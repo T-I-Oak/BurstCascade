@@ -197,6 +197,36 @@
             this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
             this.canvas.addEventListener('click', (e) => this.handleClick(e));
 
+            // タッチ操作対応
+            this.isTouchDevice = false;
+            const handleTouchMove = (e) => {
+                this.isTouchDevice = true;
+                const rect = this.canvas.getBoundingClientRect();
+                const touch = e.touches[0];
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+
+                // mousemove相当の処理（ハイライト更新）
+                const nextHovered = this.findHexAt(x, y);
+                if (this.hoveredHex !== nextHovered) {
+                    this.hoveredHex = nextHovered;
+                    this.hoveredNeighbors = [];
+
+                    if (this.hoveredHex && this.hoveredHex.zone === 'main' && this.hoveredHex.owner === this.currentPlayer) {
+                        const directions = [
+                            { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                            { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
+                        ];
+                        directions.forEach(dir => {
+                            const neighbor = this.map.getHexAt(this.hoveredHex.q + dir.q, this.hoveredHex.r + dir.r, 'main');
+                            if (neighbor) this.hoveredNeighbors.push(neighbor);
+                        });
+                    }
+                }
+            };
+            this.canvas.addEventListener('touchstart', () => { this.isTouchDevice = true; }, { passive: true });
+            this.canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+
             this.init();
         }
 
@@ -560,6 +590,10 @@
         }
 
         handleMouseMove(e) {
+            // タッチデバイスでの指移動は touchmove で処理するため、mousemove は無視する
+            // (iOS Safari 等でのシミュレートされたイベントによる誤作動防止)
+            if (this.isTouchDevice && e.pointerType !== 'mouse') return;
+
             const rect = this.canvas.getBoundingClientRect();
             const mouseX = e.clientX - rect.left;
             const mouseY = e.clientY - rect.top;
@@ -603,6 +637,26 @@
 
                 // 入力ロックのチェック（演出中やAI思考中は無効）
                 if (this.isAIThinking || this.isProcessingMove || this.turnEndRequested) return;
+
+                // Ver 4.3: 2ステップ確定ロジック (タッチデバイスの誤操作防止)
+                // マウスホバーがない環境（タッチ）を考慮し、1回目で選択、2回目で確定とする。
+                // すでにハイライト（hoveredHex）されているマス以外をクリックした場合は、選択のみ行う。
+                if (!e.isSimulated && this.hoveredHex !== hex) {
+                    this.hoveredHex = hex;
+                    this.hoveredNeighbors = [];
+                    if (hex.owner === this.currentPlayer) {
+                        const directions = [
+                            { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                            { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
+                        ];
+                        directions.forEach(dir => {
+                            const neighbor = this.map.getHexAt(hex.q + dir.q, hex.r + dir.r, 'main');
+                            if (neighbor) this.hoveredNeighbors.push(neighbor);
+                        });
+                    }
+                    this.sound.playPlace(); // 選択音
+                    return;
+                }
 
                 // PVCモードでCPUのターン中は、人間のクリックを無効化
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !e.isSimulated) {
