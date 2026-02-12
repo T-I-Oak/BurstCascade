@@ -372,11 +372,22 @@ main {
     line-height: 1;
 }
 
+.version-badge {
+    font-size: 0.9rem;
+    color: var(--accent-color);
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+    font-weight: 700;
+    letter-spacing: 0.1rem;
+}
+
 .subtitle {
     font-size: 1.1rem;
     color: #94a3b8;
     letter-spacing: 0.5rem;
-    margin-bottom: 3rem;
+    margin-bottom: 2.5rem;
+    /* 少し減らしてバランスを取る */
     text-transform: uppercase;
     font-weight: 300;
 }
