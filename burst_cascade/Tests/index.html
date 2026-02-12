@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Burst Cascade - Logic Tests</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            background: #1a1a1a;
+            color: #eee;
+            padding: 20px;
+        }
+
+        .test-case {
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            background: #2a2a2a;
+        }
+
+        .pass {
+            border-left: 5px solid #4ade80;
+        }
+
+        .fail {
+            border-left: 5px solid #f87171;
+        }
+
+        .fail .error {
+            color: #f87171;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        h1 {
+            color: #4ade80;
+        }
+
+        #results-summary {
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Burst Cascade 内部ロジックテスト</h1>
+    <div id="results-summary">テスト実行中...</div>
+    <div id="test-results"></div>
+
+    <!-- 依存ファイルの読み込み -->
+    <script src="../map.js"></script>
+    <script src="../ai.js"></script>
+    <!-- テスト本体 -->
+    <script src="rules_test.js"></script>
+</body>
+
+</html>

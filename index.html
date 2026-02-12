@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
+    <link rel="stylesheet" href="burst_cascade/style.css">
+</head>
+
+<body>
+    <div id="app">
+        <header>
+            <h1>BURST CASCADE</h1>
+            <span id="help-btn">HOW TO PLAY</span>
+            <div id="status-container">
+                <div id="war-gauge-container">
+                    <div id="p1-bar" class="gauge-bar" style="width: 50%;"></div>
+                    <div id="p2-bar" class="gauge-bar" style="width: 50%;"></div>
+                    <div id="p1-score" class="score-label">3</div>
+                    <div id="p2-score" class="score-label">3</div>
+                </div>
+            </div>
+        </header>
+        <main>
+            <canvas id="game-canvas"></canvas>
+            <div id="overlay">
+                <!-- タイトル・モード選択画面 -->
+                <div id="mode-selection-content" class="modal-content">
+                    <h1 class="title-logo">BURST CASCADE</h1>
+                    <p class="subtitle">連鎖爆発ストラテジー</p>
+                    <div class="menu-options">
+                        <div class="settings-container">
+                            <div class="setting-group">
+                                <label>PLAYERS</label>
+                                <div class="toggle-options" id="player-select">
+                                    <button class="toggle-btn selected" data-value="pvc">1P <span class="sub">vs
+                                            CPU</span></button>
+                                    <button class="toggle-btn" data-value="pvp">2P <span
+                                            class="sub">LOCAL</span></button>
+                                </div>
+                            </div>
+                            <div class="setting-group" id="ai-level-group">
+                                <label>AI LEVEL</label>
+                                <div class="toggle-options" id="ai-level-select">
+                                    <button class="toggle-btn" data-value="easy">EASY</button>
+                                    <button class="toggle-btn selected" data-value="normal">NORMAL</button>
+                                    <button class="toggle-btn" data-value="hard">HARD</button>
+                                </div>
+                            </div>
+                            <div class="setting-group">
+                                <label>MAP SIZE</label>
+                                <div class="toggle-options" id="size-select">
+                                    <button class="toggle-btn" data-value="mini">MINI</button>
+                                    <button class="toggle-btn selected" data-value="regular">REGULAR</button>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="game-start-btn" class="menu-btn primary large">GAME START</button>
+                    </div>
+                    <div class="menu-footer">
+                        <span id="start-help-btn" class="footer-link">HOW TO PLAY</span>
+                    </div>
+                </div>
+
+                <!-- ヘルプコンテンツ -->
+                <div id="help-content" class="modal-content hidden">
+                    <div class="help-scroll-container">
+                        <section class="help-section">
+                            <h2>Burst Cascade</h2>
+                            <p class="flavor-text">
+                                この世界は、純粋なエネルギーの結晶体「ヘキサグリッド」によって維持されてきた。しかし今、安定は崩れ、秩序は混沌へと向かっている。グリッドの不安定化は、一箇所の過負荷が次々と波及する「連鎖爆発（カスケード）」を招き、既存の境界を飲み込もうとしている。
+                            </p>
+                            <p class="flavor-text">
+                                あなたの使命は、この<strong>カスケード</strong>を戦略的に制御し、対立する勢力からすべての「共鳴中枢（コア）」を奪還することだ。土地のエネルギーを飽和させ、戦術的な過負荷（オーバーロード）を引き起こし、世界の秩序を再定義せよ。
+                            </p>
+                        </section>
+
+                        <section class="help-section">
+                            <h3>目的</h3>
+                            <p>相手勢力の保持する<strong>「共鳴中枢（コア）」</strong>をすべて<strong>無効化</strong>したら勝利となります。</p>
+                            <ul class="help-list">
+                                <li>相手のグリッドを「過負荷」状態に追い込むことで、そこにあるコアを無効化できます。</li>
+                            </ul>
+                        </section>
+
+                        <section class="help-section">
+                            <h3>システム・ルール</h3>
+                            <div class="rule-item">
+                                <h4>過負荷（オーバーロード）</h4>
+                                <p>グリッドのポテンシャルが限界（絶対値 9 ）を超えると発生。</p>
+                                <ul class="help-list">
+                                    <li>蓄積されたエネルギーを放出し、グリッドは<strong>基底状態</strong>（0）へ戻ります。</li>
+                                    <li>この時、そのグリッドに配置されていた「共鳴中枢（コア）」は<strong>無効化</strong>されます。</li>
+                                </ul>
+                            </div>
+                            <div class="rule-item">
+                                <h4>カスケード（連鎖爆発）</h4>
+                                <p>過負荷の発生によって、エネルギー注入プロセスが延長される現象です。</p>
+                            </div>
+                            <div class="rule-item">
+                                <h4>共鳴（レゾナンス）</h4>
+                                <p>カスケード内の過負荷パターンに応じて得られる報酬です。</p>
+                                <ul class="help-list">
+                                    <li><strong>自律共鳴（自己強化）</strong>:
+                                        <strong>1つのカスケード内</strong>で自勢力が4回過負荷を起こすと発生。供給エネルギー（ストック）の出力が強化されます。
+                                    </li>
+                                    <li><strong>侵食共鳴（領域獲得）</strong>:
+                                        相手勢力を<strong>通算で2回過負荷させるごとに</strong>発生。自勢力内のグリッドに新たな「共鳴中枢（コア）」が形成されます。</li>
+                                </ul>
+                            </div>
+                            <div class="rule-item">
+                                <h4>供給エネルギーのフィードバック</h4>
+                                <p>エネルギー注入後、ストックの状態が再構築されます。</p>
+                                <ul class="help-list">
+                                    <li><strong>カスケード発生時</strong>：供給エネルギーが「拡散」します。出力が平準化されます。</li>
+                                    <li><strong>カスケード未発生時</strong>：供給エネルギーが「集中」します。出力が集束されます。</li>
+                                </ul>
+                            </div>
+                        </section>
+
+                        <section class="help-section">
+                            <h3>フェーズの終了</h3>
+                            <ul class="help-list">
+                                <li>過負荷を発生させた場合、制御権を維持し、続けて注入が可能です。</li>
+                                <li>ただし「自律共鳴」が発生した瞬間、制御が飽和し、フェーズは終了します。</li>
+                                <li>過負荷が全く発生しなかった場合も、そのままフェーズが終了します。</li>
+                            </ul>
+                        </section>
+
+                        <section class="help-section">
+                            <h3>インターフェース</h3>
+                            <ul class="help-list">
+                                <li><strong>注入操作（クリック）</strong>: 自分の支配グリッドにエネルギー情報を流し込みます。</li>
+                                <li><strong>同調プレビュー（ホバー）</strong>: カーソルを合わせた際の予測影響範囲を確認できます。</li>
+                            </ul>
+                        </section>
+                    </div>
+                    <button class="close-btn help-back-btn">タイトルに戻る</button>
+                    <button id="help-close-btn" class="close-btn hidden">閉じる</button>
+                </div>
+
+                <!-- ゲームオーバー -->
+                <div id="game-over-content" class="modal-content hidden">
+                    <h2 id="winner-text">Player 1 Wins!</h2>
+                    <p>Dominance established.</p>
+                    <div class="menu-options">
+                        <button id="restart-btn" class="menu-btn primary">TITLE SCREEN</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 盤面覗き見ボタン (ホールドで非表示) -->
+            <button id="peek-board-btn" class="overlay-toggle-btn hidden">HOLD TO VIEW</button>
+
+            <!-- CPU思考中オーバーレイ（回路アニメーション用） -->
+            <div id="ai-thinking-overlay" class="hidden">
+                <div class="circuit-container">
+                    <div class="circuit-core"></div>
+                    <div class="circuit-path p1"></div>
+                    <div class="circuit-path p2"></div>
+                    <div class="circuit-path p3"></div>
+                    <div class="circuit-text">ANALYZING CASCADE...</div>
+                </div>
+            </div>
+        </main>
+        <footer>
+            <div id="controls">
+                <!-- 将来的なコントロール用 -->
+            </div>
+        </footer>
+    </div>
+    <script src="burst_cascade/map.js"></script>
+    <script src="burst_cascade/ai.js"></script>
+    <script src="burst_cascade/main.js"></script>
+</body>
+
+</html>
