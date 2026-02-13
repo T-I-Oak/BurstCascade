@@ -116,7 +116,8 @@
             this.lastMoveHex = null; // 最後にプレイしたマス
             this.isWaitingForDrop = false; // 落下演出の完了待ちフラグ
             this.turnHadBurst = false;    // ターン中にバーストが起きたか
-            this.turnHadReward = false;   // ターン中に報酬が発生したか
+            this.turnHadReward = false;   // ターン中に何らかの報酬が発生したか
+            this.turnHadSelfReward = false; // ターン中に「自陣報酬」が発生したか (Ver 4.4.17)
 
             // UI要素
             this.overlay = document.getElementById('overlay');
@@ -738,6 +739,7 @@
             this.isWaitingForDrop = true;
             this.turnHadBurst = false;
             this.turnHadReward = false;
+            this.turnHadSelfReward = false;
             this.dropEffects = [];
 
             const handZoneId = `hand-p${this.currentPlayer}`;
@@ -950,20 +952,22 @@
 
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
-            // Ver 4.4.16: ロジックの簡素化
-            // 継続条件: バーストが発生した OR 報酬（旗など）を獲得した
-            const shouldContinue = overflowOccurred || this.turnHadReward;
+            // Ver 4.4.17: 手番継続ルールの詳細調整
+            // 継続条件: バーストが発生 (overflowOccurred) し、かつ 自陣報酬 (turnHadSelfReward) を獲得していないこと
+            // 敵陣報酬 (turnHadReward && !turnHadSelfReward) のみの場合は継続する
+            const shouldContinue = overflowOccurred && !this.turnHadSelfReward;
 
             if (shouldContinue) {
                 if (stillBursting) {
                     console.log(`[Turn Log] Still bursting... waiting.`);
                 } else {
-                    console.log(`[Turn Log] Continue Turn for P${this.currentPlayer} (Burst:${overflowOccurred}, Reward:${this.turnHadReward})`);
+                    console.log(`[Turn Log] Continue Turn for P${this.currentPlayer} (Burst:${overflowOccurred}, NoSelfReward)`);
                     // isProcessingMove はここでは解放しない。checkTurnTransition が解放する。
                 }
             } else {
                 this.turnEndRequested = true;
-                console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer}`);
+                const reason = this.turnHadSelfReward ? 'SelfReward' : (overflowOccurred ? 'BurstButEnd?' : 'Normal');
+                console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer} (Reason: ${reason})`);
             }
         }
 
@@ -1012,6 +1016,9 @@
                 arrivedCount: 0
             };
             this.turnHadReward = true; // 成果があったことを記録
+            if (type === 'self') {
+                this.turnHadSelfReward = true; // 自陣報酬フラグ (Ver 4.4.17)
+            }
             this.pendingRewards.push(reward);
             return reward;
         }

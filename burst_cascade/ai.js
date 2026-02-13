@@ -238,6 +238,7 @@
                 return { chainContinues: false };
             }
 
+            // Ver 4.4.17: 自陣報酬が発生した場合は手番終了
             return { chainContinues: (overflowOccurred && !selfRewardTriggered) };
         }
 

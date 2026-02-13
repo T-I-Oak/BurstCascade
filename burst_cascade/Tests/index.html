@@ -135,6 +135,8 @@
 <body>
 
     <h1>BURST CASCADE TEST DASHBOARD</h1>
+    <button id="run-all-btn" class="run-btn" style="margin-bottom: 20px; font-size: 1.2rem; background: #818cf8;"
+        onclick="runAllTests()">Run All Tests</button>
 
     <div class="dashboard">
         <!-- 0. バースト継続テスト (Ver 4.4.15) -->
@@ -187,8 +189,7 @@
 
     <!-- 必要な基盤読み込み -->
     <script src="../map.js"></script>
-    <script src="test_ai_difficulty.js"></script>
-    <script src="test_burst_extra_move.js"></script>
+    <script src="../ai.js"></script> <!-- AIロジックテストのために必要 -->
 
     <script>
         const consoleEl = document.getElementById('console-output');
@@ -216,14 +217,51 @@
             };
         })();
 
+        async function loadScript(path) {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = path;
+                script.onload = () => resolve();
+                script.onerror = () => reject(`Failed to load ${path}`);
+                document.body.appendChild(script);
+            });
+        }
+
         function runUnitTest(scriptPath) {
             consoleEl.innerHTML = ''; // クリア
             log(`Running unit test: ${scriptPath}...`, 'info');
+            // 既存スクリプトがあれば削除してリロード (簡易的)
+            const old = document.querySelector(`script[src="${scriptPath}"]`);
+            if (old) old.remove();
 
-            const script = document.createElement('script');
-            script.src = scriptPath;
-            script.onerror = () => log(`Failed to load test script: ${scriptPath}`, 'error');
-            document.body.appendChild(script);
+            loadScript(scriptPath).catch(err => log(err, 'error'));
+        }
+
+        async function runAllTests() {
+            consoleEl.innerHTML = '';
+            log('Starting ALL Tests...', 'info');
+
+            const tests = [
+                'test_ai_difficulty.js',
+                'test_minimap.js',
+                'rules_test.js',
+                'test_burst_extra_move.js'
+            ];
+
+            for (const test of tests) {
+                log(`--- Running ${test} ---`, 'info');
+                try {
+                    // スクリプトタグを動的に追加して実行
+                    // ※各テストが即時実行関数になっている前提
+                    const old = document.querySelector(`script[src="${test}"]`);
+                    if (old) old.remove();
+                    await loadScript(test);
+                    await new Promise(r => setTimeout(r, 500)); // 簡易wait
+                } catch (e) {
+                    log(`Error running ${test}: ${e}`, 'error');
+                }
+            }
+            log('All tests completed sequence.', 'success');
         }
     </script>
 </body>
