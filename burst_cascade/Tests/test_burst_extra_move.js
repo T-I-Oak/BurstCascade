@@ -36,10 +36,10 @@
 
         if (isStillP1 && hasExtraMove) {
             console.log("✅ TEST PASSED: Extra move granted after enemy burst.");
-            alert("✅ TEST PASSED: Extra move granted after enemy burst.");
+            // alert("✅ TEST PASSED: Extra move granted after enemy burst.");
         } else {
             console.error("❌ TEST FAILED: Turn swapped or end requested despite burst.");
-            alert("❌ TEST FAILED: Turn swapped or end requested despite burst.");
+            // alert("❌ TEST FAILED: Turn swapped or end requested despite burst.");
         }
     }
 

@@ -187,9 +187,39 @@
 
     <div id="console-output"></div>
 
+    <!-- main.js が要求するダミーDOM要素 (非表示) -->
+    <div id="dummy-game-container" style="display: none;">
+        <canvas id="game-canvas"></canvas>
+        <div id="overlay"></div>
+        <div id="help-btn"></div>
+        <div id="start-help-btn"></div>
+        <div id="help-content"></div>
+        <div id="mode-selection-content"></div>
+        <div id="game-over-content"></div>
+        <div id="ai-thinking-overlay"></div>
+        <div id="player-select"><button class="toggle-btn selected" data-value="1"></button></div>
+        <div id="size-select"><button class="toggle-btn selected" data-value="4"></button></div>
+        <div id="ai-level-select"></div>
+        <div id="ai-level-group">
+            <button class="toggle-btn selected" data-value="hard"></button>
+            <button class="toggle-btn" data-value="normal"></button>
+            <button class="toggle-btn" data-value="easy"></button>
+        </div>
+        <div id="game-start-btn"></div>
+        <div id="restart-btn"></div>
+        <div id="help-close-btn"></div>
+        <button class="help-back-btn"></button>
+        <div id="peek-board-btn"></div>
+        <div id="p1-bar"></div>
+        <div id="p2-bar"></div>
+        <div id="p1-score"></div>
+        <div id="p2-score"></div>
+    </div>
+
     <!-- 必要な基盤読み込み -->
     <script src="../map.js"></script>
-    <script src="../ai.js"></script> <!-- AIロジックテストのために必要 -->
+    <script src="../ai.js"></script>
+    <script src="../main.js"></script>
 
     <script>
         const consoleEl = document.getElementById('console-output');
@@ -256,6 +286,17 @@
                     const old = document.querySelector(`script[src="${test}"]`);
                     if (old) old.remove();
                     await loadScript(test);
+
+                    // 特別対応: test_burst_extra_move.js は関数呼び出しが必要
+                    if (test === 'test_burst_extra_move.js' && typeof window.runBurstExtraMoveTest === 'function') {
+                        // Gameインスタンスの初期化が必要
+                        if (!window.game) {
+                            log('Initializing Game instance for integration test...', 'info');
+                            window.game = new window.BurstCascade.Game();
+                        }
+                        await window.runBurstExtraMoveTest();
+                    }
+
                     await new Promise(r => setTimeout(r, 500)); // 簡易wait
                 } catch (e) {
                     log(`Error running ${test}: ${e}`, 'error');
