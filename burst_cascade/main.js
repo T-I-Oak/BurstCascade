@@ -448,7 +448,7 @@
                     if (de.landed) return;
 
                     if (de.state === 'appearing') {
-                        de.alpha += 0.05;
+                        de.alpha += 0.1; // 高速化
                         // ほわっと浮いている微振動
                         de.y += Math.sin(Date.now() * 0.01) * 0.2;
                         if (de.alpha >= 1) {
@@ -469,7 +469,7 @@
 
                     // 落下（簡易的な物理）
                     de.y += de.velocity;
-                    de.velocity += 0.8; // 重力加速
+                    de.velocity += 1.2; // 重力加速 (0.8 -> 1.2 高速化)
 
                     // 着弾判定
                     if (de.y >= de.targetY) {
@@ -752,22 +752,32 @@
 
                 if (mapHex && !mapHex.isDisabled) {
                     const targetPos = this.layout.hexToPixel(mapHex);
-                    this.dropEffects.push({
-                        q: mapHex.q,
-                        r: mapHex.r,
-                        targetHex: mapHex,
-                        sourceHeight: handHex.height,
-                        x: targetPos.x,
-                        y: targetPos.y - 400, // ホバー高度
-                        targetY: targetPos.y,
-                        alpha: 0,
-                        state: 'appearing', // 出現中
-                        hoverTimer: 40 + Math.random() * 20, // ほわっと浮かぶ時間
-                        velocity: 0,
-                        landed: false,
-                        type: 'land',
-                        owner: handHex.owner
-                    });
+                    // Ver 4.4.13: 高さ0の土地は演出をスキップ（即座に着弾処理）
+                    if (handHex.height === 0) {
+                        this.handleDropImpact({
+                            targetHex: mapHex,
+                            sourceHeight: 0,
+                            owner: handHex.owner,
+                            type: 'land'
+                        });
+                    } else {
+                        this.dropEffects.push({
+                            q: mapHex.q,
+                            r: mapHex.r,
+                            targetHex: mapHex,
+                            sourceHeight: handHex.height,
+                            x: targetPos.x,
+                            y: targetPos.y - 400, // ホバー高度
+                            targetY: targetPos.y,
+                            alpha: 0,
+                            state: 'appearing', // 出現中
+                            hoverTimer: 10 + Math.random() * 10, // 高速化 (40+rand -> 10+rand)
+                            velocity: 0,
+                            landed: false,
+                            type: 'land',
+                            owner: handHex.owner
+                        });
+                    }
                 }
             });
 
@@ -1081,7 +1091,14 @@
                 console.log(`[Reward] applying self reward (height update)`);
                 reward.targetHex.height += (reward.player === 1 ? 1 : -1);
                 reward.targetHex.height = Math.max(-5, Math.min(5, reward.targetHex.height));
-                reward.targetHex.updateOwner();
+                reward.targetHex.updateOwner(); // オーナー更新
+
+                // フラッグ消失チェック (Ver 4.4.13)
+                if (reward.targetHex.hasFlag) {
+                    if (reward.targetHex.owner === 0 || reward.targetHex.owner !== reward.targetHex.flagOwner) {
+                        reward.targetHex.hasFlag = false;
+                    }
+                }
 
                 // バンプ（跳ね上げ）演出: 現在の視覚的な高さに勢いをつける
                 const bumpAmt = (reward.player === 1 ? 2.0 : -2.0);

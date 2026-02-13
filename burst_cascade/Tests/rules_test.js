@@ -7,16 +7,22 @@
     let failCount = 0;
 
     function assert(condition, message) {
-        const div = document.createElement('div');
-        div.className = 'test-case ' + (condition ? 'pass' : 'fail');
-        div.innerHTML = `<div>${message}</div>`;
-        if (!condition) {
-            div.innerHTML += `<div class="error">FAILED</div>`;
-            failCount++;
-        } else {
+        if (condition) {
+            console.log(`[PASS] ${message}`);
             passCount++;
+        } else {
+            console.error(`[FAIL] ${message}`);
+            failCount++;
         }
-        resultsContainer.appendChild(div);
+
+        // 互換性のため、要素が存在する場合のみ描画
+        if (resultsContainer) {
+            const div = document.createElement('div');
+            div.className = 'test-case ' + (condition ? 'pass' : 'fail');
+            div.innerHTML = `<div>${message}</div>`;
+            if (!condition) div.innerHTML += `<div class="error">FAILED</div>`;
+            resultsContainer.appendChild(div);
+        }
     }
 
     function test(name, fn) {
@@ -127,10 +133,15 @@
         assert(result.chainContinues === false, "敵の最後の旗を破壊した場合は、バースト中でも即座に手番（ゲーム）が終了すること");
     });
 
-    summaryContainer.innerHTML = `全 ${passCount + failCount} 件中 ${passCount} 件パス、${failCount} 件失敗`;
-    if (failCount > 0) {
-        summaryContainer.style.color = "#f87171";
-    } else {
-        summaryContainer.style.color = "#4ade80";
+    const summary = `全 ${passCount + failCount} 件中 ${passCount} 件パス、${failCount} 件失敗`;
+    console.log(`--- Test Summary: ${summary} ---`);
+
+    if (summaryContainer) {
+        summaryContainer.innerHTML = summary;
+        if (failCount > 0) {
+            summaryContainer.style.color = "#f87171";
+        } else {
+            summaryContainer.style.color = "#4ade80";
+        }
     }
 })();
