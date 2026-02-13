@@ -448,8 +448,24 @@
             if (this.dropEffects.length > 0) {
                 this.dropEffects.forEach(de => {
                     if (de.landed) return;
-                    if (de.delay > 0) {
-                        de.delay--;
+
+                    if (de.state === 'appearing') {
+                        de.alpha += 0.05;
+                        // ほわっと浮いている微振動
+                        de.y += Math.sin(Date.now() * 0.01) * 0.2;
+                        if (de.alpha >= 1) {
+                            de.alpha = 1;
+                            de.state = 'hovering';
+                        }
+                        return;
+                    }
+
+                    if (de.state === 'hovering') {
+                        de.hoverTimer--;
+                        de.y += Math.sin(Date.now() * 0.01) * 0.2;
+                        if (de.hoverTimer <= 0) {
+                            de.state = 'falling';
+                        }
                         return;
                     }
 
@@ -458,31 +474,32 @@
                     de.velocity += 0.8; // 重力加速
 
                     // 着弾判定
-                    const targetPos = this.layout.hexToPixel(de.targetHex);
-                    if (de.y >= targetPos.y) {
-                        de.y = targetPos.y;
+                    if (de.y >= de.targetY) {
+                        de.y = de.targetY;
                         de.landed = true;
                         this.handleDropImpact(de);
                     }
                 });
 
-                if (this.isWaitingForDrop && this.dropEffects.every(de => de.landed)) {
-                    const hasMarker = this.dropEffects.some(de => de.type === 'marker');
-                    const isAllLanded = this.dropEffects.every(de => de.landed);
+                // Ver 4.4.3: 演出状況のチェック
+                const lands = this.dropEffects.filter(de => de.type === 'land');
+                const marker = this.dropEffects.find(de => de.type === 'marker');
 
-                    if (isAllLanded) {
-                        if (hasMarker) {
-                            // マーカーが着地した＝全演出終了
-                            this.isWaitingForDrop = false;
-                            this.dropEffects = [];
-                            this.finalizeTurn(true); // バースト後のマーカー着地
-                        } else {
-                            // 土地の着地が完了＝連鎖の開始
-                            this.isWaitingForDrop = false; // 一旦止める
-                            this.dropEffects = [];
-                            this.processChainReaction();
-                        }
-                    }
+                // 土地が全着弾したか
+                const landsAllLanded = lands.length > 0 && lands.every(de => de.landed);
+
+                if (this.isWaitingForDrop && landsAllLanded) {
+                    // 土地を dropEffects から除去して連鎖フェーズへ
+                    this.dropEffects = this.dropEffects.filter(de => de.type !== 'land');
+                    this.isWaitingForDrop = false; // 土地落下待ちは一時終了
+                    this.processChainReaction();
+                }
+
+                // マーカー単体の着弾チェック
+                if (marker && marker.landed) {
+                    this.lastMoveHex = marker.targetHex;
+                    this.dropEffects = []; // クリア
+                    this.finalizeTurn(true);
                 }
             }
 
@@ -710,7 +727,7 @@
 
                 this.sound.playPlace();
                 this.isProcessingMove = true;
-                this.lastMoveHex = hex;
+                this.lastMoveHex = null; // Ver 4.4.3: クリックの瞬間はいったん消す
 
                 const color = this.currentPlayer === 1 ? '#4ade80' : '#f87171';
                 this.focusEffects.push({
@@ -725,7 +742,7 @@
             }
         }
 
-        // Ver 4.4: 落下演出の開始
+        // Ver 4.4.3: 落下演出の開始（ホバーフェーズ含む）
         triggerDropSequence(targetHex) {
             this.isWaitingForDrop = true;
             this.dropEffects = [];
@@ -734,7 +751,7 @@
             const handHexes = this.map.hexes.filter(h => h.zone === handZoneId);
             const handOffset = this.map.offsets[handZoneId];
 
-            // 1. 7つの土地を落下エフェクトに追加
+            // 1. 7つの土地を上空（ホバー位置）に生成
             handHexes.forEach((handHex, i) => {
                 const dq = handHex.q - handOffset.q;
                 const dr = handHex.r - handOffset.r;
@@ -748,37 +765,58 @@
                         targetHex: mapHex,
                         sourceHeight: handHex.height,
                         x: targetPos.x,
-                        y: targetPos.y - (400 + Math.random() * 200), // 上空から
-                        z: 1.0,
-                        velocity: 5 + Math.random() * 5,
-                        delay: Math.random() * 20,
+                        y: targetPos.y - 400, // ホバー高度
+                        targetY: targetPos.y,
+                        alpha: 0,
+                        state: 'appearing', // 出現中
+                        hoverTimer: 40 + Math.random() * 20, // ほわっと浮かぶ時間
+                        velocity: 0,
                         landed: false,
                         type: 'land',
-                        owner: handHex.owner // Ver 4.4.2: 手札本来のオーナー（色）を反映
+                        owner: handHex.owner
                     });
                 }
             });
-        }
 
-        // Ver 4.4: 最終マーカーを降らせる
-        triggerMarkerDrop(targetHex) {
-            this.isWaitingForDrop = true;
-            targetHex.isHidden = true; // 着弾まで盤面から隠す
+            // 2. インジケータも上空に生成
+            const targetPos = this.layout.hexToPixel(targetHex);
+            targetHex.isHidden = true; // 着弾まで隠す
             this.dropEffects.push({
                 q: targetHex.q,
                 r: targetHex.r,
                 targetHex: targetHex,
-                sourceHeight: (this.currentPlayer === 1 ? 1 : -1), // マーカーに厚みを持たせる
-                x: this.layout.hexToPixel(targetHex).x,
-                y: this.layout.hexToPixel(targetHex).y - 800,
-                z: 1.0,
-                velocity: 15,
-                delay: 0,
+                x: targetPos.x,
+                y: targetPos.y - 400,
+                targetY: targetPos.y,
+                alpha: 0,
+                state: 'appearing',
+                hoverTimer: 99999, // チェーンが終わるまで待機
+                velocity: 0,
                 landed: false,
                 type: 'marker',
                 owner: 0
             });
         }
+
+        // Ver 4.4: 最終マーカーを降らせる
+        // triggerMarkerDrop(targetHex) {
+        //     this.isWaitingForDrop = true;
+        //     targetHex.isHidden = true; // 着弾まで盤面から隠す
+        //     this.dropEffects.push({
+        //         q: targetHex.q,
+        //         r: targetHex.r,
+        //         targetHex: targetHex,
+        //         sourceHeight: (this.currentPlayer === 1 ? 1 : -1), // マーカーに厚みを持たせる
+        //         x: this.layout.hexToPixel(targetHex).x,
+        //         y: this.layout.hexToPixel(targetHex).y - 800,
+        //         z: 1.0,
+        //         velocity: 15,
+        //         delay: 0,
+        //         landed: false,
+        //         type: 'marker',
+        //         owner: 0
+        //     });
+        // }
 
         // Ver 4.4: 着弾時の処理
         handleDropImpact(effect) {
@@ -844,10 +882,14 @@
                 const nextOverflowed = this.map.mainHexes.filter(h => h.height > 9 || h.height < -9);
                 if (nextOverflowed.length > 0) {
                     this.processChainReaction(); // 連鎖継続
-                } else if (this.lastMoveHex && !this.dropEffects.some(de => de.type === 'marker')) {
-                    this.triggerMarkerDrop(this.lastMoveHex);
                 } else {
-                    this.finalizeTurn(true);
+                    // 全連鎖終了。上空のマーカーを落下させる
+                    const marker = this.dropEffects.find(de => de.type === 'marker');
+                    if (marker) {
+                        marker.state = 'falling';
+                    } else {
+                        this.finalizeTurn(true);
+                    }
                 }
             }, totalDelay);
         }
@@ -1448,8 +1490,9 @@
 
             // Ver 4.4: 落下中の土地・マーカーの描画
             this.dropEffects.forEach(de => {
-                if (de.landed || de.delay > 0) return;
-                this.drawFallingHex(de);
+                if (de.landed || de.state === 'appearing' || de.state === 'hovering' || de.state === 'falling') {
+                    this.drawFallingHex(de);
+                }
             });
 
             // 戦況 (フラッグ数) を更新
@@ -1534,82 +1577,91 @@
             }
         }
 
-        // Ver 4.4.2: 落下物の描画 (3D版)
+        // Ver 4.4.3: 落下物の描画
         drawFallingHex(de) {
             const ctx = this.ctx;
-            const size = this.layout.size * 0.9;
+            const size = this.layout.size * 1.0;
             const unitThickness = this.layout.size * 0.12;
-            const absH = Math.abs(de.sourceHeight || 1);
-            const h = absH * unitThickness;
-
-            // 基本カラー
-            const colors = {
-                0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
-                1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
-                2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
-            };
-
-            // マーカー（白）の場合は特殊カラー
-            let color;
-            if (de.type === 'marker') {
-                color = { top: '#ffffff', side: '#cbd5e1', border: '#94a3b8', highlight: '#f8fafc' };
-            } else {
-                color = colors[de.owner] || colors[0];
-            }
-
             ctx.save();
             ctx.translate(de.x, de.y);
+            ctx.globalAlpha = de.alpha;
 
-            // 六角形の上面・下面のベース頂点を計算
-            const vertices = [];
-            for (let i = 0; i < 6; i++) {
-                const angle = (2 * Math.PI * i) / 6 + Math.PI / 6;
-                vertices.push({
-                    x: size * Math.cos(angle),
-                    y: size * Math.sin(angle) * 0.6 // 投影を簡易シミュレート
-                });
-            }
-
-            // 1. 側面（厚み）の描画
-            const ccwIndices = [0, 5, 4, 3, 2, 1];
-            for (let j = 0; j < 6; j++) {
-                const idxA = ccwIndices[j], idxB = ccwIndices[(j + 1) % 6];
-                const vA = vertices[idxA], vB = vertices[idxB];
-                // 簡易的な背面カリング（手前に向いている面のみ描画）
-                if (vB.x > vA.x) {
-                    ctx.beginPath();
-                    ctx.moveTo(vA.x, vA.y);
-                    ctx.lineTo(vB.x, vB.y);
-                    ctx.lineTo(vB.x, vB.y - h);
-                    ctx.lineTo(vA.x, vA.y - h);
-                    ctx.closePath();
-                    ctx.fillStyle = color.side;
-                    ctx.fill();
-                    ctx.strokeStyle = color.border;
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
+            if (de.type === 'marker') {
+                // インジケータ（白いリング）
+                const hex = de.targetHex;
+                const ringVertices = this.layout.getPolygonVertices(hex, 1.2);
+                ctx.beginPath();
+                // 中心 (0,0) 相対で描画
+                const origin = this.layout.hexToPixel(hex);
+                ctx.moveTo(ringVertices[0].x - origin.x, ringVertices[0].y - origin.y);
+                for (let i = 1; i < 6; i++) {
+                    ctx.lineTo(ringVertices[i].x - origin.x, ringVertices[i].y - origin.y);
                 }
-            }
+                ctx.closePath();
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = 'white';
+                ctx.shadowBlur = 10;
+                ctx.stroke();
+            } else {
+                // 土地（3Dモデル）
+                const absH = Math.abs(de.sourceHeight || 1);
+                const h = absH * unitThickness;
+                const colors = {
+                    0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
+                    1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
+                    2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
+                };
+                const color = colors[de.owner] || colors[0];
 
-            // 2. 上面の描画
-            const topVertices = vertices.map(v => ({ x: v.x, y: v.y - h }));
-            ctx.beginPath();
-            ctx.moveTo(topVertices[0].x, topVertices[0].y);
-            for (let i = 1; i < 6; i++) ctx.lineTo(topVertices[i].x, topVertices[i].y);
-            ctx.closePath();
-            ctx.fillStyle = color.top;
-            ctx.fill();
-            ctx.strokeStyle = color.highlight;
-            ctx.lineWidth = 2;
-            ctx.stroke();
+                // 六角形のベース頂点
+                const vertices = [];
+                for (let i = 0; i < 6; i++) {
+                    const angle = (2 * Math.PI * i) / 6 + Math.PI / 6;
+                    vertices.push({
+                        x: size * Math.cos(angle),
+                        y: size * Math.sin(angle) * 0.6
+                    });
+                }
 
-            // 3. 数値（ドット）の描画
-            if (de.type === 'land') {
+                // 側面
+                const ccwIndices = [0, 5, 4, 3, 2, 1];
+                for (let j = 0; j < 6; j++) {
+                    const idxA = ccwIndices[j], idxB = ccwIndices[(j + 1) % 6];
+                    const vA = vertices[idxA], vB = vertices[idxB];
+                    if (vB.x > vA.x) {
+                        ctx.beginPath();
+                        ctx.moveTo(vA.x, vA.y);
+                        ctx.lineTo(vB.x, vB.y);
+                        ctx.lineTo(vB.x, vB.y - h);
+                        ctx.lineTo(vA.x, vA.y - h);
+                        ctx.closePath();
+                        ctx.fillStyle = color.side;
+                        ctx.fill();
+                        ctx.strokeStyle = color.border;
+                        ctx.lineWidth = 1;
+                        ctx.stroke();
+                    }
+                }
+
+                // 上面
+                const topVertices = vertices.map(v => ({ x: v.x, y: v.y - h }));
+                ctx.beginPath();
+                ctx.moveTo(topVertices[0].x, topVertices[0].y);
+                for (let i = 1; i < 6; i++) ctx.lineTo(topVertices[i].x, topVertices[i].y);
+                ctx.closePath();
+                ctx.fillStyle = color.top;
+                ctx.fill();
+                ctx.strokeStyle = color.highlight;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // ドット
                 const absValue = Math.abs(de.sourceHeight);
                 const dotRadius = size * 0.12;
                 const dotSpacing = size * 0.45;
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.translate(0, -h); // 上面に移動
+                ctx.translate(0, -h);
 
                 if (absValue === 1) {
                     ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
