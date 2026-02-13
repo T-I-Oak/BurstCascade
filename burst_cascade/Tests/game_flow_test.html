@@ -143,9 +143,31 @@
                 if (p1 !== p2) {
                     log("   [OK] プレイヤーが交代しました。", "success");
                 } else {
-                    // バーストが起きていない場合は交代するはず（Ver 4.4.6/4.4.7のロジック）
-                    // 確実に交代する状況（報酬なし・バーストなし）を想定
                     throw new Error("プレイヤーが交代していません。");
+                }
+
+                log("4. ターン交代の検証 (P2 -> P1)...");
+                const p2_start = game.currentPlayer;
+                log(`   現在のプレイヤー: Player ${p2_start}`);
+
+                // P2 の指し手 (q=-2, r=0 など別の場所)
+                const targetHex2 = game.map.getHexAt(-2, 0, 'main');
+                if (!targetHex2) throw new Error("P2テスト用のマスが見つかりません。");
+
+                log(`   q:${targetHex2.q}, r:${targetHex2.r} をクリックします...`);
+                game.handleClick({ isSimulated: true, simulatedHex: targetHex2 });
+
+                // 演出時間を待つ
+                log("   演出完了を待機中 (2.5秒)...");
+                await new Promise(resolve => setTimeout(resolve, 2500));
+
+                const p1_back = game.currentPlayer;
+                log(`   クリック後のプレイヤー: Player ${p1_back}`);
+
+                if (p2_start !== p1_back) {
+                    log("   [OK] プレイヤーが P1 に戻りました。", "success");
+                } else {
+                    throw new Error("P2 の手番が無限に続いています。");
                 }
 
                 log("--- すべてのテストが完了しました ---", "success");

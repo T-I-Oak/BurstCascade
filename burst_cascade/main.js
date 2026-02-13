@@ -734,6 +734,8 @@
             this.isProcessingMove = true;
             this.lastMoveHex = null;
             this.isWaitingForDrop = true;
+            this.turnHadBurst = false;  // Ver 4.4.9: ターン開始時にリセット
+            this.turnHadReward = false; // Ver 4.4.9: ターン開始時にリセット
             this.dropEffects = [];
 
             const handZoneId = `hand-p${this.currentPlayer}`;
