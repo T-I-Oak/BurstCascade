@@ -928,6 +928,12 @@
             // 内部データの更新
             hex.height = 0;
             hex.updateOwner();
+            // フラッグ消失チェック (Ver 4.4.14)
+            if (hex.hasFlag) {
+                if (hex.owner === 0 || hex.owner !== hex.flagOwner) {
+                    hex.hasFlag = false;
+                }
+            }
             this.chains[this.currentPlayer][targetType]++;
 
             // 視覚演出のトリガー
@@ -1196,53 +1202,10 @@
             this.render();
         }
 
-        drawHex(hex) {
-            if (hex.isHidden) return; // 落下中などは描画しない
-
-            const vertices = this.layout.getPolygonVertices(hex);
-            const ctx = this.ctx;
-
-            // Ver 4.0: 無効マスの描画
-            if (hex.isDisabled) {
-                ctx.beginPath();
-                ctx.moveTo(vertices[0].x, vertices[0].y);
-                for (let i = 1; i < 6; i++) {
-                    ctx.lineTo(vertices[i].x, vertices[i].y);
-                }
-                ctx.closePath();
-                ctx.fillStyle = '#111827'; // 非常に暗い背景色
-                ctx.fill();
-                ctx.strokeStyle = '#1e293b'; // 暗い境界線
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                return; // ここで終了
-            }
-
-            const unitThickness = this.layout.size * 0.12;
-            const absH = Math.abs(hex.visualHeight);
-            const h = absH * unitThickness;
-
-            // オーナー判定 (内部状態の高さに基づく)
-            let owner = 0;
-            if (hex.height > 0) owner = 1;
-            else if (hex.height < 0) owner = 2;
-            else if (hex.owner !== 0) owner = hex.owner; // 高さ0でもオーナー情報があれば反映
-
-            const colors = {
-                0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
-                1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
-                2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
-            };
-            const color = { ...colors[owner] };
-
-            if (this.hoveredHex === hex) {
-                color.top = this.adjustColor(color.top, 50);
-            } else if (this.hoveredNeighbors.includes(hex)) {
-                color.top = this.adjustColor(color.top, 25); // 周辺は控えめに
-            }
-
+        // Ver 4.4.14: 描画ロジックの共通化 (形状とスタイリング)
+        drawHexBase(ctx, hex, vertices, h, color) {
             // 1. 側面
-            if (absH > 0) {
+            if (h > 0) {
                 const ccwIndices = [0, 5, 4, 3, 2, 1];
                 for (let j = 0; j < 6; j++) {
                     const idxA = ccwIndices[j], idxB = ccwIndices[(j + 1) % 6];
@@ -1279,7 +1242,7 @@
             ctx.lineJoin = 'round';
             ctx.stroke();
 
-            // ハイライト
+            // ハイライト線
             ctx.beginPath();
             const edgeIndices = [0, 5, 4, 3, 2, 1];
             for (let j = 0; j < 6; j++) {
@@ -1298,30 +1261,80 @@
             ctx.lineWidth = 1;
             ctx.stroke();
 
+            return topVertices;
+        }
+
+        // Ver 4.4.14: 描画ロジックの共通化 (数値エンボス)
+        drawHexNumber(ctx, tx, ty, h, color, value) {
+            ctx.save();
+            const { angle, tilt, scaleY } = this.layout.projection;
+            const cosA = Math.cos(angle), sinA = Math.sin(angle);
+            const a = cosA, b = (sinA - cosA * tilt) * scaleY, c = -sinA, d = (cosA + sinA * tilt) * scaleY;
+            ctx.setTransform(a, b, c, d, tx, ty);
+            const fontSize = this.layout.size * 1.4;
+            ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const shadowColor = this.adjustColor(color.top, -40);
+            const highlightColor = this.adjustColor(color.top, 40);
+            const textColor = this.adjustColor(color.top, 10);
+            const roundedH = Math.abs(Math.round(value));
+            ctx.fillStyle = shadowColor;
+            ctx.fillText(roundedH, 1, 1);
+            ctx.fillStyle = highlightColor;
+            ctx.fillText(roundedH, -1, -1);
+            ctx.fillStyle = textColor;
+            ctx.fillText(roundedH, 0, 0);
+            ctx.restore();
+        }
+
+        drawHex(hex) {
+            if (hex.isHidden) return;
+
+            const vertices = this.layout.getPolygonVertices(hex);
+            const ctx = this.ctx;
+
+            if (hex.isDisabled) {
+                ctx.beginPath();
+                ctx.moveTo(vertices[0].x, vertices[0].y);
+                for (let i = 1; i < 6; i++) ctx.lineTo(vertices[i].x, vertices[i].y);
+                ctx.closePath();
+                ctx.fillStyle = '#111827';
+                ctx.fill();
+                ctx.strokeStyle = '#1e293b';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                return;
+            }
+
+            const unitThickness = this.layout.size * 0.12;
+            const absH = Math.abs(hex.visualHeight);
+            const h = absH * unitThickness;
+
+            let owner = 0;
+            if (hex.height > 0) owner = 1;
+            else if (hex.height < 0) owner = 2;
+            else if (hex.owner !== 0) owner = hex.owner;
+
+            const colors = {
+                0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
+                1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
+                2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
+            };
+            const color = { ...colors[owner] };
+
+            if (this.hoveredHex === hex) {
+                color.top = this.adjustColor(color.top, 50);
+            } else if (this.hoveredNeighbors.includes(hex)) {
+                color.top = this.adjustColor(color.top, 25);
+            }
+
+            const topVertices = this.drawHexBase(ctx, hex, vertices, h, color);
+
             // 3. 数値表示
             if (absH > 0) {
                 const center = this.layout.hexToPixel(hex);
-                const tx = center.x, ty = center.y - h;
-                ctx.save();
-                const { angle, tilt, scaleY } = this.layout.projection;
-                const cosA = Math.cos(angle), sinA = Math.sin(angle);
-                const a = cosA, b = (sinA - cosA * tilt) * scaleY, c = -sinA, d = (cosA + sinA * tilt) * scaleY;
-                ctx.setTransform(a, b, c, d, tx, ty);
-                const fontSize = this.layout.size * 1.4;
-                ctx.font = `bold ${fontSize}px Inter, sans-serif`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const shadowColor = this.adjustColor(color.top, -40);
-                const highlightColor = this.adjustColor(color.top, 40);
-                const textColor = this.adjustColor(color.top, 10);
-                const roundedH = Math.abs(Math.round(hex.visualHeight));
-                ctx.fillStyle = shadowColor;
-                ctx.fillText(roundedH, 1, 1);
-                ctx.fillStyle = highlightColor;
-                ctx.fillText(roundedH, -1, -1);
-                ctx.fillStyle = textColor;
-                ctx.fillText(roundedH, 0, 0);
-                ctx.restore();
+                this.drawHexNumber(ctx, center.x, center.y - h, h, color, hex.visualHeight);
             }
 
             // 4. 共鳴中枢（コア）の描画
@@ -1330,14 +1343,10 @@
                 const tx = center.x, ty = center.y - h;
                 const coreSize = this.layout.size * 0.4 * hex.visualFlagScale;
                 const playerColor = hex.flagOwner === 1 ? '#4ade80' : '#f87171';
-
-                // フローティング・アニメーション（速度をゆっくりに）
                 const floatY = Math.sin(this.pulseValue * Math.PI) * 4 * hex.visualFlagScale;
 
                 ctx.save();
                 ctx.translate(tx, ty);
-
-                // A. ベースリング（接地面のエネルギー）
                 ctx.beginPath();
                 ctx.ellipse(0, 0, coreSize * 1.2, coreSize * 0.6, 0, 0, Math.PI * 2);
                 ctx.strokeStyle = playerColor;
@@ -1345,11 +1354,8 @@
                 ctx.globalAlpha = (0.3 + this.pulseValue * 0.4) * hex.visualFlagScale;
                 ctx.stroke();
 
-                // B. コア本体（結晶体 - 八面体）: 数値を避けるため少し上方に移動
                 ctx.translate(0, -coreSize * 2.2 + floatY);
                 ctx.globalAlpha = 1.0 * hex.visualFlagScale;
-
-                // 結晶内部の発光
                 ctx.shadowColor = playerColor;
                 ctx.shadowBlur = (10 + this.pulseValue * 15) * hex.visualFlagScale;
 
@@ -1365,18 +1371,12 @@
                     ctx.stroke();
                 };
 
-                const halfW = coreSize * 0.8;
-                const halfH = coreSize * 1.3;
-
-                // 上半分 (前面2面)
+                const halfW = coreSize * 0.8, halfH = coreSize * 1.3;
                 drawCrystalFace([{ x: 0, y: -halfH }, { x: -halfW, y: 0 }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, -20), playerColor);
                 drawCrystalFace([{ x: 0, y: -halfH }, { x: halfW, y: 0 }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, 20), playerColor);
-
-                // 下半分 (前面2面)
                 drawCrystalFace([{ x: -halfW, y: 0 }, { x: 0, y: halfH }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, -40), playerColor);
                 drawCrystalFace([{ x: halfW, y: 0 }, { x: 0, y: halfH }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, 0), playerColor);
 
-                // ハイライト線
                 ctx.beginPath();
                 ctx.moveTo(-halfW, 0);
                 ctx.lineTo(halfW, 0);
@@ -1384,10 +1384,8 @@
                 ctx.globalAlpha = 0.5 * hex.visualFlagScale;
                 ctx.lineWidth = 1;
                 ctx.stroke();
-
                 ctx.restore();
             }
-
         }
 
         adjustColor(hex, amt) {
@@ -1638,7 +1636,6 @@
                 };
                 const color = colors[de.owner] || colors[0];
 
-                // 六角形のベース頂点 (Ver 4.4.6: 盤面と完全に一致させる)
                 const hex = de.targetHex;
                 const baseVertices = this.layout.getPolygonVertices(hex);
                 const origin = this.layout.hexToPixel(hex);
@@ -1647,39 +1644,13 @@
                     y: v.y - origin.y
                 }));
 
-                // 側面
-                const ccwIndices = [0, 5, 4, 3, 2, 1];
-                for (let j = 0; j < 6; j++) {
-                    const idxA = ccwIndices[j], idxB = ccwIndices[(j + 1) % 6];
-                    const vA = vertices[idxA], vB = vertices[idxB];
-                    if (vB.x > vA.x) {
-                        ctx.beginPath();
-                        ctx.moveTo(vA.x, vA.y);
-                        ctx.lineTo(vB.x, vB.y);
-                        ctx.lineTo(vB.x, vB.y - h);
-                        ctx.lineTo(vA.x, vA.y - h);
-                        ctx.closePath();
-                        ctx.fillStyle = color.side;
-                        ctx.fill();
-                        ctx.strokeStyle = color.border;
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                    }
+                // 共通描画ロジックの使用 (Ver 4.4.14)
+                this.drawHexBase(ctx, hex, vertices, h, color);
+
+                // 数値表示の追加 (Ver 4.4.14)
+                if (absH > 0) {
+                    this.drawHexNumber(ctx, 0, -h, h, color, de.sourceHeight);
                 }
-
-                // 上面
-                const topVertices = vertices.map(v => ({ x: v.x, y: v.y - h }));
-                ctx.beginPath();
-                ctx.moveTo(topVertices[0].x, topVertices[0].y);
-                for (let i = 1; i < 6; i++) ctx.lineTo(topVertices[i].x, topVertices[i].y);
-                ctx.closePath();
-                ctx.fillStyle = color.top;
-                ctx.fill();
-                ctx.strokeStyle = color.highlight;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // ドット（Ver 4.4.5: ユーザー要望により削除）
             }
 
             ctx.restore();
