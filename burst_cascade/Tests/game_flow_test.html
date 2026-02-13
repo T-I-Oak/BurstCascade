@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Burst Cascade Game Flow Test</title>
+    <style>
+        #test-results {
+            font-family: monospace;
+            white-space: pre;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+        }
+
+        .success {
+            color: green;
+        }
+
+        .failure {
+            color: red;
+            font-weight: bold;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        /* テスト中はキャンバスを隠す */
+    </style>
+</head>
+
+<body>
+    <h1>Burst Cascade 自動テスト (Ver 4.4.7)</h1>
+    <div id="status">テスト実行中...</div>
+
+    <!-- 必要なDOM要素の定義（main.jsが期待するもの） -->
+    <canvas id="game-canvas"></canvas>
+    <div id="overlay">
+        <div id="mode-selection-content">
+            <div id="player-select"><button class="toggle-btn" data-value="pvp"></button></div>
+            <div id="size-select"><button class="toggle-btn" data-value="regular"></button></div>
+            <div id="ai-level-select"><button class="toggle-btn" data-value="normal"></button></div>
+            <div id="ai-level-group"></div>
+            <button id="game-start-btn"></button>
+        </div>
+        <div id="help-content" class="hidden"></div>
+        <div id="game-over-content" class="hidden">
+            <h2 id="winner-text"></h2><button id="restart-btn"></button>
+        </div>
+    </div>
+    <div id="status-container">
+        <div id="p1-bar"></div>
+        <div id="p2-bar"></div>
+        <div id="p1-score"></div>
+        <div id="p2-score"></div>
+    </div>
+    <span id="help-btn"></span><span id="start-help-btn"></span>
+    <button id="help-close-btn"></button>
+    <button class="help-back-btn"></button>
+    <button id="peek-board-btn"></button>
+    <div id="ai-thinking-overlay" class="hidden"></div>
+
+    <div id="test-results"></div>
+
+    <!-- スクリプトの読み込み -->
+    <script src="../map.js"></script>
+    <script src="../ai.js"></script>
+    <!-- main.js は最後に読み込み、実行される -->
+    <script src="../main.js"></script>
+
+    <script>
+        const results = document.getElementById('test-results');
+        const log = (msg, className = '') => {
+            const div = document.createElement('div');
+            div.textContent = msg;
+            div.className = className;
+            results.appendChild(div);
+            console.log(msg);
+        };
+
+        async function runTests() {
+            try {
+                log("--- テスト開始 ---");
+
+                // Game インスタンスの取得 (new Game() がグローバルでない場合は工夫が必要だが、
+                // main.js の末尾で new Game() しているだけなら、基本はそのままで動作を確認する)
+
+                // main.js が IIFE なので、内部の this (Game) にアクセスする方法を確認
+                // 今回は main.js 自体をテスト用に少し調整するか、window に公開する（一時的に）
+
+                log("1. ゲーム初期化の確認...");
+                if (window.BurstCascade) {
+                    log("   [OK] BurstCascade 名前空間が存在します。", "success");
+                } else {
+                    throw new Error("BurstCascade 名前空間が見つかりません。");
+                }
+
+                // ゲームインスタンスが動作しているか、canvas サイズなどで間接的に確認
+                const canvas = document.getElementById('game-canvas');
+                if (canvas.width > 0) {
+                    log("   [OK] Canvasが初期化されました。", "success");
+                } else {
+                    throw new Error("Canvasが初期化されていません。");
+                }
+
+                log("2. Game Start のエミュレーション...");
+                const startBtn = document.getElementById('game-start-btn');
+                startBtn.click();
+                log("   [OK] スタートボタンがクリックされました。", "success");
+
+                log("3. ターン交代の検証 (P1 -> P2)...");
+                const game = window.game;
+                const p1 = game.currentPlayer;
+                log(`   現在のプレイヤー: Player ${p1}`);
+
+                // 適当な位置をクリック (q=2, r=0 など)
+                const targetHex = game.map.getHexAt(2, 0, 'main');
+                if (!targetHex) throw new Error("テスト用のマスが見つかりません。");
+
+                log(`   q:${targetHex.q}, r:${targetHex.r} をクリックします...`);
+                game.handleClick({ isSimulated: true, simulatedHex: targetHex });
+
+                // 演出時間を待つ (落下アニメーションなど)
+                log("   演出完了を待機中 (2.5秒)...");
+                await new Promise(resolve => setTimeout(resolve, 2500));
+
+                const p2 = game.currentPlayer;
+                log(`   クリック後のプレイヤー: Player ${p2}`);
+
+                if (p1 !== p2) {
+                    log("   [OK] プレイヤーが交代しました。", "success");
+                } else {
+                    // バーストが起きていない場合は交代するはず（Ver 4.4.6/4.4.7のロジック）
+                    // 確実に交代する状況（報酬なし・バーストなし）を想定
+                    throw new Error("プレイヤーが交代していません。");
+                }
+
+                log("--- すべてのテストが完了しました ---", "success");
+                document.getElementById('status').textContent = "テスト完了 (ALL GREEN)";
+                document.getElementById('status').style.color = "green";
+
+            } catch (err) {
+                log("!!! テスト失敗 !!!", "failure");
+                log(err.message, "failure");
+                document.getElementById('status').textContent = "テスト失敗";
+                document.getElementById('status').style.color = "red";
+            }
+        }
+
+        // 少し待ってから開始（DOM構築とスクリプト実行の同期のため）
+        setTimeout(runTests, 500);
+    </script>
+</body>
+
+</html>

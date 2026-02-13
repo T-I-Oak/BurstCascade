@@ -137,11 +137,8 @@
             this.helpCloseBtn = document.getElementById('help-close-btn');
             this.helpBackBtn = document.querySelector('.help-back-btn');
 
-            this.helpCloseBtn = document.getElementById('help-close-btn');
-            this.helpBackBtn = document.querySelector('.help-back-btn');
-
-            // 盤面覗き見ボタン
             this.peekBoardBtn = document.getElementById('peek-board-btn');
+            this.dropEffects = []; // Ver 4.4.7: 初期化漏れを復旧
 
             // リスナー
             this.helpBtn.addEventListener('click', () => this.showHelp());
@@ -1662,5 +1659,5 @@
         }
     }
 
-    new Game();
+    window.game = new Game();
 })();
