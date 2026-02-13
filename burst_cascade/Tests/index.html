@@ -140,7 +140,7 @@
 
     <div class="dashboard">
         <!-- 0. バースト継続テスト (Ver 4.4.15) -->
-        <div class="test-card" onclick="runBurstExtraMoveTest()">
+        <div class="test-card" onclick="runIntegrationTest('test_burst_extra_move.js', 'runBurstExtraMoveTest')">
             <div>
                 <h3>Burst Extra Move</h3>
                 <p>敵陣バースト発生時に手番が継続するか（報酬発生時含む）を確認します。</p>
@@ -267,6 +267,33 @@
             loadScript(scriptPath).catch(err => log(err, 'error'));
         }
 
+        async function runIntegrationTest(scriptPath, functionName) {
+            consoleEl.innerHTML = '';
+            log(`Starting integration test: ${scriptPath}...`, 'info');
+
+            try {
+                // Gameインスタンスの初期化
+                if (!window.game) {
+                    log('Initializing Game instance...', 'info');
+                    window.game = new window.BurstCascade.Game();
+                }
+
+                // スクリプト読み込み
+                const old = document.querySelector(`script[src="${scriptPath}"]`);
+                if (old) old.remove();
+                await loadScript(scriptPath);
+
+                // 関数実行
+                if (typeof window[functionName] === 'function') {
+                    await window[functionName]();
+                } else {
+                    log(`Function ${functionName} not found in ${scriptPath}`, 'error');
+                }
+            } catch (e) {
+                log(`Error: ${e}`, 'error');
+            }
+        }
+
         async function runAllTests() {
             consoleEl.innerHTML = '';
             log('Starting ALL Tests...', 'info');
@@ -281,22 +308,16 @@
             for (const test of tests) {
                 log(`--- Running ${test} ---`, 'info');
                 try {
-                    // スクリプトタグを動的に追加して実行
-                    // ※各テストが即時実行関数になっている前提
+                    // 特別対応: test_burst_extra_move.js は関数呼び出しが必要
+                    if (test === 'test_burst_extra_move.js') {
+                        await runIntegrationTest(test, 'runBurstExtraMoveTest');
+                        continue;
+                    }
+
+                    // 通常のスクリプトタグ動的追加実行
                     const old = document.querySelector(`script[src="${test}"]`);
                     if (old) old.remove();
                     await loadScript(test);
-
-                    // 特別対応: test_burst_extra_move.js は関数呼び出しが必要
-                    if (test === 'test_burst_extra_move.js' && typeof window.runBurstExtraMoveTest === 'function') {
-                        // Gameインスタンスの初期化が必要
-                        if (!window.game) {
-                            log('Initializing Game instance for integration test...', 'info');
-                            window.game = new window.BurstCascade.Game();
-                        }
-                        await window.runBurstExtraMoveTest();
-                    }
-
                     await new Promise(r => setTimeout(r, 500)); // 簡易wait
                 } catch (e) {
                     log(`Error running ${test}: ${e}`, 'error');
