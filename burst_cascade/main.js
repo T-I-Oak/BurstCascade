@@ -114,10 +114,9 @@
             this.dotTargets = {};
             this.chains = { 1: { self: 0, enemy: 0 }, 2: { self: 0, enemy: 0 } };
             this.lastMoveHex = null; // 最後にプレイしたマス
-            this.focusEffects = []; // 収束演出用のエフェクト
-            this.dropEffects = []; // 上空からの落下演出
             this.isWaitingForDrop = false; // 落下演出の完了待ちフラグ
             this.turnHadBurst = false;    // ターン中にバーストが起きたか
+            this.turnHadReward = false;   // ターン中に報酬が発生したか
 
             // UI要素
             this.overlay = document.getElementById('overlay');
@@ -727,17 +726,6 @@
                 }
 
                 this.sound.playPlace();
-                this.isProcessingMove = true;
-                this.lastMoveHex = null; // Ver 4.4.3: クリックの瞬間はいったん消す
-
-                const color = this.currentPlayer === 1 ? '#4ade80' : '#f87171';
-                this.focusEffects.push({
-                    targetHex: hex,
-                    life: 1.0,
-                    scale: 3.0,
-                    color: color
-                });
-
                 console.log(`[Turn] Player ${this.currentPlayer} triggers drop sequence at q:${hex.q},r:${hex.r}`);
                 this.triggerDropSequence(hex);
             }
@@ -745,6 +733,8 @@
 
         // Ver 4.4.3: 落下演出の開始（ホバーフェーズ含む）
         triggerDropSequence(targetHex) {
+            this.isProcessingMove = true;
+            this.lastMoveHex = null;
             this.isWaitingForDrop = true;
             this.dropEffects = [];
 
@@ -782,6 +772,7 @@
             // 2. インジケータも上空に生成
             const targetPos = this.layout.hexToPixel(targetHex);
             this.turnHadBurst = false; // フラグリセット
+            this.turnHadReward = false; // フラグリセット
             this.dropEffects.push({
                 q: targetHex.q,
                 r: targetHex.r,
@@ -937,18 +928,15 @@
             const pattern = overflowOccurred ? 'diffuse' : 'focus';
             this.map.performHandUpdate(handZoneId, pattern);
 
-            // 自陣の報酬が発生しているか、またはバーストが発生していない（かつ連鎖中でもない）場合に交代
-            const hasSelfReward = this.pendingRewards.some(r => r.player === this.currentPlayer && r.type === 'self');
+            // 報酬が発生しているか、またはバーストが発生していない場合に交代
+            // ※ Ver 4.4.6: フラグを直接チェックすることで同期ズレを防止
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
-            if (!overflowOccurred || hasSelfReward) {
+            if (!overflowOccurred || this.turnHadReward) {
                 this.turnEndRequested = true;
-                console.log(`[Turn] End requested for Player ${this.currentPlayer}`);
+                console.log(`[Turn] End requested for Player ${this.currentPlayer} (Burst:${overflowOccurred}, Reward:${this.turnHadReward})`);
             } else if (!stillBursting) {
-                // 連鎖が終わったが、報酬条件を満たさない場合は手番継続か交代かの最終判定
-                // (基本はバーストが発生したら継続だが、自陣報酬が出れば終了)
-                console.log(`[Turn] Chain finished. Checking if turn should end.`);
-                // この時点でここに来る＝バーストは起きたが報酬はない＝手番継続
+                console.log(`[Turn] Chain finished. Player ${this.currentPlayer} continues (Burst occurred, no reward).`);
             }
         }
 
@@ -996,6 +984,7 @@
                 player, type, targetHex: null, color, status: 'pending',
                 arrivedCount: 0
             };
+            this.turnHadReward = true; // 成果があったことを記録
             this.pendingRewards.push(reward);
             return reward;
         }
@@ -1625,15 +1614,14 @@
                 };
                 const color = colors[de.owner] || colors[0];
 
-                // 六角形のベース頂点
-                const vertices = [];
-                for (let i = 0; i < 6; i++) {
-                    const angle = (2 * Math.PI * i) / 6 + Math.PI / 6;
-                    vertices.push({
-                        x: size * Math.cos(angle),
-                        y: size * Math.sin(angle) * 0.6
-                    });
-                }
+                // 六角形のベース頂点 (Ver 4.4.6: 盤面と完全に一致させる)
+                const hex = de.targetHex;
+                const baseVertices = this.layout.getPolygonVertices(hex);
+                const origin = this.layout.hexToPixel(hex);
+                const vertices = baseVertices.map(v => ({
+                    x: v.x - origin.x,
+                    y: v.y - origin.y
+                }));
 
                 // 側面
                 const ccwIndices = [0, 5, 4, 3, 2, 1];
