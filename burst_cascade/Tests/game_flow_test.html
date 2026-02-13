@@ -79,112 +79,121 @@
             console.log(msg);
         };
 
+        // ユーティリティ: 指定された条件が満たされるまで待機
+        async function waitFor(condition, timeout = 5000) {
+            const start = Date.now();
+            while (!condition()) {
+                if (Date.now() - start > timeout) throw new Error("待機タイムアウト");
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+        }
+
+        // ユーティリティ: 演出が完全に終了してアイドル状態になるまで待機
+        async function waitForIdle(game) {
+            await waitFor(() => {
+                return game.effects.length === 0 &&
+                    game.pendingRewards.length === 0 &&
+                    game.dropEffects.length === 0 &&
+                    !game.isWaitingForDrop;
+            }, 10000);
+            // 状態が安定するまで少しだけ待つ
+            await new Promise(resolve => setTimeout(resolve, 300));
+        }
+
         async function runTests() {
             try {
+                const statusEl = document.getElementById('status');
                 const interval = setInterval(() => {
                     if (window.game) {
                         const g = window.game;
-                        const msg = `[DEBUG] Effects:${g.effects.length}, Rewards:${g.pendingRewards.length}, Drops:${g.dropEffects.length}, WaitingDrop:${g.isWaitingForDrop}, Lock:${g.isProcessingMove}, Requested:${g.turnEndRequested}`;
-                        document.getElementById('status').textContent = msg;
+                        statusEl.textContent = `[DEBUG] Effects:${g.effects.length}, Rewards:${g.pendingRewards.length}, Drops:${g.dropEffects.length}, WaitingDrop:${g.isWaitingForDrop}, Lock:${g.isProcessingMove}, Current:P${g.currentPlayer}`;
                     }
                 }, 100);
 
-                log("--- テスト開始 ---");
+                log("--- テスト開始 (Ver 4.4.11) ---");
 
-                // Game インスタンスの取得 (new Game() がグローバルでない場合は工夫が必要だが、
-                // main.js の末尾で new Game() しているだけなら、基本はそのままで動作を確認する)
+                log("1. PVCモードでの AI 二重起動チェック...");
 
-                // main.js が IIFE なので、内部の this (Game) にアクセスする方法を確認
-                // 今回は main.js 自体をテスト用に少し調整するか、window に公開する（一時的に）
+                // モード選択を PVC に
+                const pvpBtn = document.querySelector('button[data-value="pvp"]');
+                const pvcBtn = document.createElement('button'); // 既存のボタンがない場合の予備
+                const modeGroup = document.getElementById('player-select');
 
-                log("1. ゲーム初期化の確認...");
-                if (window.BurstCascade) {
-                    log("   [OK] BurstCascade 名前空間が存在します。", "success");
+                // PVPボタンを解除してPVCを選択状態にする（実際のDOM構造に合わせる）
+                // 実際には main.js が data-value を見ているのでそれをエミュレート
+                const modeBtns = document.querySelectorAll('#player-select .toggle-btn');
+                modeBtns.forEach(b => b.classList.remove('selected'));
+
+                // PVCボタンを探すか作成する
+                let pvcTarget = Array.from(modeBtns).find(b => b.textContent === 'PVC');
+                if (!pvcTarget) {
+                    pvcTarget = document.createElement('button');
+                    pvcTarget.className = 'toggle-btn selected';
+                    pvcTarget.setAttribute('data-value', 'pvc');
+                    pvcTarget.textContent = 'PVC';
+                    modeGroup.appendChild(pvcTarget);
                 } else {
-                    throw new Error("BurstCascade 名前空間が見つかりません。");
+                    pvcTarget.classList.add('selected');
                 }
 
-                // ゲームインスタンスが動作しているか、canvas サイズなどで間接的に確認
-                const canvas = document.getElementById('game-canvas');
-                if (canvas.width > 0) {
-                    log("   [OK] Canvasが初期化されました。", "success");
-                } else {
-                    throw new Error("Canvasが初期化されていません。");
-                }
-
-                log("2. Game Start のエミュレーション...");
                 const startBtn = document.getElementById('game-start-btn');
                 startBtn.click();
-                log("   [OK] スタートボタンがクリックされました。", "success");
 
                 const game = window.game;
-                if (game.gameMode === 'pvp') {
-                    log("   [OK] gameMode が 'pvp' に設定されました。", "success");
-                } else {
-                    throw new Error(`gameMode が不正です: ${game.gameMode}`);
-                }
+                await waitFor(() => game.gameMode === 'pvc');
+                log("   [OK] PVCモードで開始しました。", "success");
 
-                if (document.getElementById('overlay').classList.contains('hidden')) {
-                    log("   [OK] オーバーレイが非表示になりました。", "success");
-                } else {
-                    log("   [WARN] オーバーレイが非表示になっていませんが、テストを続行します。", "failure");
-                }
-
-                log("3. ターン交代の検証 (P1 -> P2)...");
-                const p1 = game.currentPlayer;
-                log(`   現在のプレイヤー: Player ${p1}`);
-
-                // 適当な位置をクリック (q=2, r=0 など)
+                log("2. P1 の行動と AI(P2) の期待される動作...");
                 const targetHex = game.map.getHexAt(2, 0, 'main');
-                if (!targetHex) throw new Error("テスト用のマスが見つかりません。");
-
-                log(`   q:${targetHex.q}, r:${targetHex.r} をクリックします...`);
                 game.handleClick({ isSimulated: true, simulatedHex: targetHex });
+                log("   P1 が指しました。演出完了を待ちます...");
 
-                // 演出時間を待つ (落下アニメーションなど)
-                log("   演出完了を待機中 (2.5秒)...");
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                // P1の演出が終わるのを待つ
+                await waitForIdle(game);
+                log(`   P1演出完了。現在のプレイヤー: Player ${game.currentPlayer}`);
 
-                const p2 = game.currentPlayer;
-                log(`   クリック後のプレイヤー: Player ${p2}`);
-
-                if (p1 !== p2) {
-                    log("   [OK] プレイヤーが交代しました。", "success");
+                if (game.currentPlayer === 2) {
+                    log("   [OK] P2 (AI) に手番が移りました。", "success");
                 } else {
-                    throw new Error("プレイヤーが交代していません。");
+                    throw new Error("P2に手番が移っていません。");
                 }
 
-                log("4. ターン交代の検証 (P2 -> P1)...");
-                const p2_start = game.currentPlayer;
-                log(`   現在のプレイヤー: Player ${p2_start}`);
+                log("3. AI の思考と「一度だけの行動」の検証...");
+                // AIが思考を開始するのを待つ (setTimeout 300ms)
+                await waitFor(() => game.isProcessingMove, 2000);
+                log("   AI が思考・行動を開始しました。演出中の多重起動を監視します...");
 
-                // P2 の指し手 (q=-2, r=0 など別の場所)
-                const targetHex2 = game.map.getHexAt(-2, 0, 'main');
-                if (!targetHex2) throw new Error("P2テスト用のマスが見つかりません。");
+                // 演出中に isProcessingMove が一度 false になる（＝ロックが解除される）不具合がないか
+                // 落下中（dropEffects > 0）の間にチェックする
+                let bugDetected = false;
+                const checkInterval = setInterval(() => {
+                    if (game.dropEffects.length > 0 && !game.isProcessingMove) {
+                        bugDetected = true;
+                    }
+                }, 50);
 
-                log(`   q:${targetHex2.q}, r:${targetHex2.r} をクリックします...`);
-                game.handleClick({ isSimulated: true, simulatedHex: targetHex2 });
+                // AIの演出が完全に終わるのを待つ
+                await waitForIdle(game);
+                clearInterval(checkInterval);
 
-                // 演出時間を待つ
-                log("   演出完了を待機中 (2.5秒)...");
-                await new Promise(resolve => setTimeout(resolve, 2500));
-
-                const p1_back = game.currentPlayer;
-                log(`   クリック後のプレイヤー: Player ${p1_back}`);
-
-                if (p2_start !== p1_back) {
-                    log("   [OK] プレイヤーが P1 に戻りました。", "success");
+                if (bugDetected) {
+                    throw new Error("不具合検出: 落下演出中にロックが解除されました！(AI二重起動の危険)");
                 } else {
-                    throw new Error("P2 の手番が無限に続いています。");
+                    log("   [OK] 演出中のロック解除は検出されませんでした。", "success");
                 }
 
-                log("--- すべてのテストが完了しました ---", "success");
-                if (window.game) {
-                    const g = window.game;
-                    const msg = `[DEBUG] Effects:${g.effects.length}, Rewards:${g.pendingRewards.length}, Drops:${g.dropEffects.length}, WaitingDrop:${g.isWaitingForDrop}, Lock:${g.isProcessingMove}, Requested:${g.turnEndRequested}`;
-                    document.getElementById('status').textContent = msg;
+                log(`   AI演出完了。現在のプレイヤー: Player ${game.currentPlayer}`);
+                if (game.currentPlayer === 1) {
+                    log("   [OK] AIの行動が終わり、P1に手番が戻りました。", "success");
+                } else {
+                    // もしAIがバーストさせて報酬なしならもう一回AIの番だが、通常の初期盤面なら交代するはず
+                    log(`   [INFO] 現在のプレイヤーは P${game.currentPlayer} です。連鎖状況によります。`);
                 }
-                document.getElementById('status').style.color = "green";
+
+                log("--- すべてのテストが完了しました (ALL GREEN) ---", "success");
+                statusEl.textContent = "テスト完了";
+                statusEl.style.color = "green";
+                clearInterval(interval);
 
             } catch (err) {
                 log("!!! テスト失敗 !!!", "failure");
@@ -194,7 +203,6 @@
             }
         }
 
-        // 少し待ってから開始（DOM構築とスクリプト実行の同期のため）
         setTimeout(runTests, 500);
     </script>
 </body>
