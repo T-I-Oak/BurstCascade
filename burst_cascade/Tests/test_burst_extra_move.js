@@ -6,11 +6,14 @@
         const game = window.game;
 
         // 1. セットアップ: プレイヤー1のターン。敵（P2）のマスをバースト寸前にする
+        // Note: P1の手札は正の値なので、敵マスも正の値（ただし所有権はP2）にしておかないと、
+        // 加算したときに絶対値が増えず、バーストしない。
         const targetHex = game.map.getHexAt(0, 0, 'main');
-        targetHex.height = -9; // 敵のマス
-        targetHex.updateOwner();
+        targetHex.height = 9;
+        targetHex.owner = 2; // P2の所有物とする
+        // targetHex.updateOwner(); // これを呼ぶと height > 0 なので owner=1 に戻ってしまうため呼ばない
 
-        console.log("Initial state: Hex(0,0) height -9 (owned by P2)");
+        console.log("Initial state: Hex(0,0) height 9 (force owned by P2)");
 
         // P1の手札を準備 (高さ1の土地を降らせる)
         game.currentPlayer = 1;
