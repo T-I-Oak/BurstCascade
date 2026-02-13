@@ -1295,10 +1295,10 @@
 
             const roundedH = Math.abs(Math.round(value));
 
-            ctx.fillStyle = shadowColor;
-            ctx.fillText(roundedH, 1.5, 1.5);
             ctx.fillStyle = highlightColor;
-            ctx.fillText(roundedH, -1, -1);
+            ctx.fillText(roundedH, 1, 1);
+            ctx.fillStyle = shadowColor;
+            ctx.fillText(roundedH, -1.5, -1.5);
             ctx.fillStyle = textColor;
             ctx.fillText(roundedH, 0, 0);
 
