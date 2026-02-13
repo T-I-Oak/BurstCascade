@@ -754,7 +754,7 @@
                         delay: Math.random() * 20,
                         landed: false,
                         type: 'land',
-                        owner: this.currentPlayer
+                        owner: handHex.owner // Ver 4.4.2: 手札本来のオーナー（色）を反映
                     });
                 }
             });
@@ -763,10 +763,12 @@
         // Ver 4.4: 最終マーカーを降らせる
         triggerMarkerDrop(targetHex) {
             this.isWaitingForDrop = true;
+            targetHex.isHidden = true; // 着弾まで盤面から隠す
             this.dropEffects.push({
                 q: targetHex.q,
                 r: targetHex.r,
                 targetHex: targetHex,
+                sourceHeight: (this.currentPlayer === 1 ? 1 : -1), // マーカーに厚みを持たせる
                 x: this.layout.hexToPixel(targetHex).x,
                 y: this.layout.hexToPixel(targetHex).y - 800,
                 z: 1.0,
@@ -780,6 +782,9 @@
 
         // Ver 4.4: 着弾時の処理
         handleDropImpact(effect) {
+            if (effect.targetHex) {
+                effect.targetHex.isHidden = false; // 盤面に再表示
+            }
             if (effect.type === 'land') {
                 const hex = effect.targetHex;
                 const originalOwner = hex.owner;
@@ -1128,6 +1133,8 @@
         }
 
         drawHex(hex) {
+            if (hex.isHidden) return; // 落下中などは描画しない
+
             const vertices = this.layout.getPolygonVertices(hex);
             const ctx = this.ctx;
 
@@ -1527,74 +1534,98 @@
             }
         }
 
-        // Ver 4.4: 落下物の描画
+        // Ver 4.4.2: 落下物の描画 (3D版)
         drawFallingHex(de) {
             const ctx = this.ctx;
             const size = this.layout.size * 0.9;
+            const unitThickness = this.layout.size * 0.12;
+            const absH = Math.abs(de.sourceHeight || 1);
+            const h = absH * unitThickness;
+
+            // 基本カラー
+            const colors = {
+                0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
+                1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
+                2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
+            };
+
+            // マーカー（白）の場合は特殊カラー
+            let color;
+            if (de.type === 'marker') {
+                color = { top: '#ffffff', side: '#cbd5e1', border: '#94a3b8', highlight: '#f8fafc' };
+            } else {
+                color = colors[de.owner] || colors[0];
+            }
+
             ctx.save();
             ctx.translate(de.x, de.y);
 
-            // 擬似的な3D感を出すための傾きとスケール
-            const scaleY = 0.6;
-            ctx.scale(1.0, scaleY);
-
-            // 六角形の描画
-            ctx.beginPath();
+            // 六角形の上面・下面のベース頂点を計算
+            const vertices = [];
             for (let i = 0; i < 6; i++) {
                 const angle = (2 * Math.PI * i) / 6 + Math.PI / 6;
-                const vx = size * Math.cos(angle);
-                const vy = size * Math.sin(angle);
-                if (i === 0) ctx.moveTo(vx, vy);
-                else ctx.lineTo(vx, vy);
+                vertices.push({
+                    x: size * Math.cos(angle),
+                    y: size * Math.sin(angle) * 0.6 // 投影を簡易シミュレート
+                });
             }
+
+            // 1. 側面（厚み）の描画
+            const ccwIndices = [0, 5, 4, 3, 2, 1];
+            for (let j = 0; j < 6; j++) {
+                const idxA = ccwIndices[j], idxB = ccwIndices[(j + 1) % 6];
+                const vA = vertices[idxA], vB = vertices[idxB];
+                // 簡易的な背面カリング（手前に向いている面のみ描画）
+                if (vB.x > vA.x) {
+                    ctx.beginPath();
+                    ctx.moveTo(vA.x, vA.y);
+                    ctx.lineTo(vB.x, vB.y);
+                    ctx.lineTo(vB.x, vB.y - h);
+                    ctx.lineTo(vA.x, vA.y - h);
+                    ctx.closePath();
+                    ctx.fillStyle = color.side;
+                    ctx.fill();
+                    ctx.strokeStyle = color.border;
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                }
+            }
+
+            // 2. 上面の描画
+            const topVertices = vertices.map(v => ({ x: v.x, y: v.y - h }));
+            ctx.beginPath();
+            ctx.moveTo(topVertices[0].x, topVertices[0].y);
+            for (let i = 1; i < 6; i++) ctx.lineTo(topVertices[i].x, topVertices[i].y);
             ctx.closePath();
+            ctx.fillStyle = color.top;
+            ctx.fill();
+            ctx.strokeStyle = color.highlight;
+            ctx.lineWidth = 2;
+            ctx.stroke();
 
+            // 3. 数値（ドット）の描画
             if (de.type === 'land') {
-                const colors = {
-                    1: { top: '#4ade80', border: '#166534' },
-                    2: { top: '#f87171', border: '#991b1b' }
-                };
-                const c = colors[de.owner];
-                ctx.fillStyle = c.top;
-                ctx.fill();
-                ctx.strokeStyle = c.border;
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                // 数値（ドット）の描画
-                const absH = Math.abs(de.sourceHeight);
+                const absValue = Math.abs(de.sourceHeight);
                 const dotRadius = size * 0.12;
                 const dotSpacing = size * 0.45;
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.translate(0, -h); // 上面に移動
 
-                if (absH === 1) {
+                if (absValue === 1) {
                     ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
-                } else if (absH === 3) {
-                    // 正三角形の頂点に配置
+                } else if (absValue === 3) {
                     for (let i = 0; i < 3; i++) {
                         const angle = (2 * Math.PI * i) / 3 - Math.PI / 2;
                         ctx.beginPath();
                         ctx.arc(Math.cos(angle) * dotSpacing * 0.6, Math.sin(angle) * dotSpacing * 0.6, dotRadius, 0, Math.PI * 2);
                         ctx.fill();
                     }
-                } else if (absH === 5) {
-                    // 中心 + 四隅
+                } else if (absValue === 5) {
                     ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
-                    const corners = [
-                        { x: -dotSpacing * 0.5, y: -dotSpacing * 0.5 }, { x: dotSpacing * 0.5, y: -dotSpacing * 0.5 },
-                        { x: -dotSpacing * 0.5, y: dotSpacing * 0.5 }, { x: dotSpacing * 0.5, y: dotSpacing * 0.5 }
-                    ];
-                    corners.forEach(cp => {
-                        ctx.beginPath(); ctx.arc(cp.x, cp.y, dotRadius, 0, Math.PI * 2); ctx.fill();
+                    [{ x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: 1 }].forEach(p => {
+                        ctx.beginPath(); ctx.arc(p.x * dotSpacing * 0.5, p.y * dotSpacing * 0.5, dotRadius, 0, Math.PI * 2); ctx.fill();
                     });
                 }
-            } else {
-                // マーカー（白）
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 3;
-                ctx.stroke();
             }
 
             ctx.restore();

@@ -20,6 +20,7 @@
             // 表示用のアニメーションデータ
             this.visualHeight = height;
             this.visualFlagScale = 0; // 0 to 1
+            this.isHidden = false; // Ver 4.4.2: 演出中の非表示フラグ
         }
 
         get s() {
