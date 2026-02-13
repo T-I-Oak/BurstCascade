@@ -833,10 +833,13 @@
             });
 
             // 全バーストの終了を待つための大まかなタイマー（またはエフェクト監視）
-            const totalDelay = overflowedHexes.length * 150 + 500;
+            const totalDelay = overflowedHexes.length * 150 + 600;
             setTimeout(() => {
-                // すべてのバーストが終わったらマーカーを降らす（まだ降っていない場合）
-                if (this.lastMoveHex && !this.dropEffects.some(de => de.type === 'marker')) {
+                // すべてのバースト処理が終わった後、再度連鎖が発生していないかチェック
+                const nextOverflowed = this.map.mainHexes.filter(h => h.height > 9 || h.height < -9);
+                if (nextOverflowed.length > 0) {
+                    this.processChainReaction(); // 連鎖継続
+                } else if (this.lastMoveHex && !this.dropEffects.some(de => de.type === 'marker')) {
                     this.triggerMarkerDrop(this.lastMoveHex);
                 } else {
                     this.finalizeTurn(true);
@@ -876,19 +879,18 @@
             const pattern = overflowOccurred ? 'diffuse' : 'focus';
             this.map.performHandUpdate(handZoneId, pattern);
 
-            // 自陣の報酬（通常は4連鎖）またはオーバーフローなしでターン終了
-            // ※以前のロジックを踏襲。ただし、より厳密にする必要があるかもしれないが、まずは同等の仕様で。
-            // 実際には pendingRewards の状態で判断するのが安全
+            // 自陣の報酬が発生しているか、またはバーストが発生していない（かつ連鎖中でもない）場合に交代
             const hasSelfReward = this.pendingRewards.some(r => r.player === this.currentPlayer && r.type === 'self');
+            const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
             if (!overflowOccurred || hasSelfReward) {
                 this.turnEndRequested = true;
-            } else {
-                // 連鎖継続
-                console.log(`[Turn] Chain continues for Player ${this.currentPlayer}`);
-                // 次のバーストチェックが必要かもしれないが、
-                // 高度な非同期バーストにする場合、再帰的に processChainReaction を呼ぶ必要がある
-                this.processChainReaction();
+                console.log(`[Turn] End requested for Player ${this.currentPlayer}`);
+            } else if (!stillBursting) {
+                // 連鎖が終わったが、報酬条件を満たさない場合は手番継続か交代かの最終判定
+                // (基本はバーストが発生したら継続だが、自陣報酬が出れば終了)
+                console.log(`[Turn] Chain finished. Checking if turn should end.`);
+                // この時点でここに来る＝バーストは起きたが報酬はない＝手番継続
             }
         }
 
@@ -1558,6 +1560,34 @@
                 ctx.strokeStyle = c.border;
                 ctx.lineWidth = 2;
                 ctx.stroke();
+
+                // 数値（ドット）の描画
+                const absH = Math.abs(de.sourceHeight);
+                const dotRadius = size * 0.12;
+                const dotSpacing = size * 0.45;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+
+                if (absH === 1) {
+                    ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
+                } else if (absH === 3) {
+                    // 正三角形の頂点に配置
+                    for (let i = 0; i < 3; i++) {
+                        const angle = (2 * Math.PI * i) / 3 - Math.PI / 2;
+                        ctx.beginPath();
+                        ctx.arc(Math.cos(angle) * dotSpacing * 0.6, Math.sin(angle) * dotSpacing * 0.6, dotRadius, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                } else if (absH === 5) {
+                    // 中心 + 四隅
+                    ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
+                    const corners = [
+                        { x: -dotSpacing * 0.5, y: -dotSpacing * 0.5 }, { x: dotSpacing * 0.5, y: -dotSpacing * 0.5 },
+                        { x: -dotSpacing * 0.5, y: dotSpacing * 0.5 }, { x: dotSpacing * 0.5, y: dotSpacing * 0.5 }
+                    ];
+                    corners.forEach(cp => {
+                        ctx.beginPath(); ctx.arc(cp.x, cp.y, dotRadius, 0, Math.PI * 2); ctx.fill();
+                    });
+                }
             } else {
                 // マーカー（白）
                 ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
