@@ -115,6 +115,8 @@
             this.chains = { 1: { self: 0, enemy: 0 }, 2: { self: 0, enemy: 0 } };
             this.lastMoveHex = null; // 最後にプレイしたマス
             this.focusEffects = []; // 収束演出用のエフェクト
+            this.dropEffects = []; // 上空からの落下演出
+            this.isWaitingForDrop = false; // 落下演出の完了待ちフラグ
 
             // UI要素
             this.overlay = document.getElementById('overlay');
@@ -442,6 +444,48 @@
         animate(time) {
             this.pulseValue = (Math.sin(time / 500) + 1) / 2; // 0 to 1
 
+            // Ver 4.4: 落下エフェクトの更新
+            if (this.dropEffects.length > 0) {
+                this.dropEffects.forEach(de => {
+                    if (de.landed) return;
+                    if (de.delay > 0) {
+                        de.delay--;
+                        return;
+                    }
+
+                    // 落下（簡易的な物理）
+                    de.y += de.velocity;
+                    de.velocity += 0.8; // 重力加速
+
+                    // 着弾判定
+                    const targetPos = this.layout.hexToPixel(de.targetHex);
+                    if (de.y >= targetPos.y) {
+                        de.y = targetPos.y;
+                        de.landed = true;
+                        this.handleDropImpact(de);
+                    }
+                });
+
+                if (this.isWaitingForDrop && this.dropEffects.every(de => de.landed)) {
+                    const hasMarker = this.dropEffects.some(de => de.type === 'marker');
+                    const isAllLanded = this.dropEffects.every(de => de.landed);
+
+                    if (isAllLanded) {
+                        if (hasMarker) {
+                            // マーカーが着地した＝全演出終了
+                            this.isWaitingForDrop = false;
+                            this.dropEffects = [];
+                            this.finalizeTurn(true); // バースト後のマーカー着地
+                        } else {
+                            // 土地の着地が完了＝連鎖の開始
+                            this.isWaitingForDrop = false; // 一旦止める
+                            this.dropEffects = [];
+                            this.processChainReaction();
+                        }
+                    }
+                }
+            }
+
             // 遅延爆発のチェック
             const now = Date.now();
             this.delayedBursts = this.delayedBursts.filter(b => {
@@ -668,8 +712,6 @@
                 this.isProcessingMove = true;
                 this.lastMoveHex = hex;
 
-                // 収束演出（フォーカス・エフェクト）のトリガー
-                const center = this.layout.hexToPixel(hex);
                 const color = this.currentPlayer === 1 ? '#4ade80' : '#f87171';
                 this.focusEffects.push({
                     targetHex: hex,
@@ -678,74 +720,175 @@
                     color: color
                 });
 
-                console.log(`[Turn] Player ${this.currentPlayer} moves at q:${hex.q},r:${hex.r}`);
+                console.log(`[Turn] Player ${this.currentPlayer} triggers drop sequence at q:${hex.q},r:${hex.r}`);
+                this.triggerDropSequence(hex);
+            }
+        }
 
-                // 2. 手札の適用
-                const handZoneId = `hand-p${this.currentPlayer}`;
-                const { overflowOccurred, overflowedOwners, overflowedHexes } = this.map.applyHand(hex, handZoneId);
+        // Ver 4.4: 落下演出の開始
+        triggerDropSequence(targetHex) {
+            this.isWaitingForDrop = true;
+            this.dropEffects = [];
 
-                // オーバーフロー演出
-                const playerColors = { 1: '#4ade80', 2: '#f87171' };
-                let nextSelfIdx = this.chains[this.currentPlayer].self;
-                let nextEnemyIdx = this.chains[this.currentPlayer].enemy;
-                let selfRewardCreated = false;
-                let enemyRewardCreated = false;
+            const handZoneId = `hand-p${this.currentPlayer}`;
+            const handHexes = this.map.hexes.filter(h => h.zone === handZoneId);
+            const handOffset = this.map.offsets[handZoneId];
 
-                overflowedHexes.forEach((h, i) => {
-                    const originalOwner = overflowedOwners[i];
-                    const center = this.layout.hexToPixel(h);
-                    const color = playerColors[originalOwner] || '#ffffff';
-                    const isEnemyOverflow = (originalOwner !== 0 && originalOwner !== this.currentPlayer);
+            // 1. 7つの土地を落下エフェクトに追加
+            handHexes.forEach((handHex, i) => {
+                const dq = handHex.q - handOffset.q;
+                const dr = handHex.r - handOffset.r;
+                const mapHex = this.map.getHexAt(targetHex.q + dq, targetHex.r + dr, 'main');
 
-                    const targetType = isEnemyOverflow ? 'enemy' : 'self';
-                    const currentIdx = isEnemyOverflow ? nextEnemyIdx : nextSelfIdx;
-                    const threshold = isEnemyOverflow ? 2 : 4; // Chain length for enemy is 2, for self is 4
-                    const targetIdx = currentIdx % threshold; // 常にスロットへ収束
-
-                    const targetDotKey = `${this.currentPlayer}-${targetType}-${targetIdx}`;
-                    let reward = null;
-
-                    if (isEnemyOverflow) {
-                        if (nextEnemyIdx % threshold === threshold - 1) { // This is the last dot for enemy chain
-                            reward = this.queueReward(this.currentPlayer, 'enemy');
-                            enemyRewardCreated = true;
-                        }
-                        this.delayedBursts.push({
-                            time: Date.now() + 250,
-                            x: center.x, y: center.y,
-                            color: color, isBig: true,
-                            targetDotKey: targetDotKey,
-                            reward: reward // Pass reward to delayed burst
-                        });
-                        nextEnemyIdx++;
-                    } else {
-                        if (nextSelfIdx % threshold === threshold - 1) { // This is the last dot for self chain
-                            reward = this.queueReward(this.currentPlayer, 'self');
-                            selfRewardCreated = true;
-                        }
-                        nextSelfIdx++;
-                    }
-                    this.addParticles(center.x, center.y, color, isEnemyOverflow, targetDotKey, null, reward);
-                });
-
-                // Update chain counts (カウントはリセットせず、演出終了時に triggerRewardFlow で減算する)
-                this.chains[this.currentPlayer].self = nextSelfIdx;
-                this.chains[this.currentPlayer].enemy = nextEnemyIdx;
-
-                // 3. 手札の更新
-                const pattern = overflowOccurred ? 'diffuse' : 'focus';
-                this.map.performHandUpdate(handZoneId, pattern);
-
-                // 4. ターン交代の管理
-                // 自陣の報酬が発生したか、バーストが発生していない場合に手番終了
-                // (敵陣の報酬＝旗の獲得であれば、バースト中なら手番は継続する)
-                if (!overflowOccurred || selfRewardCreated) {
-                    this.turnEndRequested = true;
-                    console.log(`[Turn] End requested for Player ${this.currentPlayer} (Reward or No Burst)`);
-                } else {
-                    // 連鎖継続の場合
-                    console.log(`[Turn] Chain continues for Player ${this.currentPlayer}`);
+                if (mapHex && !mapHex.isDisabled) {
+                    const targetPos = this.layout.hexToPixel(mapHex);
+                    this.dropEffects.push({
+                        q: mapHex.q,
+                        r: mapHex.r,
+                        targetHex: mapHex,
+                        sourceHeight: handHex.height,
+                        x: targetPos.x,
+                        y: targetPos.y - (400 + Math.random() * 200), // 上空から
+                        z: 1.0,
+                        velocity: 5 + Math.random() * 5,
+                        delay: Math.random() * 20,
+                        landed: false,
+                        type: 'land',
+                        owner: this.currentPlayer
+                    });
                 }
+            });
+        }
+
+        // Ver 4.4: 最終マーカーを降らせる
+        triggerMarkerDrop(targetHex) {
+            this.isWaitingForDrop = true;
+            this.dropEffects.push({
+                q: targetHex.q,
+                r: targetHex.r,
+                targetHex: targetHex,
+                x: this.layout.hexToPixel(targetHex).x,
+                y: this.layout.hexToPixel(targetHex).y - 800,
+                z: 1.0,
+                velocity: 15,
+                delay: 0,
+                landed: false,
+                type: 'marker',
+                owner: 0
+            });
+        }
+
+        // Ver 4.4: 着弾時の処理
+        handleDropImpact(effect) {
+            if (effect.type === 'land') {
+                const hex = effect.targetHex;
+                const originalOwner = hex.owner;
+                hex.height += effect.sourceHeight;
+                hex.updateOwner();
+
+                // フラッグ消失チェック
+                if (hex.hasFlag) {
+                    if (hex.owner === 0 || hex.owner !== hex.flagOwner) {
+                        hex.hasFlag = false;
+                    }
+                }
+
+                // 着弾時の小規模なパーティクル
+                const pos = this.layout.hexToPixel(hex);
+                const color = effect.owner === 1 ? '#4ade80' : '#f87171';
+                for (let i = 0; i < 5; i++) {
+                    this.effects.push({
+                        x: pos.x, y: pos.y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        life: 0.5 + Math.random() * 0.5,
+                        color: color,
+                        size: 2 + Math.random() * 3
+                    });
+                }
+            } else if (effect.type === 'marker') {
+                this.sound.playPlace(); // 着地音
+            }
+        }
+
+        // Ver 4.4: 連鎖（バースト）の非同期処理
+        processChainReaction() {
+            // オーバーフローしているマスを抽出
+            const overflowedHexes = this.map.mainHexes.filter(h => h.height > 9 || h.height < -9);
+
+            if (overflowedHexes.length === 0) {
+                // 連鎖がない場合は手札更新とターン交代へ
+                this.finalizeTurn(false);
+                return;
+            }
+
+            // 非同期にバーストを発生させる
+            overflowedHexes.forEach((hex, i) => {
+                const originalOwner = hex.owner;
+                const delay = i * 150; // 少しずつずらす
+
+                setTimeout(() => {
+                    this.triggerBurst(hex, originalOwner);
+                }, delay);
+            });
+
+            // 全バーストの終了を待つための大まかなタイマー（またはエフェクト監視）
+            const totalDelay = overflowedHexes.length * 150 + 500;
+            setTimeout(() => {
+                // すべてのバーストが終わったらマーカーを降らす（まだ降っていない場合）
+                if (this.lastMoveHex && !this.dropEffects.some(de => de.type === 'marker')) {
+                    this.triggerMarkerDrop(this.lastMoveHex);
+                } else {
+                    this.finalizeTurn(true);
+                }
+            }, totalDelay);
+        }
+
+        triggerBurst(hex, originalOwner) {
+            const center = this.layout.hexToPixel(hex);
+            const playerColors = { 1: '#4ade80', 2: '#f87171' };
+            const color = playerColors[originalOwner] || '#ffffff';
+            const isEnemyOverflow = (originalOwner !== 0 && originalOwner !== this.currentPlayer);
+
+            const targetType = isEnemyOverflow ? 'enemy' : 'self';
+            const threshold = isEnemyOverflow ? 2 : 4;
+            const currentIdx = this.chains[this.currentPlayer][targetType];
+            const targetIdx = currentIdx % threshold;
+            const targetDotKey = `${this.currentPlayer}-${targetType}-${targetIdx}`;
+
+            let reward = null;
+            if (targetIdx === threshold - 1) {
+                reward = this.queueReward(this.currentPlayer, targetType);
+            }
+
+            // 内部データの更新
+            hex.height = 0;
+            hex.updateOwner();
+            this.chains[this.currentPlayer][targetType]++;
+
+            // 視覚演出のトリガー
+            this.sound.playBurst();
+            this.addParticles(center.x, center.y, color, isEnemyOverflow, targetDotKey, null, reward);
+        }
+
+        finalizeTurn(overflowOccurred) {
+            const handZoneId = `hand-p${this.currentPlayer}`;
+            const pattern = overflowOccurred ? 'diffuse' : 'focus';
+            this.map.performHandUpdate(handZoneId, pattern);
+
+            // 自陣の報酬（通常は4連鎖）またはオーバーフローなしでターン終了
+            // ※以前のロジックを踏襲。ただし、より厳密にする必要があるかもしれないが、まずは同等の仕様で。
+            // 実際には pendingRewards の状態で判断するのが安全
+            const hasSelfReward = this.pendingRewards.some(r => r.player === this.currentPlayer && r.type === 'self');
+
+            if (!overflowOccurred || hasSelfReward) {
+                this.turnEndRequested = true;
+            } else {
+                // 連鎖継続
+                console.log(`[Turn] Chain continues for Player ${this.currentPlayer}`);
+                // 次のバーストチェックが必要かもしれないが、
+                // 高度な非同期バーストにする場合、再帰的に processChainReaction を呼ぶ必要がある
+                this.processChainReaction();
             }
         }
 
@@ -1288,12 +1431,16 @@
                 this.ctx.save();
                 this.ctx.globalAlpha = ef.life;
                 this.ctx.fillStyle = ef.color;
-                // ブラウザ負荷が極めて高いため shadowBlur を廃止。
-                // 代わりにわずかに色を明るくして透明度で煌めきを表現。
                 this.ctx.beginPath();
                 this.ctx.arc(ef.x, ef.y, ef.size || 2, 0, Math.PI * 2);
                 this.ctx.fill();
                 this.ctx.restore();
+            });
+
+            // Ver 4.4: 落下中の土地・マーカーの描画
+            this.dropEffects.forEach(de => {
+                if (de.landed || de.delay > 0) return;
+                this.drawFallingHex(de);
             });
 
             // 戦況 (フラッグ数) を更新
@@ -1376,6 +1523,51 @@
                 this.ctx.stroke();
                 this.ctx.restore();
             }
+        }
+
+        // Ver 4.4: 落下物の描画
+        drawFallingHex(de) {
+            const ctx = this.ctx;
+            const size = this.layout.size * 0.9;
+            ctx.save();
+            ctx.translate(de.x, de.y);
+
+            // 擬似的な3D感を出すための傾きとスケール
+            const scaleY = 0.6;
+            ctx.scale(1.0, scaleY);
+
+            // 六角形の描画
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = (2 * Math.PI * i) / 6 + Math.PI / 6;
+                const vx = size * Math.cos(angle);
+                const vy = size * Math.sin(angle);
+                if (i === 0) ctx.moveTo(vx, vy);
+                else ctx.lineTo(vx, vy);
+            }
+            ctx.closePath();
+
+            if (de.type === 'land') {
+                const colors = {
+                    1: { top: '#4ade80', border: '#166534' },
+                    2: { top: '#f87171', border: '#991b1b' }
+                };
+                const c = colors[de.owner];
+                ctx.fillStyle = c.top;
+                ctx.fill();
+                ctx.strokeStyle = c.border;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            } else {
+                // マーカー（白）
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.fill();
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+
+            ctx.restore();
         }
     }
 
