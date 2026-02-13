@@ -481,24 +481,24 @@
                     }
                 });
 
-                // Ver 4.4.3: 演出状況のチェック
+                // Ver 4.4.4: 演出状況の精密なチェック
                 const lands = this.dropEffects.filter(de => de.type === 'land');
                 const marker = this.dropEffects.find(de => de.type === 'marker');
 
-                // 土地が全着弾したか
-                const landsAllLanded = lands.length > 0 && lands.every(de => de.landed);
-
-                if (this.isWaitingForDrop && landsAllLanded) {
-                    // 土地を dropEffects から除去して連鎖フェーズへ
+                // 1. 土地の着弾待ち（すべて着弾した場合）
+                if (this.isWaitingForDrop && lands.every(de => de.landed)) {
+                    // 土地をエフェクトから除去（連鎖計算に影響を与えないため）
                     this.dropEffects = this.dropEffects.filter(de => de.type !== 'land');
-                    this.isWaitingForDrop = false; // 土地落下待ちは一時終了
+                    this.isWaitingForDrop = false; // 土地待ちフェーズ終了
+                    console.log("[Sequence] All lands landed. Starting chain reaction.");
                     this.processChainReaction();
                 }
 
-                // マーカー単体の着弾チェック
+                // 2. マーカーの着弾待ち（マーカーが存在し、落下指示後に着弾した場合）
                 if (marker && marker.landed) {
+                    console.log("[Sequence] Marker landed. Finalizing turn.");
                     this.lastMoveHex = marker.targetHex;
-                    this.dropEffects = []; // クリア
+                    this.dropEffects = []; // エフェクトクリア
                     this.finalizeTurn(true);
                 }
             }
@@ -860,8 +860,15 @@
             const overflowedHexes = this.map.mainHexes.filter(h => h.height > 9 || h.height < -9);
 
             if (overflowedHexes.length === 0) {
-                // 連鎖がない場合は手札更新とターン交代へ
-                this.finalizeTurn(false);
+                // 連鎖がない場合も、上空のマーカーを落下させて終了させる
+                const marker = this.dropEffects.find(de => de.type === 'marker');
+                if (marker) {
+                    marker.state = 'falling';
+                    marker.hoverTimer = 0;
+                    console.log("[Sequence] No chain. Triggering marker fall.");
+                } else {
+                    this.finalizeTurn(false);
+                }
                 return;
             }
 
@@ -883,10 +890,12 @@
                 if (nextOverflowed.length > 0) {
                     this.processChainReaction(); // 連鎖継続
                 } else {
-                    // 全連鎖終了。上空のマーカーを落下させる
+                    // 全連鎖終了。上空のマーカーを落下させる（デッドロック回避のため必ず呼ぶ）
                     const marker = this.dropEffects.find(de => de.type === 'marker');
                     if (marker) {
                         marker.state = 'falling';
+                        marker.hoverTimer = 0;
+                        console.log("[Sequence] Chain finished. Triggering marker fall.");
                     } else {
                         this.finalizeTurn(true);
                     }
