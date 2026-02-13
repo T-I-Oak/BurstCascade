@@ -3,57 +3,227 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Burst Cascade - Logic Tests</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Burst Cascade Test Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono&display=swap"
+        rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+            --success-color: #4ade80;
+            --error-color: #f87171;
+            --border-radius: 12px;
+        }
+
         body {
-            font-family: sans-serif;
-            background: #1a1a1a;
-            color: #eee;
-            padding: 20px;
-        }
-
-        .test-case {
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 4px;
-            background: #2a2a2a;
-        }
-
-        .pass {
-            border-left: 5px solid #4ade80;
-        }
-
-        .fail {
-            border-left: 5px solid #f87171;
-        }
-
-        .fail .error {
-            color: #f87171;
-            font-weight: bold;
-            margin-top: 5px;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Outfit', sans-serif;
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
+            font-weight: 600;
+            margin-bottom: 30px;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .test-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            transition: transform 0.2s, background-color 0.2s;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .test-card:hover {
+            transform: translateY(-4px);
+            background: #232f45;
+            border-color: var(--accent-color);
+        }
+
+        .test-card h3 {
+            margin-top: 0;
+            margin-bottom: 12px;
+            font-size: 1.2rem;
+            color: var(--accent-color);
+        }
+
+        .test-card p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .run-btn {
+            background: var(--accent-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            text-decoration: none;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .run-btn:hover {
+            opacity: 0.9;
+        }
+
+        #console-output {
+            width: 100%;
+            max-width: 900px;
+            background: #000;
+            color: #eee;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+            margin-top: 40px;
+            border-radius: var(--border-radius);
+            font-size: 0.85rem;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+
+        .log-entry {
+            margin-bottom: 4px;
+        }
+
+        .log-info {
+            color: #38bdf8;
+        }
+
+        .log-success {
             color: #4ade80;
         }
 
-        #results-summary {
-            font-size: 1.2em;
-            margin-bottom: 20px;
+        .log-error {
+            color: #f87171;
         }
     </style>
 </head>
 
 <body>
-    <h1>Burst Cascade 内部ロジックテスト</h1>
-    <div id="results-summary">テスト実行中...</div>
-    <div id="test-results"></div>
 
-    <!-- 依存ファイルの読み込み -->
+    <h1>BURST CASCADE TEST DASHBOARD</h1>
+
+    <div class="dashboard">
+        <!-- 1. ゲームフローテスト (統合テスト) -->
+        <div class="test-card">
+            <div>
+                <h3>Game Flow Test</h3>
+                <p>AI対戦(PVC)を含む、実際のゲームシーケンスと演出同期を検証する統合テストです。</p>
+            </div>
+            <a href="game_flow_test.html" class="run-btn">Launch Integration Test</a>
+        </div>
+
+        <!-- 2. AI難易度テスト -->
+        <div class="test-card" onclick="runUnitTest('test_ai_difficulty.js')">
+            <div>
+                <h3>AI Difficulty Check</h3>
+                <p>各難易度におけるAIの探索深度や評価パラメータが正しく設定されているか検証します。</p>
+            </div>
+            <button class="run-btn">Run Static Check</button>
+        </div>
+
+        <!-- 3. ミニマップロジックテスト -->
+        <div class="test-card" onclick="runUnitTest('test_minimap.js')">
+            <div>
+                <h3>Minimap Logic</h3>
+                <p>ミニマップモードでの領域制限や、無効化されたマスへの干渉防止ロジックを検証します。</p>
+            </div>
+            <button class="run-btn">Run Static Check</button>
+        </div>
+
+        <!-- 4. ルールロジックテスト (手番交代など) -->
+        <div class="test-card" onclick="runUnitTest('rules_test.js')">
+            <div>
+                <h3>Core Rules Check</h3>
+                <p>バースト発生、報酬獲得時、敵コア破壊時などの手番交代ルールをシミュレーション検証します。</p>
+            </div>
+            <button class="run-btn">Run Logic Check</button>
+        </div>
+    </div>
+
+    <div id="console-output"></div>
+
+    <!-- 必要な基盤読み込み -->
     <script src="../map.js"></script>
     <script src="../ai.js"></script>
-    <!-- テスト本体 -->
-    <script src="rules_test.js"></script>
+
+    <script>
+        const consoleEl = document.getElementById('console-output');
+
+        function log(msg, type = 'info') {
+            consoleEl.style.display = 'block';
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            consoleEl.appendChild(entry);
+            consoleEl.scrollTop = consoleEl.scrollHeight;
+        }
+
+        // console.log をフックして画面に表示
+        (function () {
+            const originalLog = console.log;
+            const originalError = console.error;
+            console.log = (...args) => {
+                log(args.join(' '), 'info');
+                originalLog.apply(console, args);
+            };
+            console.error = (...args) => {
+                log(args.join(' '), 'error');
+                originalError.apply(console, args);
+            };
+        })();
+
+        function runUnitTest(scriptPath) {
+            consoleEl.innerHTML = ''; // クリア
+            log(`Running unit test: ${scriptPath}...`, 'info');
+
+            const script = document.createElement('script');
+            script.src = scriptPath;
+            script.onerror = () => log(`Failed to load test script: ${scriptPath}`, 'error');
+            document.body.appendChild(script);
+        }
+    </script>
 </body>
 
 </html>
