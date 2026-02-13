@@ -950,14 +950,23 @@
 
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
-            if (!overflowOccurred || this.turnHadReward) {
-                this.turnEndRequested = true;
-                console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer}`);
-            } else if (!stillBursting) {
-                console.log(`[Turn Log] Extra Move for P${this.currentPlayer} (Burst happened, no reward)`);
-                this.isProcessingMove = false;
+            // Ver 4.4.15: バーストが発生した場合は報酬の有無に関わらず継続手番
+            if (overflowOccurred) {
+                if (stillBursting) {
+                    console.log(`[Turn Log] Still bursting... waiting.`);
+                } else {
+                    console.log(`[Turn Log] Extra Move for P${this.currentPlayer} (Burst happened)`);
+                    this.isProcessingMove = false;
+                }
             } else {
-                console.log(`[Turn Log] Still bursting... waiting.`);
+                // バーストなし。報酬があった場合のみ継続（Ver 4.4以前と同じ。ただし現状報酬はバースト起点なので実際はバーストありのみ継続が基本）
+                if (this.turnHadReward) {
+                    console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer} (Reward happened, unusual case)`);
+                    this.turnEndRequested = true;
+                } else {
+                    this.turnEndRequested = true;
+                    console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer}`);
+                }
             }
         }
 
@@ -1647,9 +1656,9 @@
                 // 共通描画ロジックの使用 (Ver 4.4.14)
                 this.drawHexBase(ctx, hex, vertices, h, color);
 
-                // 数値表示の追加 (Ver 4.4.14)
+                // 数値表示の追加 (Ver 4.4.15: 絶対座標 de.x, de.y を考慮)
                 if (absH > 0) {
-                    this.drawHexNumber(ctx, 0, -h, h, color, de.sourceHeight);
+                    this.drawHexNumber(ctx, de.x, de.y - h, h, color, de.sourceHeight);
                 }
             }
 

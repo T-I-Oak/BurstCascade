@@ -35,6 +35,7 @@
             letter-spacing: -0.02em;
             background: linear-gradient(135deg, #38bdf8, #818cf8);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -76,15 +77,6 @@
             opacity: 0.8;
             line-height: 1.5;
             margin-bottom: 20px;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            background: rgba(255, 255, 255, 0.1);
         }
 
         .run-btn {
@@ -145,6 +137,15 @@
     <h1>BURST CASCADE TEST DASHBOARD</h1>
 
     <div class="dashboard">
+        <!-- 0. バースト継続テスト (Ver 4.4.15) -->
+        <div class="test-card" onclick="runBurstExtraMoveTest()">
+            <div>
+                <h3>Burst Extra Move</h3>
+                <p>敵陣バースト発生時に手番が継続するか（報酬発生時含む）を確認します。</p>
+            </div>
+            <button class="run-btn">Run Logic Check</button>
+        </div>
+
         <!-- 1. ゲームフローテスト (統合テスト) -->
         <div class="test-card">
             <div>
@@ -186,7 +187,8 @@
 
     <!-- 必要な基盤読み込み -->
     <script src="../map.js"></script>
-    <script src="../ai.js"></script>
+    <script src="test_ai_difficulty.js"></script>
+    <script src="test_burst_extra_move.js"></script>
 
     <script>
         const consoleEl = document.getElementById('console-output');
