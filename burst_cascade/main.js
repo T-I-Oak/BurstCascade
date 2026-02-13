@@ -574,8 +574,9 @@
                         } else if (ef.targetHex && ef.reward) {
                             // 報酬パーティクルの場合、一定数届くまでカウント
                             ef.reward.arrivedCount = (ef.reward.arrivedCount || 0) + 1;
-                            // 最初の1粒ではなく、ある程度（15粒ほど）届いた瞬間にメイン効果を発動
-                            if (ef.reward.arrivedCount === 15) {
+                            // Ver 4.4.10: 閾値を 15 から 5 に引き下げ
+                            if (ef.reward.arrivedCount === 5) {
+                                console.log(`[Reward Log] Threshold reached (5). Applying effect for P${ef.reward.player}`);
                                 this.applyRewardEffect(ef.reward);
                             }
                         }
@@ -731,11 +732,12 @@
 
         // Ver 4.4.3: 落下演出の開始（ホバーフェーズ含む）
         triggerDropSequence(targetHex) {
+            console.log(`[Turn Log] --- Player ${this.currentPlayer} Move Start ---`);
             this.isProcessingMove = true;
             this.lastMoveHex = null;
             this.isWaitingForDrop = true;
-            this.turnHadBurst = false;  // Ver 4.4.9: ターン開始時にリセット
-            this.turnHadReward = false; // Ver 4.4.9: ターン開始時にリセット
+            this.turnHadBurst = false;
+            this.turnHadReward = false;
             this.dropEffects = [];
 
             const handZoneId = `hand-p${this.currentPlayer}`;
@@ -865,6 +867,7 @@
             }
 
             // 非同期にバーストを発生させる
+            console.log(`[Turn Log] Burst(s) detected. Count: ${overflowedHexes.length}`);
             overflowedHexes.forEach((hex, i) => {
                 const originalOwner = hex.owner;
                 const delay = i * 150; // 少しずつずらす
@@ -924,19 +927,21 @@
         }
 
         finalizeTurn(overflowOccurred) {
+            console.log(`[Turn Log] finalizeTurn called. burst:${overflowOccurred}, reward:${this.turnHadReward}`);
             const handZoneId = `hand-p${this.currentPlayer}`;
             const pattern = overflowOccurred ? 'diffuse' : 'focus';
             this.map.performHandUpdate(handZoneId, pattern);
 
-            // 報酬が発生しているか、またはバーストが発生していない場合に交代
-            // ※ Ver 4.4.6: フラグを直接チェックすることで同期ズレを防止
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
             if (!overflowOccurred || this.turnHadReward) {
                 this.turnEndRequested = true;
-                console.log(`[Turn] End requested for Player ${this.currentPlayer} (Burst:${overflowOccurred}, Reward:${this.turnHadReward})`);
+                console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer}`);
             } else if (!stillBursting) {
-                console.log(`[Turn] Chain finished. Player ${this.currentPlayer} continues (Burst occurred, no reward).`);
+                console.log(`[Turn Log] Extra Move for P${this.currentPlayer} (Burst happened, no reward)`);
+                this.isProcessingMove = false;
+            } else {
+                console.log(`[Turn Log] Still bursting... waiting.`);
             }
         }
 
@@ -997,30 +1002,25 @@
             if (this.effects.length > 0 || this.pendingRewards.length > 0) return;
 
             // 1. 勝利条件のチェック (修正: 常に優先確認)
-            // 演出ブロックが解除されたタイミングで、盤面状態を確認する
             this.checkGameOverStatus();
             if (this.gameOver) return;
 
             if (this.turnEndRequested) {
-                // すべての演出が完了し、手番終了がリクエストされている場合
+                console.log(`[Turn Log] Executing Swap: P${this.currentPlayer} -> P${this.currentPlayer === 1 ? 2 : 1}`);
                 this.turnEndRequested = false;
                 this.isProcessingMove = false;
 
-                // 自陣の連鎖カウントのみリセットして交代
                 this.chains[this.currentPlayer].self = 0;
                 this.currentPlayer = (this.currentPlayer === 1 ? 2 : 1);
                 this.sound.playTurnChange();
-                console.log(`[Turn] Swapped to Player ${this.currentPlayer}`);
 
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
                     setTimeout(() => this.handleCPUTurn(), 300);
                 }
             } else if (this.isProcessingMove) {
-                // 手番は継続するが、演出（連鎖アニメーション）がすべて完了した場合
+                console.log(`[Turn Log] Executing Unlock (Continue Turn) for P${this.currentPlayer}`);
                 this.isProcessingMove = false;
-                console.log(`[Turn] Lock released for Player ${this.currentPlayer} (Chain continue)`);
 
-                // CPUの継続ターンの場合、思考を再開
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
                     setTimeout(() => this.handleCPUTurn(), 300);
                 }
