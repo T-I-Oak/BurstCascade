@@ -38,11 +38,11 @@
     <canvas id="game-canvas"></canvas>
     <div id="overlay">
         <div id="mode-selection-content">
-            <div id="player-select"><button class="toggle-btn" data-value="pvp"></button></div>
-            <div id="size-select"><button class="toggle-btn" data-value="regular"></button></div>
-            <div id="ai-level-select"><button class="toggle-btn" data-value="normal"></button></div>
+            <div id="player-select"><button class="toggle-btn selected" data-value="pvp">PVP</button></div>
+            <div id="size-select"><button class="toggle-btn selected" data-value="regular">REGULAR</button></div>
+            <div id="ai-level-select"><button class="toggle-btn selected" data-value="normal">NORMAL</button></div>
             <div id="ai-level-group"></div>
-            <button id="game-start-btn"></button>
+            <button id="game-start-btn">START</button>
         </div>
         <div id="help-content" class="hidden"></div>
         <div id="game-over-content" class="hidden">
@@ -109,8 +109,20 @@
                 startBtn.click();
                 log("   [OK] スタートボタンがクリックされました。", "success");
 
-                log("3. ターン交代の検証 (P1 -> P2)...");
                 const game = window.game;
+                if (game.gameMode === 'pvp') {
+                    log("   [OK] gameMode が 'pvp' に設定されました。", "success");
+                } else {
+                    throw new Error(`gameMode が不正です: ${game.gameMode}`);
+                }
+
+                if (document.getElementById('overlay').classList.contains('hidden')) {
+                    log("   [OK] オーバーレイが非表示になりました。", "success");
+                } else {
+                    log("   [WARN] オーバーレイが非表示になっていませんが、テストを続行します。", "failure");
+                }
+
+                log("3. ターン交代の検証 (P1 -> P2)...");
                 const p1 = game.currentPlayer;
                 log(`   現在のプレイヤー: Player ${p1}`);
 

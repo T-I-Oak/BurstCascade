@@ -138,6 +138,7 @@
             this.helpBackBtn = document.querySelector('.help-back-btn');
 
             this.peekBoardBtn = document.getElementById('peek-board-btn');
+            this.focusEffects = []; // Ver 4.4.8: 初期化漏れを復旧
             this.dropEffects = []; // Ver 4.4.7: 初期化漏れを復旧
 
             // リスナー
@@ -425,7 +426,7 @@
         }
 
         checkGameOverStatus() {
-            if (this.gameOver) return;
+            if (!this.map || this.gameOver) return;
             const mainHexes = this.map.hexes.filter(h => h.zone === 'main');
             const flags1 = mainHexes.filter(h => h.hasFlag && h.flagOwner === 1).length;
             const flags2 = mainHexes.filter(h => h.hasFlag && h.flagOwner === 2).length;
@@ -1141,6 +1142,7 @@
         }
 
         resize() {
+            if (!this.map) return;
             this.canvas.width = window.innerWidth;
             this.canvas.height = window.innerHeight;
             const origin = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
@@ -1376,6 +1378,7 @@
             return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
         }
 
+
         drawLabel(text, zoneId, color, align) {
             const center = this.map.centers[zoneId];
             if (!center) return;
@@ -1465,6 +1468,7 @@
         }
 
         render() {
+            if (!this.map || !this.layout) return;
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
             const sortedHexes = [...this.map.hexes].sort((a, b) => {
                 const zA = a.q + a.r;
