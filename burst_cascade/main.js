@@ -950,23 +950,20 @@
 
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
-            // Ver 4.4.15: バーストが発生した場合は報酬の有無に関わらず継続手番
-            if (overflowOccurred) {
+            // Ver 4.4.16: ロジックの簡素化
+            // 継続条件: バーストが発生した OR 報酬（旗など）を獲得した
+            const shouldContinue = overflowOccurred || this.turnHadReward;
+
+            if (shouldContinue) {
                 if (stillBursting) {
                     console.log(`[Turn Log] Still bursting... waiting.`);
                 } else {
-                    console.log(`[Turn Log] Extra Move for P${this.currentPlayer} (Burst happened)`);
-                    this.isProcessingMove = false;
+                    console.log(`[Turn Log] Continue Turn for P${this.currentPlayer} (Burst:${overflowOccurred}, Reward:${this.turnHadReward})`);
+                    // isProcessingMove はここでは解放しない。checkTurnTransition が解放する。
                 }
             } else {
-                // バーストなし。報酬があった場合のみ継続（Ver 4.4以前と同じ。ただし現状報酬はバースト起点なので実際はバーストありのみ継続が基本）
-                if (this.turnHadReward) {
-                    console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer} (Reward happened, unusual case)`);
-                    this.turnEndRequested = true;
-                } else {
-                    this.turnEndRequested = true;
-                    console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer}`);
-                }
+                this.turnEndRequested = true;
+                console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer}`);
             }
         }
 
@@ -1035,7 +1032,7 @@
             if (this.gameOver) return;
 
             if (this.turnEndRequested) {
-                console.log(`[Turn Log] Executing Swap: P${this.currentPlayer} -> P${this.currentPlayer === 1 ? 2 : 1}`);
+                console.log(`[Turn Log] --- Executing Swap: P${this.currentPlayer} -> P${this.currentPlayer === 1 ? 2 : 1} ---`);
                 this.turnEndRequested = false;
                 this.isProcessingMove = false;
 
@@ -1044,14 +1041,14 @@
                 this.sound.playTurnChange();
 
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
-                    setTimeout(() => this.handleCPUTurn(), 300);
+                    setTimeout(() => this.handleCPUTurn(), 400); // 余裕を持って開始
                 }
             } else if (this.isProcessingMove) {
-                console.log(`[Turn Log] Executing Unlock (Continue Turn) for P${this.currentPlayer}`);
+                console.log(`[Turn Log] --- Executing Unlock (Continue Turn) for P${this.currentPlayer} ---`);
                 this.isProcessingMove = false;
 
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
-                    setTimeout(() => this.handleCPUTurn(), 300);
+                    setTimeout(() => this.handleCPUTurn(), 400); // 継続手番でもAIを叩く
                 }
             }
         }
@@ -1280,20 +1277,24 @@
             const cosA = Math.cos(angle), sinA = Math.sin(angle);
             const a = cosA, b = (sinA - cosA * tilt) * scaleY, c = -sinA, d = (cosA + sinA * tilt) * scaleY;
             ctx.setTransform(a, b, c, d, tx, ty);
-            const fontSize = this.layout.size * 1.4;
-            ctx.font = `bold ${fontSize}px Inter, sans-serif`;
+            const fontSize = this.layout.size * 1.5; // 少し大きく
+            ctx.font = `bold ${fontSize}px Outfit, sans-serif`; // Outfit に変更
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            const shadowColor = this.adjustColor(color.top, -40);
-            const highlightColor = this.adjustColor(color.top, 40);
-            const textColor = this.adjustColor(color.top, 10);
+
+            const shadowColor = 'rgba(0,0,0,0.6)';
+            const highlightColor = 'rgba(255,255,255,0.8)';
+            const textColor = this.adjustColor(color.top, -100); // コントラスト確保
+
             const roundedH = Math.abs(Math.round(value));
+
             ctx.fillStyle = shadowColor;
-            ctx.fillText(roundedH, 1, 1);
+            ctx.fillText(roundedH, 1.5, 1.5);
             ctx.fillStyle = highlightColor;
             ctx.fillText(roundedH, -1, -1);
             ctx.fillStyle = textColor;
             ctx.fillText(roundedH, 0, 0);
+
             ctx.restore();
         }
 
