@@ -117,6 +117,7 @@
             this.focusEffects = []; // 収束演出用のエフェクト
             this.dropEffects = []; // 上空からの落下演出
             this.isWaitingForDrop = false; // 落下演出の完了待ちフラグ
+            this.turnHadBurst = false;    // ターン中にバーストが起きたか
 
             // UI要素
             this.overlay = document.getElementById('overlay');
@@ -496,10 +497,10 @@
 
                 // 2. マーカーの着弾待ち（マーカーが存在し、落下指示後に着弾した場合）
                 if (marker && marker.landed) {
-                    console.log("[Sequence] Marker landed. Finalizing turn.");
+                    console.log(`[Sequence] Marker landed. Finalizing turn (burst: ${this.turnHadBurst}).`);
                     this.lastMoveHex = marker.targetHex;
                     this.dropEffects = []; // エフェクトクリア
-                    this.finalizeTurn(true);
+                    this.finalizeTurn(this.turnHadBurst);
                 }
             }
 
@@ -780,7 +781,7 @@
 
             // 2. インジケータも上空に生成
             const targetPos = this.layout.hexToPixel(targetHex);
-            targetHex.isHidden = true; // 着弾まで隠す
+            this.turnHadBurst = false; // フラグリセット
             this.dropEffects.push({
                 q: targetHex.q,
                 r: targetHex.r,
@@ -926,6 +927,7 @@
             this.chains[this.currentPlayer][targetType]++;
 
             // 視覚演出のトリガー
+            this.turnHadBurst = true; // バースト発生を記録
             this.sound.playBurst();
             this.addParticles(center.x, center.y, color, isEnemyOverflow, targetDotKey, null, reward);
         }
@@ -1665,28 +1667,7 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // ドット
-                const absValue = Math.abs(de.sourceHeight);
-                const dotRadius = size * 0.12;
-                const dotSpacing = size * 0.45;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.translate(0, -h);
-
-                if (absValue === 1) {
-                    ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
-                } else if (absValue === 3) {
-                    for (let i = 0; i < 3; i++) {
-                        const angle = (2 * Math.PI * i) / 3 - Math.PI / 2;
-                        ctx.beginPath();
-                        ctx.arc(Math.cos(angle) * dotSpacing * 0.6, Math.sin(angle) * dotSpacing * 0.6, dotRadius, 0, Math.PI * 2);
-                        ctx.fill();
-                    }
-                } else if (absValue === 5) {
-                    ctx.beginPath(); ctx.arc(0, 0, dotRadius, 0, Math.PI * 2); ctx.fill();
-                    [{ x: -1, y: -1 }, { x: 1, y: -1 }, { x: -1, y: 1 }, { x: 1, y: 1 }].forEach(p => {
-                        ctx.beginPath(); ctx.arc(p.x * dotSpacing * 0.5, p.y * dotSpacing * 0.5, dotRadius, 0, Math.PI * 2); ctx.fill();
-                    });
-                }
+                // ドット（Ver 4.4.5: ユーザー要望により削除）
             }
 
             ctx.restore();
