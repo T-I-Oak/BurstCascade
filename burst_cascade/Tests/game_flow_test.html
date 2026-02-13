@@ -81,6 +81,14 @@
 
         async function runTests() {
             try {
+                const interval = setInterval(() => {
+                    if (window.game) {
+                        const g = window.game;
+                        const msg = `[DEBUG] Effects:${g.effects.length}, Rewards:${g.pendingRewards.length}, Drops:${g.dropEffects.length}, WaitingDrop:${g.isWaitingForDrop}, Lock:${g.isProcessingMove}, Requested:${g.turnEndRequested}`;
+                        document.getElementById('status').textContent = msg;
+                    }
+                }, 100);
+
                 log("--- テスト開始 ---");
 
                 // Game インスタンスの取得 (new Game() がグローバルでない場合は工夫が必要だが、
@@ -171,7 +179,11 @@
                 }
 
                 log("--- すべてのテストが完了しました ---", "success");
-                document.getElementById('status').textContent = "テスト完了 (ALL GREEN)";
+                if (window.game) {
+                    const g = window.game;
+                    const msg = `[DEBUG] Effects:${g.effects.length}, Rewards:${g.pendingRewards.length}, Drops:${g.dropEffects.length}, WaitingDrop:${g.isWaitingForDrop}, Lock:${g.isProcessingMove}, Requested:${g.turnEndRequested}`;
+                    document.getElementById('status').textContent = msg;
+                }
                 document.getElementById('status').style.color = "green";
 
             } catch (err) {

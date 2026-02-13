@@ -998,10 +998,14 @@
          * 演出がすべて完了したかチェックし、必要なら手番を交代する
          */
         checkTurnTransition() {
-            // 演出中（パーティクル飛翔中・報酬処理中）は、手番交代もロック解除も行わない
-            if (this.effects.length > 0 || this.pendingRewards.length > 0) return;
-
-            // 1. 勝利条件のチェック (修正: 常に優先確認)
+            // 演出中（パーティクル、報酬、落下演出、着弾待ち）は、手番交代もロック解除も行わない
+            if (this.effects.length > 0 || this.pendingRewards.length > 0 || this.dropEffects.length > 0 || this.isWaitingForDrop) {
+                // 内部状態を1秒ごとにログ出力 (デバッグ用)
+                if (Date.now() % 1000 < 20) {
+                    console.log(`[Turn Log] Busy... Effects:${this.effects.length}, Rewards:${this.pendingRewards.length}, Drops:${this.dropEffects.length}, WaitingDrop:${this.isWaitingForDrop}`);
+                }
+                return;
+            }
             this.checkGameOverStatus();
             if (this.gameOver) return;
 
