@@ -734,6 +734,11 @@
         // Ver 4.4.3: 落下演出の開始（ホバーフェーズ含む）
         triggerDropSequence(targetHex) {
             console.log(`[Turn Log] --- Player ${this.currentPlayer} Move Start ---`);
+
+            // Ver 4.4.19: 確定操作時にハイライトを消去 (iPadでのハイライト残留バグ修正)
+            this.hoveredHex = null;
+            this.hoveredNeighbors = [];
+
             this.isProcessingMove = true;
             this.lastMoveHex = null;
             this.isWaitingForDrop = true;
