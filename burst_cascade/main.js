@@ -547,6 +547,8 @@
             for (let i = 0; i < originalCount; i++) {
                 const ef = this.effects[i];
 
+                let keep = true;
+
                 if (ef.type === 'reconstruct_dot') {
                     // Ver 4.6.0: 再構築ドット（放物線移動）
                     const now = Date.now();
@@ -608,7 +610,7 @@
                         target = this.layout.hexToPixel(ef.targetHex);
                     }
 
-                    let keep = true;
+                    // let keep = true; (Removed: declared at loop start)
                     if (target) {
                         const isReFlight = !!ef.targetHex;
                         const startHomingLife = isReFlight ? 0.88 : 0.8;
