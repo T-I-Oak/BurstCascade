@@ -13,7 +13,7 @@
         <header>
             <h1>BURST CASCADE <small
                     style="font-size: 0.7rem; opacity: 0.6; font-weight: 400; vertical-align: middle; margin-left: 0.5rem;">Ver
-                    4.4.19</small></h1>
+                    4.5.2</small></h1>
             <span id="help-btn">HOW TO PLAY</span>
             <div id="status-container">
                 <div id="war-gauge-container">
@@ -30,7 +30,7 @@
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
                     <h1 class="title-logo">BURST CASCADE</h1>
-                    <div class="version-badge">Ver 4.4.19</div>
+                    <div class="version-badge">Ver 4.5.2</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
                     <div class="menu-options">
                         <div class="settings-container">
@@ -72,72 +72,99 @@
                         <section class="help-section">
                             <h2>Burst Cascade</h2>
                             <p class="flavor-text">
-                                この世界は、純粋なエネルギーの結晶体「ヘキサグリッド」によって維持されてきた。しかし今、安定は崩れ、秩序は混沌へと向かっている。グリッドの不安定化は、一箇所の過負荷が次々と波及する「連鎖爆発（カスケード）」を招き、既存の境界を飲み込もうとしている。
+                                この世界は、純粋なエネルギーの結晶体「ヘキサグリッド」によって維持されてきた。しかし今、安定は崩れ、秩序は混沌へと向かっている。グリッドの不安定化は、一箇所の爆発（Burst）がさらなる事象を引き起こす連鎖（Cascade）を招き、既存の境界を飲み込もうとしている。
                             </p>
                             <p class="flavor-text">
-                                あなたの使命は、この<strong>カスケード</strong>を戦略的に制御し、対立する勢力からすべての「共鳴中枢（コア）」を奪還することだ。土地のエネルギーを飽和させ、戦術的な過負荷（オーバーロード）を引き起こし、世界の秩序を再定義せよ。
+                                あなたの使命は、この<strong>カスケード</strong>を戦略的に制御し、対立する勢力からすべての共鳴中枢（Core）を奪還することだ。グリッドのエネルギーを飽和させ、戦術的な爆発（Burst）を引き起こし、世界の秩序を再定義せよ。
                             </p>
                         </section>
 
                         <section class="help-section">
                             <h3>目的</h3>
-                            <p>相手勢力の保持する<strong>「共鳴中枢（コア）」</strong>をすべて<strong>無効化</strong>したら勝利となります。</p>
+                            <div class="tutorial-float-right">
+                                <canvas id="help-core-canvas" class="tutorial-canvas" width="120" height="120"></canvas>
+                                <p class="tutorial-caption">共鳴中枢（Core）</p>
+                            </div>
+                            <p>相手勢力がマップ中に保有している<strong>「共鳴中枢（Core）」</strong>をすべて<strong>無効化</strong>したら勝利となります。</p>
                             <ul class="help-list">
-                                <li>相手のグリッドを「過負荷」状態に追い込むことで、そこにあるコアを無効化できます。</li>
+                                <li>相手のグリッドに自勢力の供給エネルギーを注入して中和したり、相手のグリッドを爆発（Burst）させることで、そこにある共鳴中枢（Core）を無効化することができます。
+                                </li>
                             </ul>
                         </section>
 
+                        <div style="clear: both;"></div>
                         <section class="help-section">
                             <h3>システム・ルール</h3>
                             <div class="rule-item">
-                                <h4>過負荷（オーバーロード）</h4>
-                                <p>グリッドのポテンシャルが限界（絶対値 9 ）を超えると発生。</p>
+                                <div class="tutorial-float-right">
+                                    <canvas id="help-inject-canvas" class="tutorial-canvas" width="120"
+                                        height="120"></canvas>
+                                    <p class="tutorial-caption">エネルギー注入</p>
+                                </div>
+                                <h4>エネルギー注入プロセス</h4>
+                                <p>ターン開始時、マップ中の自勢力のグリッドを選択して供給エネルギーを注入するプロセスです。</p>
+                            </div>
+                            <div class="rule-item">
+                                <div class="tutorial-float-right">
+                                    <canvas id="help-overload-canvas" class="tutorial-canvas" width="120"
+                                        height="120"></canvas>
+                                    <p class="tutorial-caption">爆発（Burst）</p>
+                                </div>
+                                <h4>爆発（Burst）</h4>
+                                <p>エネルギー注入によってグリッドのポテンシャルが限界（エネルギー値9）を超えたときに発生します。</p>
                                 <ul class="help-list">
                                     <li>蓄積されたエネルギーを放出し、グリッドは<strong>基底状態</strong>（0）へ戻ります。</li>
-                                    <li>この時、そのグリッドに配置されていた「共鳴中枢（コア）」は<strong>無効化</strong>されます。</li>
+                                    <li>この時、そのグリッドに配置されていた共鳴中枢（Core）は<strong>無効化</strong>されます。</li>
                                 </ul>
                             </div>
                             <div class="rule-item">
-                                <h4>カスケード（連鎖爆発）</h4>
-                                <p>過負荷の発生によって、エネルギー注入プロセスが延長される現象です。</p>
-                            </div>
-                            <div class="rule-item">
-                                <h4>共鳴（レゾナンス）</h4>
-                                <p>カスケード内の過負荷パターンに応じて得られる報酬です。</p>
+                                <h4>共鳴（Resonance）</h4>
+                                <p>爆発（Burst）の発生に応じて得られる報酬です。</p>
                                 <ul class="help-list">
-                                    <li><strong>自律共鳴（自己強化）</strong>:
-                                        <strong>1つのカスケード内</strong>で自勢力が4回過負荷を起こすと発生。供給エネルギー（ストック）の出力が強化されます。
+                                    <li><strong>供給エネルギー強化</strong>:
+                                        1ターン内に自勢力の爆発（Burst）が4回発生すると、供給エネルギーがランダムに1エネルギー強化されます。このとき、アクティブプレイヤーが交代します。
                                     </li>
-                                    <li><strong>侵食共鳴（領域獲得）</strong>:
-                                        相手勢力を<strong>通算で2回過負荷させるごとに</strong>発生。自勢力内のグリッドに新たな「共鳴中枢（コア）」が形成されます。</li>
+                                    <li><strong>共鳴中枢（Core）追加</strong>:
+                                        相手勢力の爆発（Burst）を通算で2回発生させるたびに、共鳴中枢（Core）がランダムに1つ増えます。</li>
                                 </ul>
                             </div>
                             <div class="rule-item">
-                                <h4>供給エネルギーのフィードバック</h4>
-                                <p>エネルギー注入後、ストックの状態が再構築されます。</p>
+                                <div class="tutorial-float-right">
+                                    <canvas id="help-reconstruct-canvas" class="tutorial-canvas" width="120"
+                                        height="120"></canvas>
+                                    <p class="tutorial-caption">供給エネルギー再構築</p>
+                                </div>
+                                <h4>供給エネルギーの再構築</h4>
+                                <p>エネルギー注入後、7つの供給エネルギーのうちランダムな2つが選ばれ、再構築されます（±1 ずつ変化）。</p>
                                 <ul class="help-list">
-                                    <li><strong>カスケード発生時</strong>：供給エネルギーが「拡散」します。出力が平準化されます。</li>
-                                    <li><strong>カスケード未発生時</strong>：供給エネルギーが「集中」します。出力が集束されます。</li>
+                                    <li><strong>爆発（Burst）未発生時 → 集束（Focus）</strong>:
+                                        <br>エネルギー差が開くように移動します。<br>
+                                        <small>（例: 2と4 → 1と5）</small>
+                                    </li>
+                                    <li><strong>爆発（Burst）発生時 → 拡散（Diffuse）</strong>:
+                                        <br>エネルギー差が縮まるように移動します。<br>
+                                        <small>（例: 1と5 → 2と4）</small>
+                                    </li>
                                 </ul>
                             </div>
                         </section>
 
                         <section class="help-section">
-                            <h3>フェーズの終了</h3>
+                            <h3>ターンの終了と継続</h3>
+                            <p>行動の結果、次のターンの<strong>アクティブプレイヤー</strong>が決まります。</p>
                             <ul class="help-list">
-                                <li>過負荷を発生させた場合、制御権を維持し、続けて注入が可能です。</li>
-                                <li>ただし「自律共鳴」が発生した瞬間、制御が飽和し、フェーズは終了します。</li>
-                                <li>過負荷が全く発生しなかった場合も、そのままフェーズが終了します。</li>
+                                <li><strong>停滞 (Stagnation)</strong>: <br>
+                                    爆発（Burst）が発生しなかった場合。<br>
+                                    → <strong>交代</strong>（相手がアクティブプレイヤーになります）</li>
+                                <li><strong>飽和 (Saturation)</strong>: <br>
+                                    供給エネルギー強化が発生した場合。<br>
+                                    → <strong>交代</strong>（相手がアクティブプレイヤーになります）</li>
+                                <li><strong>連鎖 (Cascade)</strong>: <br>
+                                    爆発（Burst）が発生し、かつ飽和に至らなかった場合。<br>
+                                    → <strong>継続</strong>（自分が引き続きアクティブプレイヤーとなります）</li>
                             </ul>
                         </section>
 
-                        <section class="help-section">
-                            <h3>インターフェース</h3>
-                            <ul class="help-list">
-                                <li><strong>注入操作（クリック）</strong>: 自分の支配グリッドにエネルギー情報を流し込みます。</li>
-                                <li><strong>同調プレビュー（ホバー）</strong>: カーソルを合わせた際の予測影響範囲を確認できます。</li>
-                            </ul>
-                        </section>
                     </div>
                     <button class="close-btn help-back-btn">タイトルに戻る</button>
                     <button id="help-close-btn" class="close-btn hidden">閉じる</button>
@@ -176,6 +203,7 @@
     <script src="burst_cascade/map.js"></script>
     <script src="burst_cascade/ai.js"></script>
     <script src="burst_cascade/main.js"></script>
+    <script src="burst_cascade/tutorial.js"></script>
 </body>
 
 </html>

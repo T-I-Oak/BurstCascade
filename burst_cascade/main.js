@@ -1283,13 +1283,13 @@
         }
 
         // Ver 4.4.14: 描画ロジックの共通化 (数値エンボス)
-        drawHexNumber(ctx, tx, ty, h, color, value) {
+        drawHexNumber(ctx, tx, ty, h, color, value, layout = this.layout) {
             ctx.save();
-            const { angle, tilt, scaleY } = this.layout.projection;
+            const { angle, tilt, scaleY } = layout.projection;
             const cosA = Math.cos(angle), sinA = Math.sin(angle);
             const a = cosA, b = (sinA - cosA * tilt) * scaleY, c = -sinA, d = (cosA + sinA * tilt) * scaleY;
             ctx.setTransform(a, b, c, d, tx, ty);
-            const fontSize = this.layout.size * 1.5; // 少し大きく
+            const fontSize = layout.size * 1.5; // 少し大きく
             ctx.font = `bold ${fontSize}px Outfit, sans-serif`; // Outfit に変更
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
@@ -1307,14 +1307,20 @@
             ctx.fillStyle = textColor;
             ctx.fillText(roundedH, 0, 0);
 
+            // layout.size を使用するために引数渡しが必要だったが、
+            // フォントサイズは layout.size * 1.5 で計算済みなのでここでは不要かもだが
+            // ctx.font 設定時に this.layout を参照しているので、
+            // 呼び出し元で ctx.font を設定するか、ここでも layout を使う必要がある。
+            // 上記コードでは this.layout.size を参照している箇所があるため修正が必要。
+
             ctx.restore();
         }
 
-        drawHex(hex) {
+        drawHex(hex, ctx = this.ctx, layout = this.layout) {
             if (hex.isHidden) return;
 
-            const vertices = this.layout.getPolygonVertices(hex);
-            const ctx = this.ctx;
+            const vertices = layout.getPolygonVertices(hex);
+            // ctx is now provided via argument or defaults to this.ctx
 
             if (hex.isDisabled) {
                 ctx.beginPath();
@@ -1329,7 +1335,7 @@
                 return;
             }
 
-            const unitThickness = this.layout.size * 0.12;
+            const unitThickness = layout.size * 0.12;
             const absH = Math.abs(hex.visualHeight);
             const h = absH * unitThickness;
 
@@ -1355,15 +1361,15 @@
 
             // 3. 数値表示
             if (absH > 0) {
-                const center = this.layout.hexToPixel(hex);
-                this.drawHexNumber(ctx, center.x, center.y - h, h, color, hex.visualHeight);
+                const center = layout.hexToPixel(hex);
+                this.drawHexNumber(ctx, center.x, center.y - h, h, color, hex.visualHeight, layout);
             }
 
             // 4. 共鳴中枢（コア）の描画
             if (hex.visualFlagScale > 0.01) {
-                const center = this.layout.hexToPixel(hex);
+                const center = layout.hexToPixel(hex);
                 const tx = center.x, ty = center.y - h;
-                const coreSize = this.layout.size * 0.4 * hex.visualFlagScale;
+                const coreSize = layout.size * 0.4 * hex.visualFlagScale;
                 const playerColor = hex.flagOwner === 1 ? '#4ade80' : '#f87171';
                 const floatY = Math.sin(this.pulseValue * Math.PI) * 4 * hex.visualFlagScale;
 
@@ -1622,10 +1628,9 @@
         }
 
         // Ver 4.4.3: 落下物の描画
-        drawFallingHex(de) {
-            const ctx = this.ctx;
-            const size = this.layout.size * 1.0;
-            const unitThickness = this.layout.size * 0.12;
+        drawFallingHex(de, ctx = this.ctx, layout = this.layout) {
+            const size = layout.size * 1.0;
+            const unitThickness = layout.size * 0.12;
             ctx.save();
             ctx.translate(de.x, de.y);
             ctx.globalAlpha = de.alpha;
@@ -1633,10 +1638,10 @@
             if (de.type === 'marker') {
                 // インジケータ（白いリング）
                 const hex = de.targetHex;
-                const ringVertices = this.layout.getPolygonVertices(hex, 1.2);
+                const ringVertices = layout.getPolygonVertices(hex, 1.2);
                 ctx.beginPath();
                 // 中心 (0,0) 相対で描画
-                const origin = this.layout.hexToPixel(hex);
+                const origin = layout.hexToPixel(hex);
                 ctx.moveTo(ringVertices[0].x - origin.x, ringVertices[0].y - origin.y);
                 for (let i = 1; i < 6; i++) {
                     ctx.lineTo(ringVertices[i].x - origin.x, ringVertices[i].y - origin.y);
@@ -1659,8 +1664,8 @@
                 const color = colors[de.owner] || colors[0];
 
                 const hex = de.targetHex;
-                const baseVertices = this.layout.getPolygonVertices(hex);
-                const origin = this.layout.hexToPixel(hex);
+                const baseVertices = layout.getPolygonVertices(hex);
+                const origin = layout.hexToPixel(hex);
                 const vertices = baseVertices.map(v => ({
                     x: v.x - origin.x,
                     y: v.y - origin.y
@@ -1671,7 +1676,11 @@
 
                 // 数値表示の追加 (Ver 4.4.15: 絶対座標 de.x, de.y を考慮)
                 if (absH > 0) {
-                    this.drawHexNumber(ctx, de.x, de.y - h, h, color, de.sourceHeight);
+                    // drawHexNumber は絶対座標 (de.x, de.y) に描画するが、
+                    // ここでは translate(de.x, de.y) されているので、(0, -h) に描画すべき？
+                    // drawHexNumber の実装を見ると setTransform しているので translate の影響を受けない（絶対配置）。
+                    // なので、(de.x, de.y - h) を渡せばよい。
+                    this.drawHexNumber(ctx, de.x, de.y - h, h, color, de.sourceHeight, layout);
                 }
             }
 
