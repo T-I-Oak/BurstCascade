@@ -566,23 +566,23 @@
                         // P1: Red(-1) -> Green(+1). P2: Green(+1) -> Red(-1) [Visual]
                         const isP1 = (this.currentPlayer === 1);
 
-                        // Start Side (Origin of dot)
+                        // Start Side (Weaker Side)
                         this.effects.push({
-                            x: ef.startX, y: ef.startY - 40, // Offset increased for larger text
+                            x: ef.startX, y: ef.startY - 40,
                             vx: 0, vy: -0.5,
                             life: 1.0,
-                            text: isP1 ? "-1" : "+1", // P1: Lost power. P2: Gained power (more negative)
-                            color: isP1 ? '#ef4444' : '#4ade80', // P1: Red. P2: Green.
+                            text: "-1",
+                            color: isP1 ? '#ef4444' : '#4ade80',
                             type: 'floating_text'
                         });
 
-                        // End Side (Destination of dot)
+                        // End Side (Stronger Side)
                         this.effects.push({
                             x: ef.endX, y: ef.endY - 40,
                             vx: 0, vy: -0.5,
                             life: 1.0,
-                            text: isP1 ? "+1" : "-1", // P1: Gained power. P2: Lost power (less negative)
-                            color: isP1 ? '#4ade80' : '#ef4444', // P1: Green. P2: Red.
+                            text: "+1",
+                            color: isP1 ? '#4ade80' : '#ef4444',
                             type: 'floating_text'
                         });
 
@@ -1788,16 +1788,12 @@
             // Ver 4.6.1: P2の場合は逆転させる (Power Flow: Gained Power -> Lost Power? No.)
             // P1 (Positive): -1 (Giver) -> +1 (Receiver). Dot: Giver -> Receiver.
             // P2 (Negative): -1 (Giver, absolute increase) -> +1 (Receiver, absolute decrease).
-            // User Request: "P2 Receiver (Abs Decrease) is `-` (Red), P2 Giver (Abs Increase) is `+` (Green)"
-            // User Request: "Dot moves from `+` to `-` ?" No, "Dot flies from - to +".
-            // Wait, user said: "2Pから見ると、赤が+、緑が+なので、ドットの飛ぶ方向と符号が間違えています。" (Red is +, Green is + ... wait, maybe typo?)
-            // Context: "2P side involves reversing + and - meanings."
-            // Let's assume user wants dot to fly from "Minus" to "Plus".
-            // For P2:
-            //   Giver (e.g. -2 -> -3): Gaining absolute power. User calls this "+". (Green)
-            //   Receiver (e.g. -5 -> -4): Losing absolute power. User calls this "-". (Red)
-            //   Dot should fly from "-" (Receiver) to "+" (Giver).
-            //   So Start = Receiver, End = Giver.
+            // Logic Change (Ver 4.6.2):
+            //   Giver (Abs Increase, More Red) -> +1 (Red)
+            //   Receiver (Abs Decrease, More Green) -> -1 (Green)
+            //   Dot flies from "Weaker" (-1) to "Stronger" (+1).
+            //   P1: Giver (-1) -> Receiver (+1). Start=Giver, End=Receiver.
+            //   P2: Receiver (-1) -> Giver (+1). Start=Receiver, End=Giver.
 
             if (this.currentPlayer === 2) {
                 startHex = receiver; // The one becoming "weaker" (closer to 0)
@@ -1806,6 +1802,15 @@
 
             const start = this.layout.hexToPixel(startHex);
             const end = this.layout.hexToPixel(endHex);
+
+            // Ver 4.6.2: ドットの高さを土地の天面に合わせる
+            const unitThickness = this.layout.size * 0.12;
+            const startH = Math.abs(startHex.height) * unitThickness;
+            const endH = Math.abs(endHex.height) * unitThickness;
+
+            // Y座標を補正 (-h, Canvas座標系で上へ)
+            start.y -= startH;
+            end.y -= endH;
 
             // 黄色いドットの発射
             this.effects.push({
