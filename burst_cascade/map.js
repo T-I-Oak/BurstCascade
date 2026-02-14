@@ -202,8 +202,10 @@
                         else h.owner = 0;
                     });
                     success = true;
+                    return { success: true, giver: giver, receiver: receiver, pattern: pattern };
                 }
             }
+            return { success: false };
         }
 
         generateZone(offsetQ, offsetR, size, zoneId) {

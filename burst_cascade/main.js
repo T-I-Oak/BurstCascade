@@ -546,60 +546,103 @@
             const originalCount = this.effects.length;
             for (let i = 0; i < originalCount; i++) {
                 const ef = this.effects[i];
-                let target = null;
-                if (ef.targetDotKey && this.dotTargets[ef.targetDotKey]) {
-                    target = this.dotTargets[ef.targetDotKey];
-                } else if (ef.targetHex) {
-                    target = this.layout.hexToPixel(ef.targetHex);
-                }
 
-                let keep = true;
-                if (target) {
-                    const isReFlight = !!ef.targetHex;
-                    const startHomingLife = isReFlight ? 0.88 : 0.8;
-                    const strength = Math.max(0, (startHomingLife - ef.life) * (isReFlight ? 20.0 : 3.0));
-                    const dx = target.x - ef.x;
-                    const dy = target.y - ef.y;
-                    const dist = Math.sqrt(dx * dx + dy * dy);
+                if (ef.type === 'reconstruct_dot') {
+                    // Ver 4.6.0: 再構築ドット（放物線移動）
+                    const now = Date.now();
+                    const el = now - ef.startTime;
+                    if (el >= ef.duration) {
+                        // 到達！
+                        // ポップアップテキスト表示
+                        this.effects.push({
+                            x: ef.startX, y: ef.startY - 20,
+                            vx: 0, vy: -0.5,
+                            life: 1.0,
+                            text: " -1 ",
+                            color: '#ef4444', // Red for minus
+                            type: 'floating_text'
+                        });
+                        this.effects.push({
+                            x: ef.endX, y: ef.endY - 20,
+                            vx: 0, vy: -0.5,
+                            life: 1.0,
+                            text: " +1 ",
+                            color: '#4ade80', // Green for plus
+                            type: 'floating_text'
+                        });
 
-                    if (dist < 25) { // 判定を絞って精密にする
-                        if (ef.targetDotKey) {
-                            const [pId, type, idx] = ef.targetDotKey.split('-');
-                            const intIdx = parseInt(idx);
-                            const threshold = (type === 'self' ? 3 : 1);
-                            if (intIdx === threshold && ef.reward && ef.reward.status === 'pending') {
-                                this.triggerRewardFlow(ef.reward, target);
-                            } else {
-                                this.triggerChainAnim(parseInt(pId), type);
-                            }
-                        } else if (ef.targetHex && ef.reward) {
-                            // 報酬パーティクルの場合、一定数届くまでカウント
-                            ef.reward.arrivedCount = (ef.reward.arrivedCount || 0) + 1;
-                            // Ver 4.4.10: 閾値を 15 から 5 に引き下げ
-                            if (ef.reward.arrivedCount === 5) {
-                                console.log(`[Reward Log] Threshold reached (5). Applying effect for P${ef.reward.player}`);
-                                this.applyRewardEffect(ef.reward);
-                            }
-                        }
-                        keep = false;
+                        // 到達時のエフェクト
+                        this.addParticles(ef.endX, ef.endY, ef.color, false);
                     } else {
-                        if (dist > 2) {
-                            ef.vx += (dx / dist) * strength;
-                            ef.vy += (dy / dist) * strength;
-                        }
-                        const damping = (isReFlight && ef.life < startHomingLife) ? 0.88 : 0.94;
-                        ef.vx *= damping;
-                        ef.vy *= damping;
+                        // 移動計算 (Parabolic)
+                        const p = el / ef.duration;
+                        ef.x = ef.startX + (ef.endX - ef.startX) * p;
+                        ef.y = ef.startY + (ef.endY - ef.startY) * p - Math.sin(p * Math.PI) * 50; // 高さ50の放物線
+                        survivors.push(ef);
                     }
-                } else {
-                    ef.vy += 0.15;
-                }
-
-                if (keep) {
+                } else if (ef.type === 'floating_text') {
+                    // フローティングテキスト
                     ef.x += ef.vx;
                     ef.y += ef.vy;
-                    ef.life -= (ef.targetHex ? 0.005 : 0.012);
+                    ef.life -= 0.02;
                     if (ef.life > 0) survivors.push(ef);
+                } else {
+                    // 既存のパーティクルロジック
+                    let target = null;
+                    if (ef.targetDotKey && this.dotTargets[ef.targetDotKey]) {
+                        target = this.dotTargets[ef.targetDotKey];
+                    } else if (ef.targetHex) {
+                        target = this.layout.hexToPixel(ef.targetHex);
+                    }
+
+                    let keep = true;
+                    if (target) {
+                        const isReFlight = !!ef.targetHex;
+                        const startHomingLife = isReFlight ? 0.88 : 0.8;
+                        const strength = Math.max(0, (startHomingLife - ef.life) * (isReFlight ? 20.0 : 3.0));
+                        const dx = target.x - ef.x;
+                        const dy = target.y - ef.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+
+                        if (dist < 25) { // 判定を絞って精密にする
+                            if (ef.targetDotKey) {
+                                const [pId, type, idx] = ef.targetDotKey.split('-');
+                                const intIdx = parseInt(idx);
+                                const threshold = (type === 'self' ? 3 : 1);
+                                if (intIdx === threshold && ef.reward && ef.reward.status === 'pending') {
+                                    this.triggerRewardFlow(ef.reward, target);
+                                } else {
+                                    this.triggerChainAnim(parseInt(pId), type);
+                                }
+                            } else if (ef.targetHex && ef.reward) {
+                                // 報酬パーティクルの場合、一定数届くまでカウント
+                                ef.reward.arrivedCount = (ef.reward.arrivedCount || 0) + 1;
+                                // Ver 4.4.10: 閾値を 15 から 5 に引き下げ
+                                if (ef.reward.arrivedCount === 5) {
+                                    console.log(`[Reward Log] Threshold reached (5). Applying effect for P${ef.reward.player}`);
+                                    this.applyRewardEffect(ef.reward);
+                                }
+                            }
+                            keep = false;
+                        } else {
+                            if (dist > 2) {
+                                ef.vx += (dx / dist) * strength;
+                                ef.vy += (dy / dist) * strength;
+                            }
+                            const damping = (isReFlight && ef.life < startHomingLife) ? 0.88 : 0.94;
+                            ef.vx *= damping;
+                            ef.vy *= damping;
+                        }
+                    } else {
+                        ef.vy += 0.15;
+                    }
+
+                    if (keep) {
+                        ef.x += ef.vx;
+                        ef.y += ef.vy;
+                        ef.life -= (ef.targetHex ? 0.005 : 0.012);
+                        if (ef.life > 0) survivors.push(ef);
+                    }
                 }
             }
             // ループ中（triggerRewardFlow等）に追加された新しいエフェクトを結合
@@ -778,7 +821,7 @@
                             targetY: targetPos.y,
                             alpha: 0,
                             state: 'appearing', // 出現中
-                            hoverTimer: 10 + Math.random() * 10, // 高速化 (40+rand -> 10+rand)
+                            hoverTimer: 5 + Math.random() * 5, // 高速化 (40+rand -> 10+rand -> 5+rand)
                             velocity: 0,
                             landed: false,
                             type: 'land',
@@ -790,6 +833,22 @@
 
             // 2. インジケータも上空に生成
             const targetPos = this.layout.hexToPixel(targetHex);
+
+            // Ver 4.6.0: 中心ヘクスの高さを取得し、マーカー位置を補正
+            // targetHex はメインマップのマス（まだ更新前なので高さは古いかも？ いや、クリック時点の高さはある）
+            // しかし手札の「中心」となるマス（offset 0,0）が重なるので、その高さに合わせるべき。
+            // targetHex はクリックしたマス（着地先）。その上に「手札センター」が来る。
+            // 手札センターは handHexes の中で offset 0,0 のもの。
+            // handHexes iteration order logic above:
+            // handHexes.forEach... mapHex ... 
+            // We need to find the height of the hand hex at offset 0,0.
+            const centerHandHex = handHexes.find(h => (h.q - handOffset.q) === 0 && (h.r - handOffset.r) === 0);
+            const centerHeight = centerHandHex ? centerHandHex.height : 0;
+            const unitThickness = this.layout.size * 0.12;
+            const h = Math.abs(centerHeight) * unitThickness;
+            // ターゲットY座標（着地後の高さ）: Ground (targetPos.y) - Height (h)
+            const objectTargetY = targetPos.y - h;
+
             this.turnHadBurst = false; // フラグリセット
             this.turnHadReward = false; // フラグリセット
             this.dropEffects.push({
@@ -797,8 +856,8 @@
                 r: targetHex.r,
                 targetHex: targetHex,
                 x: targetPos.x,
-                y: targetPos.y - 400,
-                targetY: targetPos.y,
+                y: objectTargetY - 400, // ホバー高度 (天面基準)
+                targetY: objectTargetY, // 土地の天面で停止 (targetPos.y - height)
                 alpha: 0,
                 state: 'appearing',
                 hoverTimer: 99999, // チェーンが終わるまで待機
@@ -953,7 +1012,11 @@
             console.log(`[Turn Log] finalizeTurn called. burst:${overflowOccurred}, reward:${this.turnHadReward}`);
             const handZoneId = `hand-p${this.currentPlayer}`;
             const pattern = overflowOccurred ? 'diffuse' : 'focus';
-            this.map.performHandUpdate(handZoneId, pattern);
+            const result = this.map.performHandUpdate(handZoneId, pattern);
+
+            if (result && result.success) {
+                this.triggerReconstructEffect(result.giver, result.receiver);
+            }
 
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
 
@@ -1538,6 +1601,19 @@
                 this.ctx.restore();
             });
 
+            // Ver 4.6.0: テキストエフェクトの描画
+            this.effects.filter(ef => ef.type === 'floating_text').forEach(ef => {
+                this.ctx.save();
+                this.ctx.globalAlpha = ef.life;
+                this.ctx.fillStyle = ef.color;
+                this.ctx.font = 'bold 16px sans-serif';
+                this.ctx.shadowColor = 'rgba(0,0,0,0.8)';
+                this.ctx.shadowBlur = 4;
+                this.ctx.textAlign = 'center';
+                this.ctx.fillText(ef.text, ef.x, ef.y);
+                this.ctx.restore();
+            });
+
             // Ver 4.4: 落下中の土地・マーカーの描画
             this.dropEffects.forEach(de => {
                 if (de.landed || de.state === 'appearing' || de.state === 'hovering' || de.state === 'falling') {
@@ -1685,6 +1761,27 @@
             }
 
             ctx.restore();
+        }
+
+        // Ver 4.6.0: 再構築エフェクト（黄色いドットと数値ポップ）
+        triggerReconstructEffect(giver, receiver) {
+            const start = this.layout.hexToPixel(giver);
+            const end = this.layout.hexToPixel(receiver);
+
+            // 黄色いドットの発射
+            this.effects.push({
+                x: start.x, y: start.y,
+                vx: 0, vy: 0, // start -> end の自力移動ロジックが必要だが、既存のHomingは使えない（Parabolic Arcなので）
+                life: 1.0,
+                color: '#fbbf24',
+                size: 4,
+                type: 'reconstruct_dot',
+                startX: start.x, startY: start.y,
+                endX: end.x, endY: end.y,
+                startTime: Date.now(),
+                duration: 500, // 0.5秒で到達
+                giver: giver, receiver: receiver // 到達時のテキスト表示用
+            });
         }
     }
 
