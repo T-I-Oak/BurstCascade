@@ -162,8 +162,18 @@
             return { overflowOccurred, overflowedOwners, overflowedHexes };
         }
 
-        // 手札更新処理
+        // 手札更新処理 (Ver 4.6.1: 旧メソッド互換性維持 + ラッパー)
         performHandUpdate(zoneId, pattern) {
+            const result = this.calculateHandUpdate(zoneId, pattern);
+            if (result && result.success && result.updates) {
+                this.applyHandUpdate(result.updates);
+                return result; // テストなどで利用できるように結果を返す
+            }
+            return { success: false };
+        }
+
+        // 手札更新の計算 (Ver 4.6.1: 遅延実行のため計算のみ行う)
+        calculateHandUpdate(zoneId, pattern) {
             const handHexes = this.hexes.filter(h => h.zone === zoneId);
             if (handHexes.length < 2) return;
 
@@ -193,19 +203,28 @@
 
                 // 3. 範囲チェック (-5 to +5)
                 if (giver.height > -5 && receiver.height < 5) {
-                    giver.height -= 1;
-                    receiver.height += 1;
-                    // オーナーの更新 (正: P1, 負: P2, 0: 中立)
-                    [giver, receiver].forEach(h => {
-                        if (h.height > 0) h.owner = 1;
-                        else if (h.height < 0) h.owner = 2;
-                        else h.owner = 0;
-                    });
-                    success = true;
-                    return { success: true, giver: giver, receiver: receiver, pattern: pattern };
+                    // 変更はここでは適用せず、計画データとして返す
+                    // giver: -1, receiver: +1
+                    const updates = [
+                        { hex: giver, heightChange: -1 },
+                        { hex: receiver, heightChange: 1 }
+                    ];
+
+                    return { success: true, giver: giver, receiver: receiver, pattern: pattern, updates: updates };
                 }
             }
             return { success: false };
+        }
+
+        // 手札更新の適用 (Ver 4.6.1: 遅延実行用)
+        applyHandUpdate(updates) {
+            updates.forEach(u => {
+                u.hex.height += u.heightChange;
+                // オーナーの更新
+                if (u.hex.height > 0) u.hex.owner = 1;
+                else if (u.hex.height < 0) u.hex.owner = 2;
+                else u.hex.owner = 0;
+            });
         }
 
         generateZone(offsetQ, offsetR, size, zoneId) {

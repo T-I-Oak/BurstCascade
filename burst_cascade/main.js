@@ -553,21 +553,34 @@
                     const el = now - ef.startTime;
                     if (el >= ef.duration) {
                         // 到達！
-                        // ポップアップテキスト表示
+                        keep = false;
+
+                        // Ver 4.6.1: 遅延させていた手札更新をここで適用
+                        if (ef.updates) {
+                            this.map.applyHandUpdate(ef.updates);
+                        }
+
+                        // ポップアップテキスト表示 (Ver 4.6.1: サイズ2倍, P2対応)
+                        // P1: Red(-1) -> Green(+1). P2: Green(+1) -> Red(-1) [Visual]
+                        const isP1 = (this.currentPlayer === 1);
+
+                        // Start Side (Origin of dot)
                         this.effects.push({
-                            x: ef.startX, y: ef.startY - 20,
+                            x: ef.startX, y: ef.startY - 40, // Offset increased for larger text
                             vx: 0, vy: -0.5,
                             life: 1.0,
-                            text: " -1 ",
-                            color: '#ef4444', // Red for minus
+                            text: isP1 ? "-1" : "+1", // P1: Lost power. P2: Gained power (more negative)
+                            color: isP1 ? '#ef4444' : '#4ade80', // P1: Red. P2: Green.
                             type: 'floating_text'
                         });
+
+                        // End Side (Destination of dot)
                         this.effects.push({
-                            x: ef.endX, y: ef.endY - 20,
+                            x: ef.endX, y: ef.endY - 40,
                             vx: 0, vy: -0.5,
                             life: 1.0,
-                            text: " +1 ",
-                            color: '#4ade80', // Green for plus
+                            text: isP1 ? "+1" : "-1", // P1: Gained power. P2: Lost power (less negative)
+                            color: isP1 ? '#4ade80' : '#ef4444', // P1: Green. P2: Red.
                             type: 'floating_text'
                         });
 
@@ -1012,10 +1025,12 @@
             console.log(`[Turn Log] finalizeTurn called. burst:${overflowOccurred}, reward:${this.turnHadReward}`);
             const handZoneId = `hand-p${this.currentPlayer}`;
             const pattern = overflowOccurred ? 'diffuse' : 'focus';
-            const result = this.map.performHandUpdate(handZoneId, pattern);
+
+            // Ver 4.6.1: 計算のみ行い、適用は遅延させる
+            const result = this.map.calculateHandUpdate(handZoneId, pattern);
 
             if (result && result.success) {
-                this.triggerReconstructEffect(result.giver, result.receiver);
+                this.triggerReconstructEffect(result.giver, result.receiver, result.updates);
             }
 
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
@@ -1606,7 +1621,7 @@
                 this.ctx.save();
                 this.ctx.globalAlpha = ef.life;
                 this.ctx.fillStyle = ef.color;
-                this.ctx.font = 'bold 16px sans-serif';
+                this.ctx.font = 'bold 32px sans-serif'; // Ver 4.6.1: サイズ倍増 (16px -> 32px)
                 this.ctx.shadowColor = 'rgba(0,0,0,0.8)';
                 this.ctx.shadowBlur = 4;
                 this.ctx.textAlign = 'center';
@@ -1764,23 +1779,46 @@
         }
 
         // Ver 4.6.0: 再構築エフェクト（黄色いドットと数値ポップ）
-        triggerReconstructEffect(giver, receiver) {
-            const start = this.layout.hexToPixel(giver);
-            const end = this.layout.hexToPixel(receiver);
+        triggerReconstructEffect(giver, receiver, updates) {
+            let startHex = giver;
+            let endHex = receiver;
+
+            // Ver 4.6.1: P2の場合は逆転させる (Power Flow: Gained Power -> Lost Power? No.)
+            // P1 (Positive): -1 (Giver) -> +1 (Receiver). Dot: Giver -> Receiver.
+            // P2 (Negative): -1 (Giver, absolute increase) -> +1 (Receiver, absolute decrease).
+            // User Request: "P2 Receiver (Abs Decrease) is `-` (Red), P2 Giver (Abs Increase) is `+` (Green)"
+            // User Request: "Dot moves from `+` to `-` ?" No, "Dot flies from - to +".
+            // Wait, user said: "2Pから見ると、赤が+、緑が+なので、ドットの飛ぶ方向と符号が間違えています。" (Red is +, Green is + ... wait, maybe typo?)
+            // Context: "2P side involves reversing + and - meanings."
+            // Let's assume user wants dot to fly from "Minus" to "Plus".
+            // For P2:
+            //   Giver (e.g. -2 -> -3): Gaining absolute power. User calls this "+". (Green)
+            //   Receiver (e.g. -5 -> -4): Losing absolute power. User calls this "-". (Red)
+            //   Dot should fly from "-" (Receiver) to "+" (Giver).
+            //   So Start = Receiver, End = Giver.
+
+            if (this.currentPlayer === 2) {
+                startHex = receiver; // The one becoming "weaker" (closer to 0)
+                endHex = giver;     // The one becoming "stronger" (further from 0)
+            }
+
+            const start = this.layout.hexToPixel(startHex);
+            const end = this.layout.hexToPixel(endHex);
 
             // 黄色いドットの発射
             this.effects.push({
                 x: start.x, y: start.y,
-                vx: 0, vy: 0, // start -> end の自力移動ロジックが必要だが、既存のHomingは使えない（Parabolic Arcなので）
+                vx: 0, vy: 0,
                 life: 1.0,
                 color: '#fbbf24',
-                size: 4,
+                size: 8, // Ver 4.6.1: サイズ倍増 (4 -> 8)
                 type: 'reconstruct_dot',
                 startX: start.x, startY: start.y,
                 endX: end.x, endY: end.y,
                 startTime: Date.now(),
                 duration: 500, // 0.5秒で到達
-                giver: giver, receiver: receiver // 到達時のテキスト表示用
+                giver: giver, receiver: receiver,
+                updates: updates // 遅延更新用データ
             });
         }
     }
