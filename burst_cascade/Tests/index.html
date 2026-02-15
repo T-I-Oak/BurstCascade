@@ -139,6 +139,15 @@
         onclick="runAllTests()">Run All Tests</button>
 
     <div class="dashboard">
+        <!-- 00. 安定性テスト (Regression Prevention) -->
+        <div class="test-card" onclick="runIntegrationTest('stability_test.js', 'runStabilityTest')">
+            <div>
+                <h3>System Stability Check</h3>
+                <p>主要クラスの定義、プロパティの存在、初期化フローが正常か（リグレッション防止）を検証します。</p>
+            </div>
+            <button class="run-btn">Run Integrity Check</button>
+        </div>
+
         <!-- 0. バースト継続テスト (Ver 4.4.15) -->
         <div class="test-card" onclick="runIntegrationTest('test_burst_extra_move.js', 'runBurstExtraMoveTest')">
             <div>
@@ -183,6 +192,15 @@
             </div>
             <button class="run-btn">Run Logic Check</button>
         </div>
+
+        <!-- 5. 実績獲得テスト -->
+        <div class="test-card" onclick="runIntegrationTest('test_achievements.js', 'runAchievementTest')">
+            <div>
+                <h3>Achievement Unlock Test</h3>
+                <p>勝利時に実績が正しく判定され、解除されるかを確認します。</p>
+            </div>
+            <button class="run-btn">Run Achievement Check</button>
+        </div>
     </div>
 
     <div id="console-output"></div>
@@ -195,21 +213,40 @@
         <div id="start-help-btn"></div>
         <div id="help-content"></div>
         <div id="mode-selection-content"></div>
-        <div id="game-over-content"></div>
-        <div id="ai-thinking-overlay"></div>
-        <div id="player-select"><button class="toggle-btn selected" data-value="1"></button></div>
-        <div id="size-select"><button class="toggle-btn selected" data-value="4"></button></div>
-        <div id="ai-level-select"></div>
-        <div id="ai-level-group">
-            <button class="toggle-btn selected" data-value="hard"></button>
-            <button class="toggle-btn" data-value="normal"></button>
-            <button class="toggle-btn" data-value="easy"></button>
+        <div id="game-over-content">
+            <h2 id="winner-text"></h2>
+            <p></p>
         </div>
+        <div id="ai-thinking-overlay"></div>
+        <div id="player-select">
+            <button class="toggle-btn selected" data-value="pvc"></button>
+            <button class="toggle-btn" data-value="pvp"></button>
+        </div>
+        <div id="size-select">
+            <button class="toggle-btn" data-value="mini"></button>
+            <button class="toggle-btn selected" data-value="regular"></button>
+        </div>
+        <div id="ai-level-select">
+            <button class="toggle-btn" data-value="easy"></button>
+            <button class="toggle-btn selected" data-value="normal"></button>
+            <button class="toggle-btn" data-value="hard"></button>
+        </div>
+        <div id="ai-level-group"></div>
         <div id="game-start-btn"></div>
         <div id="restart-btn"></div>
         <div id="help-close-btn"></div>
         <button class="help-back-btn"></button>
         <div id="peek-board-btn"></div>
+        <div id="achievements-btn"></div>
+        <div id="achievements-content"></div>
+        <div id="achievements-back-btn"></div>
+        <div id="achievement-reset-btn"></div>
+        <div id="achievement-percent"></div>
+        <table id="achievements-table">
+            <tbody></tbody>
+        </table>
+        <div class="tab-btn" data-map="mini"></div>
+        <div class="tab-btn" data-map="regular"></div>
         <div id="p1-bar"></div>
         <div id="p2-bar"></div>
         <div id="p1-score"></div>
@@ -218,8 +255,10 @@
 
     <!-- 必要な基盤読み込み -->
     <script src="../map.js"></script>
+    <script src="../achievements.js"></script>
     <script src="../ai.js"></script>
     <script src="../main.js"></script>
+    <script src="../tutorial.js"></script>
 
     <script>
         const consoleEl = document.getElementById('console-output');
@@ -299,18 +338,28 @@
             log('Starting ALL Tests...', 'info');
 
             const tests = [
+                'stability_test.js',
                 'test_ai_difficulty.js',
                 'test_minimap.js',
                 'rules_test.js',
-                'test_burst_extra_move.js'
+                'test_burst_extra_move.js',
+                'test_achievements.js'
             ];
 
             for (const test of tests) {
                 log(`--- Running ${test} ---`, 'info');
                 try {
-                    // 特別対応: test_burst_extra_move.js は関数呼び出しが必要
+                    // 特別対応: 関数呼び出しが必要なテスト
                     if (test === 'test_burst_extra_move.js') {
                         await runIntegrationTest(test, 'runBurstExtraMoveTest');
+                        continue;
+                    }
+                    if (test === 'test_achievements.js') {
+                        await runIntegrationTest(test, 'runAchievementTest');
+                        continue;
+                    }
+                    if (test === 'stability_test.js') {
+                        await runIntegrationTest(test, 'runStabilityTest');
                         continue;
                     }
 

@@ -1,5 +1,5 @@
 (function () {
-    const { HexMap, Layout } = window.BurstCascade;
+    const { HexMap, Layout, AchievementManager, AI } = window.BurstCascade;
 
     class SoundManager {
         constructor() {
@@ -92,11 +92,12 @@
             this.map = new HexMap(4);
             this.layout = null;
             this.sound = new SoundManager();
+            this.achievementManager = new AchievementManager();
 
             // ゲーム状態
             this.currentPlayer = 1;
             this.gameMode = null; // 'pvp' or 'pvc'
-            this.ai = new BurstCascade.AI(2);
+            this.ai = new AI(2);
             this.isAIThinking = false;
             this.turnEndRequested = false; // 手番交代の予約フラグ
             this.isProcessingMove = false; // 現在移動・演出処理中か
@@ -139,8 +140,33 @@
             this.helpBackBtn = document.querySelector('.help-back-btn');
 
             this.peekBoardBtn = document.getElementById('peek-board-btn');
+
+            // Achievement UI elements
+            this.achievementsBtn = document.getElementById('achievements-btn');
+            this.achievementsContent = document.getElementById('achievements-content');
+            this.achievementsBackBtn = document.getElementById('achievements-back-btn');
+            this.achievementResetBtn = document.getElementById('achievement-reset-btn');
+            this.achievementsTableBody = document.querySelector('#achievements-table tbody');
+            this.achievementPercent = document.getElementById('achievement-percent');
+            this.achievementTabs = document.querySelectorAll('.tab-btn');
+
             this.focusEffects = []; // Ver 4.4.8: 初期化漏れを復旧
             this.dropEffects = []; // Ver 4.4.7: 初期化漏れを復旧
+
+            // Achievement Stats
+            this.turnCount = 0; // Achievement: Speed Run / Endurance
+            this.turnCount = 0; // Achievement: Speed Run / Endurance
+            // Initialize Stats
+            this.achievementManager.startNewGame();
+
+            // Legacy history reference for compatibility (if needed by old code before full migration)
+            // We'll keep a minimal object or proxy if necessary, but ideally we use achievementManager.stats
+            this.history = {
+                // maxCellEnergy is unique as it's a peak value, not a counter. 
+                // We'll track it here for now or add a custom StatItem? 
+                // The plan didn't specify maxCellEnergy in StatItem, so let's keep it here.
+                maxCellEnergy: 0
+            };
 
             // リスナー
             this.helpBtn.addEventListener('click', () => this.showHelp());
@@ -174,6 +200,25 @@
             this.restartBtn.addEventListener('click', () => location.reload());
             this.helpCloseBtn.addEventListener('click', () => this.closeOverlay());
             this.helpBackBtn.addEventListener('click', () => this.showModeSelection());
+
+            // Achievement Event Listeners
+            this.achievementsBtn.addEventListener('click', () => this.showAchievements());
+            this.achievementsBackBtn.addEventListener('click', () => this.showModeSelection());
+            this.achievementResetBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to reset all achievements?')) {
+                    this.achievementManager.resetData();
+                    this.updateAchievementsUI();
+                }
+            });
+
+            this.achievementTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    this.achievementTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    this.updateAchievementsUI(tab.dataset.map);
+                    this.sound.playPlace();
+                });
+            });
 
             // 盤面覗き見機能 (Hold to View)
             const startPeek = (e) => {
@@ -225,10 +270,10 @@
                     }
                 }
             };
-            this.canvas.addEventListener('touchstart', () => { this.isTouchDevice = true; }, { passive: true });
             this.canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
 
-            this.init();
+            this.loadSettings(); // 設定の読み込み
+            this.init(); // Add: Start animation loop
         }
 
         showHelp() {
@@ -236,6 +281,7 @@
             this.overlay.classList.remove('hidden');
             this.helpContent.classList.remove('hidden');
             this.modeSelection.classList.add('hidden');
+            this.achievementsContent.classList.add('hidden');
             this.gameOverContent.classList.add('hidden');
             this.peekBoardBtn.classList.add('hidden');
 
@@ -253,6 +299,7 @@
             this.overlay.classList.remove('hidden');
             this.modeSelection.classList.remove('hidden');
             this.helpContent.classList.add('hidden');
+            this.achievementsContent.classList.add('hidden');
             this.gameOverContent.classList.add('hidden');
         }
 
@@ -263,6 +310,8 @@
             const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value; // 'easy', 'normal', 'hard'
 
             this.gameMode = mode;
+            this.saveSettings(); // 設定の保存 (Ver 4.5.3)
+
             this.map = new HexMap(4, size); // マップ再生成
             if (mode === 'pvc') {
                 this.ai = new BurstCascade.AI(2, aiLevel);
@@ -270,10 +319,177 @@
             }
             this.resize(); // レイアウト再計算
 
+            // Reset Achievement Stats
+            this.turnCount = 1; // Start at Turn 1
+            this.winner = undefined;
+
+            // Initialize Range Stats with initial map state (Ver 5.1.0)
+            const initialGridCounts = {
+                1: this.map.mainHexes.filter(h => h.owner === 1).length,
+                2: this.map.mainHexes.filter(h => h.owner === 2).length
+            };
+            const initialCoreCounts = {
+                1: this.map.mainHexes.filter(h => h.owner === 1 && h.hasFlag).length,
+                2: this.map.mainHexes.filter(h => h.owner === 2 && h.hasFlag).length
+            };
+            this.achievementManager.startNewGame(initialGridCounts, initialCoreCounts);
+
+            // Legacy history reference for compatibility
+            this.history = {
+                // maxCellEnergy is unique as it's a peak value, not a counter. 
+                maxCellEnergy: 0
+            };
+
+            this.currentPlayer = 1;
+            this.gameOver = false;
+            this.isProcessingMove = false;
+            this.pendingRewards = [];
+            this.dropEffects = [];
+            this.effects = [];
+
+            this.resetTurnStats(); // ターン開始時の統計リセット
+            this.dropEffects = [];
+            this.effects = [];
+
             this.closeOverlay();
             // ゲーム開始
             console.log(`Game started in ${mode} mode with ${size} map.`);
             this.render(); // 初回描画
+        }
+
+        showAchievements() {
+            this.overlay.classList.remove('hidden');
+            this.achievementsContent.classList.remove('hidden');
+            this.modeSelection.classList.add('hidden');
+            this.helpContent.classList.add('hidden');
+            this.gameOverContent.classList.add('hidden');
+
+            // 現在の設定（マップサイズ）をデフォルトとして表示
+            const currentSize = this.sizeSelect.querySelector('.selected').dataset.value;
+
+            // タブのactive状態を更新
+            this.achievementTabs.forEach(tab => {
+                if (tab.dataset.map === currentSize) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            this.updateAchievementsUI(currentSize);
+        }
+
+        // --- Settings Persistence (Ver 4.5.3) ---
+        applySetting(groupId, value) {
+            const group = document.getElementById(groupId);
+            if (!group) return;
+            const btns = group.querySelectorAll('.toggle-btn');
+            btns.forEach(btn => {
+                if (btn.dataset.value === value) {
+                    btn.classList.add('selected');
+                } else {
+                    btn.classList.remove('selected');
+                }
+            });
+        }
+
+        saveSettings() {
+            const settings = {
+                mode: this.playerSelect.querySelector('.selected').dataset.value,
+                size: this.sizeSelect.querySelector('.selected').dataset.value,
+                aiLevel: this.aiLevelSelect.querySelector('.selected').dataset.value
+            };
+            localStorage.setItem('burst-cascade-settings', JSON.stringify(settings));
+        }
+
+        loadSettings() {
+            const saved = localStorage.getItem('burst-cascade-settings');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    if (settings.mode) this.applySetting('player-select', settings.mode);
+                    if (settings.size) this.applySetting('size-select', settings.size);
+                    if (settings.aiLevel) this.applySetting('ai-level-select', settings.aiLevel);
+
+                    // AIレベルグループの表示制御
+                    if (settings.mode === 'pvc') {
+                        this.aiLevelGroup.classList.remove('hidden');
+                    } else {
+                        this.aiLevelGroup.classList.add('hidden');
+                    }
+                } catch (e) {
+                    console.error("Failed to load settings:", e);
+                }
+            }
+        }
+
+        updateAchievementsUI(mapType = 'regular') {
+            // Get active tab if mapType is not specified (e.g. initial open)
+            if (!mapType) {
+                const activeTab = document.querySelector('.tab-btn.active');
+                mapType = activeTab ? activeTab.dataset.map : 'regular';
+            }
+
+            const data = this.achievementManager.getRevealedList(mapType);
+            this.achievementsTableBody.innerHTML = '';
+
+            let totalEarned = 0;
+            let totalCount = 0;
+
+            const createMedal = (earned) => {
+                return earned ? '<span class="medal-earned">🏅</span>' : '<span class="medal-locked">●</span>';
+            };
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+
+                // Achievement Title Cell
+                const tdTitle = document.createElement('td');
+                tdTitle.className = 'ach-title-cell';
+
+                if (item.isRevealed) {
+                    const description = item.isHint ? '？？？' : item.description;
+                    tdTitle.innerHTML = `<span class="ach-name">${item.title}</span><span class="ach-desc">${description}</span>`;
+                    if (item.isHint) {
+                        tdTitle.classList.add('ach-hint');
+                    }
+                } else {
+                    tdTitle.innerHTML = `<span class="ach-name">???</span><span class="ach-desc">???</span>`;
+                    tdTitle.classList.add('ach-locked');
+                }
+                tr.appendChild(tdTitle);
+
+                // Easy
+                const tdEasy = document.createElement('td');
+                tdEasy.className = 'medal-cell';
+                tdEasy.innerHTML = createMedal(item.earned.easy);
+                tr.appendChild(tdEasy);
+
+                // Normal
+                const tdNormal = document.createElement('td');
+                tdNormal.className = 'medal-cell';
+                tdNormal.innerHTML = createMedal(item.earned.normal);
+                tr.appendChild(tdNormal);
+
+                // Hard
+                const tdHard = document.createElement('td');
+                tdHard.className = 'medal-cell';
+                tdHard.innerHTML = createMedal(item.earned.hard);
+                tr.appendChild(tdHard);
+
+                this.achievementsTableBody.appendChild(tr);
+
+                // Calculate progress for current map type (all diffs combined)
+                // Actually user requested "Difficulty x Map", so we track all.
+                // Let's just count total checkboxes for this map.
+                if (item.earned.easy) totalEarned++;
+                if (item.earned.normal) totalEarned++;
+                if (item.earned.hard) totalEarned++;
+                totalCount += 3;
+            });
+
+            const percent = Math.floor((totalEarned / totalCount) * 100);
+            this.achievementPercent.textContent = `${percent}%`;
         }
 
         getVictoryType(winner) {
@@ -368,10 +584,16 @@
             const candidates = messages[type] || messages['NORMAL'];
             const rawMessage = candidates[Math.floor(Math.random() * candidates.length)];
 
-            return rawMessage.replace(/\{W\}/g, winnerName).replace(/\{L\}/g, loserName);
+            return {
+                title: winner === 0 ? `DRAW - RESONANCE VOID` : `PLAYER ${winner} VICTORY!`,
+                subtitle: rawMessage.replace(/\{W\}/g, winnerName).replace(/\{L\}/g, loserName)
+            };
         }
 
         showGameOver(winner) {
+            console.log(`[Game Over] Game finished in ${this.turnCount} turns. Winner: Player ${winner}`);
+            this.winner = winner; // Ver 4.7.1: 実績判定用に勝者を記録
+            this.updateHistoryStats(); // ゲーム終了直前の状態を統計に反映
             this.gameOver = true;
             this.overlay.classList.remove('hidden');
             this.gameOverContent.classList.remove('hidden');
@@ -381,26 +603,66 @@
             const winnerText = document.getElementById('winner-text');
             const p = this.gameOverContent.querySelector('p');
 
+            const victoryType = this.getVictoryType(winner);
+            const message = this.getVictoryMessage(victoryType, winner);
+
+            winnerText.textContent = message.title;
+            if (p) p.innerHTML = message.subtitle;
+
+            // Set background based on winner
             if (winner === 0) {
-                winnerText.innerText = `DRAW - 共鳴の消失`;
                 winnerText.style.background = 'linear-gradient(135deg, #cbd5e1, #94a3b8)';
-                if (p) p.innerText = this.getVictoryMessage('DRAW', 0);
             } else {
-                winnerText.innerText = `Player ${winner} の勝利！`;
                 winnerText.style.background = winner === 1 ?
                     'linear-gradient(135deg, #4ade80, #16a34a)' :
                     'linear-gradient(135deg, #f87171, #dc2626)';
+            }
 
-                if (p) {
-                    const type = this.getVictoryType(winner);
-                    p.innerText = this.getVictoryMessage(type, winner);
-                    console.log(`[GameOver] Winner: P${winner}, Type: ${type}`);
+            // Check Achievements
+            if (this.gameMode === 'pvc') {
+                const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value;
+                const mapType = this.sizeSelect.querySelector('.selected').dataset.value;
+
+                // Pass legacy history for maxCellEnergy compatibility if not migrated to stats yet
+                // But we should use the new stats structure within checkAchievements.
+                // maxCellEnergy is not yet in stats, so we might need to track it separately or add to stats.
+                // Plan said "maxCellEnergy: 瞬間最大風速的な記録". It's not a counter.
+                const legacyHistory = { maxCellEnergy: this.history.maxCellEnergy || 0 };
+
+                const unlocked = this.achievementManager.checkAchievements(this, mapType, aiLevel, legacyHistory);
+                if (unlocked.length > 0) {
+                    // Show notification (simple alert or toast for now, or append to game over msg)
+                    // Let's add simple visual cue in game over screen?
+                    const p = document.createElement('p');
+                    p.style.color = '#fbbf24';
+                    p.style.fontWeight = 'bold';
+                    p.innerHTML = `🏆 ACHIEVEMENT UNLOCKED!<br><span style="font-size:0.8em">${unlocked.map(u => u.title).join(', ')}</span>`;
+                    document.querySelector('#game-over-content').appendChild(p);
                 }
             }
 
             winnerText.style.webkitBackgroundClip = 'text';
             winnerText.style.webkitTextFillColor = 'transparent';
         }
+
+        updateHistoryStats() {
+            if (!this.map) return;
+            // Most stats are now updated in real-time via Atomic Stats (StatItem.add).
+
+            // Update range-based stats one last time
+            this._updateRangeStats();
+
+            // Check Max Cell Energy (High Voltage) as a fallback
+            this.map.mainHexes.forEach(h => {
+                const absH = Math.abs(h.height);
+                if (absH > (this.history.maxCellEnergy || 0)) {
+                    this.history.maxCellEnergy = absH;
+                    this.achievementManager.stats[this.currentPlayer].maxCellEnergy.update(absH);
+                }
+            });
+        }
+
+
 
 
         closeOverlay() {
@@ -706,6 +968,32 @@
         triggerChainAnim(player, type) {
             // 到着に合わせてアニメーションを開始
             this.chainAnims[player][type] = 1.0;
+
+            // 連鎖カウンターの更新
+            if (this.chains[player].self > this.history.maxChain) this.history.maxChain = this.chains[player].self;
+            // バースト数の更新 (ターン内の最大バースト数)
+            // Note: chains store current chain count. 
+            // Need to track bursts per turn separately if 'burst_lover' means "5 bursts in one turn".
+            // The current logic doesn't explicitly count "bursts per turn" in a simple property, 
+            // but we can infer from chain logic or add a counter.
+            // For now, let's use chain steps as proxy or add 'turnBurstCount' reset every turn.
+
+            if (this.turnBurstCount === undefined) this.turnBurstCount = 0; // Should be initialized at turn start
+            this.turnBurstCount++;
+            if (this.turnBurstCount > this.history.maxBurst) this.history.maxBurst = this.turnBurstCount;
+
+            // Enemy Core Damage Logic Check (One Shot)
+            // If cores changed, calculate diff.
+            // But core updates happen in `processTurn` -> `map.cores` update.
+            // We need to track it there.
+
+            // Check for High Voltage (Max Cell Energy)
+            for (const id in this.map.cells) {
+                const cell = this.map.cells[id];
+                if (Math.abs(cell.value) > this.history.maxCellEnergy) {
+                    this.history.maxCellEnergy = Math.abs(cell.value);
+                }
+            }
         }
 
         handleMouseMove(e) {
@@ -785,6 +1073,10 @@
 
                 this.sound.playPlace();
                 console.log(`[Turn] Player ${this.currentPlayer} triggers drop sequence at q:${hex.q},r:${hex.r}`);
+
+                // Atomic Stats: Action Count
+                this.achievementManager.stats[this.currentPlayer].actions.add(1);
+
                 this.triggerDropSequence(hex);
             }
         }
@@ -800,9 +1092,19 @@
             this.isProcessingMove = true;
             this.lastMoveHex = null;
             this.isWaitingForDrop = true;
+            // ターン開始時のリセット（アクション単位のリセット）
             this.turnHadBurst = false;
             this.turnHadReward = false;
-            this.turnHadSelfReward = false;
+            this.turnHadSelfReward = false; // Ver 4.4.17
+
+            // Update Turn Action Count
+            this.turnActionCount = (this.turnActionCount || 0) + 1;
+
+            // Atomic Stats: Start New Action Scope
+            this.achievementManager.startNewAction();
+
+            this.currentActionWaveCount = 0; // 旧 turnChainCount (Wave数)
+            this.turnStartOwners = new Map(this.map.mainHexes.map(h => [`${h.q},${h.r}`, h.owner])); // NEW: 注入前の所有者記録
             this.dropEffects = [];
 
             const handZoneId = `hand-p${this.currentPlayer}`;
@@ -917,7 +1219,13 @@
                 // フラッグ消失チェック
                 if (hex.hasFlag) {
                     if (hex.owner === 0 || hex.owner !== hex.flagOwner) {
+                        const flagOwner = hex.flagOwner;
                         hex.hasFlag = false;
+
+                        // Atomic Stats: Neutralize via injection (Ver 5.2.1)
+                        const stats = this.achievementManager.stats[this.currentPlayer];
+                        stats.neutralized[flagOwner].add(1);
+                        stats.neutralized.both.add(1);
                     }
                 }
 
@@ -959,6 +1267,41 @@
 
             // 非同期にバーストを発生させる
             console.log(`[Turn Log] Burst(s) detected. Count: ${overflowedHexes.length}`);
+
+            // High Voltage Check: バースト直前の最大エネルギーを記録
+            overflowedHexes.forEach(h => {
+                const energy = Math.abs(h.height);
+                if (energy > this.history.maxCellEnergy) {
+                    this.history.maxCellEnergy = energy;
+                }
+
+                // Atomic Stats: Neutralize (Core only)
+                if (h.hasFlag) {
+                    const stats = this.achievementManager.stats[this.currentPlayer];
+                    stats.neutralized[h.flagOwner].add(1);
+                    stats.neutralized.both.add(1);
+                }
+            });
+
+            // Double/Grand Sabotage: 1回目の非同期処理（注入直後）に限定してバーストをカウント
+            if (this.currentActionWaveCount === 0) {
+                // Double Sabotage: 敵陣 (Enemy Only)
+                const enemyId = this.currentPlayer === 1 ? 2 : 1;
+                const enemyBurstCount = overflowedHexes.filter(h => {
+                    const prevOwner = this.turnStartOwners.get(`${h.q},${h.r}`);
+                    return prevOwner === enemyId;
+                }).length;
+                if (enemyBurstCount > this.history.maxEnemyBurstDirect) {
+                    this.history.maxEnemyBurstDirect = enemyBurstCount;
+                }
+
+                // Grand Sabotage: 合計 (Total) - 連鎖の起点となる爆発数
+                const totalDirectBurst = overflowedHexes.length;
+                if (totalDirectBurst > this.history.maxDirectBurst) {
+                    this.history.maxDirectBurst = totalDirectBurst;
+                }
+            }
+
             overflowedHexes.forEach((hex, i) => {
                 const originalOwner = hex.owner;
                 const delay = i * 150; // 少しずつずらす
@@ -967,6 +1310,8 @@
                     this.triggerBurst(hex, originalOwner);
                 }, delay);
             });
+
+            this.currentActionWaveCount = (this.currentActionWaveCount || 0) + 1; // 連鎖数（Wave）を加算
 
             // 全バーストの終了を待つための大まかなタイマー（またはエフェクト監視）
             const totalDelay = overflowedHexes.length * 150 + 600;
@@ -997,8 +1342,7 @@
 
             const targetType = isEnemyOverflow ? 'enemy' : 'self';
             const threshold = isEnemyOverflow ? 2 : 4;
-            const currentIdx = this.chains[this.currentPlayer][targetType];
-            const targetIdx = currentIdx % threshold;
+            const targetIdx = this.chains[this.currentPlayer][targetType];
             const targetDotKey = `${this.currentPlayer}-${targetType}-${targetIdx}`;
 
             let reward = null;
@@ -1019,6 +1363,18 @@
 
             // 視覚演出のトリガー
             this.turnHadBurst = true; // バースト発生を記録
+            this.turnBurstCount = (this.turnBurstCount || 0) + 1; // Achievement: Burst Lover
+
+            // Atomic Stats: Burst Count (v5 Px Array)
+            const stats = this.achievementManager.stats[this.currentPlayer];
+            if (hex.hasFlag) {
+                stats.burstCore[originalOwner].add(1);
+                stats.burstCore.both.add(1);
+            } else {
+                stats.burstGrid[originalOwner].add(1);
+                stats.burstGrid.both.add(1);
+            }
+
             this.sound.playBurst();
             this.addParticles(center.x, center.y, color, isEnemyOverflow, targetDotKey, null, reward);
         }
@@ -1092,7 +1448,8 @@
         }
 
 
-        queueReward(player, type) {
+        // Helper to track core damage/gain
+        queueReward(player, type) { // Method restored
             this.sound.playReward();
             console.log(`[Reward] queueReward: player=${player}, type=${type}`);
             let color = player === 1 ? '#4ade80' : '#f87171';
@@ -1101,9 +1458,16 @@
                 arrivedCount: 0
             };
             this.turnHadReward = true; // 成果があったことを記録
+
+            // Atomic Stats: Reward (v5 Px Array)
+            const stats = this.achievementManager.stats[this.currentPlayer];
             if (type === 'self') {
                 this.turnHadSelfReward = true; // 自陣報酬フラグ (Ver 4.4.17)
+                stats.rewardEnergy.add(1);
+            } else if (type === 'enemy') {
+                stats.rewardCore.add(1);
             }
+
             this.pendingRewards.push(reward);
             return reward;
         }
@@ -1126,10 +1490,24 @@
             if (this.turnEndRequested) {
                 console.log(`[Turn Log] --- Executing Swap: P${this.currentPlayer} -> P${this.currentPlayer === 1 ? 2 : 1} ---`);
                 this.turnEndRequested = false;
-                this.isProcessingMove = false;
+
+                // Range Stats 更新 (Ver 5.1.0)
+                this._updateRangeStats();
 
                 this.chains[this.currentPlayer].self = 0;
-                this.currentPlayer = (this.currentPlayer === 1 ? 2 : 1);
+                // 手番プレイヤーの切り替え
+                const nextPlayer = (this.currentPlayer === 1 ? 2 : 1);
+                this.currentPlayer = nextPlayer;
+                this.isProcessingMove = false;
+                this.turnCount++;
+
+                // Atomic Stats: Start New Turn Scope
+                this.achievementManager.startNewTurn();
+
+                // 次のプレイヤーのターン統計をリセット
+                this.resetTurnStats();
+
+                // CPUの手番ならAIを実行
                 this.sound.playTurnChange();
 
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
@@ -1143,6 +1521,13 @@
                     setTimeout(() => this.handleCPUTurn(), 400); // 継続手番でもAIを叩く
                 }
             }
+        }
+
+        resetTurnStats() {
+            this.turnActionCount = 0; // アクション回数
+            this.turnBurstCount = 0; // ターン合計バースト数
+            this.turnStartCores = { ...this.map.cores }; // Achievement: One Shot / Unscathed / Status Quo
+            this.turnStartEnergy = { 1: this.map.players[1].energy, 2: this.map.players[2].energy }; // Achievement: Minimalist
         }
 
         triggerRewardFlow(reward, dotPos) {
@@ -1196,13 +1581,6 @@
                 reward.targetHex.height += (reward.player === 1 ? 1 : -1);
                 reward.targetHex.height = Math.max(-5, Math.min(5, reward.targetHex.height));
                 reward.targetHex.updateOwner(); // オーナー更新
-
-                // フラッグ消失チェック (Ver 4.4.13)
-                if (reward.targetHex.hasFlag) {
-                    if (reward.targetHex.owner === 0 || reward.targetHex.owner !== reward.targetHex.flagOwner) {
-                        reward.targetHex.hasFlag = false;
-                    }
-                }
 
                 // バンプ（跳ね上げ）演出: 現在の視覚的な高さに勢いをつける
                 const bumpAmt = (reward.player === 1 ? 2.0 : -2.0);
@@ -1828,7 +2206,44 @@
                 updates: updates // 遅延更新用データ
             });
         }
+
+        /**
+         * 最小値・最大値統計を更新する (Ver 5.1.0)
+         */
+        _updateRangeStats() {
+            const mainHexes = this.map.mainHexes.filter(h => !h.isDisabled);
+
+            const g1 = mainHexes.filter(h => h.owner === 1).length;
+            const g2 = mainHexes.filter(h => h.owner === 2).length;
+            const c1 = mainHexes.filter(h => h.owner === 1 && h.isCore).length;
+            const c2 = mainHexes.filter(h => h.owner === 2 && h.isCore).length;
+
+            const s1 = this.achievementManager.stats[1];
+            const s2 = this.achievementManager.stats[2];
+
+            s1.gridCount.update(g1);
+            s1.gridDiff.update(g1 - g2);
+            s1.coreCount.update(c1);
+            s1.coreDiff.update(c1 - c2);
+
+            s2.gridCount.update(g2);
+            s2.gridDiff.update(g2 - g1);
+            s2.coreCount.update(c2);
+            s2.coreDiff.update(c2 - c1);
+
+            // maxCellEnergy の更新
+            const mainEnergyHexes = mainHexes.filter(h => h.energy !== undefined);
+            const maxEnergy = mainEnergyHexes.length > 0 ? Math.max(...mainEnergyHexes.map(h => h.energy)) : 0;
+            s1.maxCellEnergy.update(maxEnergy);
+            s2.maxCellEnergy.update(maxEnergy);
+
+            // Legacy compatibility
+            if (maxEnergy > this.history.maxCellEnergy) {
+                this.history.maxCellEnergy = maxEnergy;
+            }
+        }
     }
 
+    window.BurstCascade.Game = Game;
     window.game = new Game();
 })();

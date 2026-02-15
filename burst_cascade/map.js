@@ -63,6 +63,19 @@
                 this.performHandUpdate('hand-p1', 'random');
                 this.performHandUpdate('hand-p2', 'random');
             }
+
+            // Achievement & Stats tracking support
+            this.players = {
+                1: { energy: 0 },
+                2: { energy: 0 }
+            };
+        }
+
+        get cores() {
+            return {
+                1: this.mainHexes.filter(h => h.hasFlag && h.flagOwner === 1).length,
+                2: this.mainHexes.filter(h => h.hasFlag && h.flagOwner === 2).length
+            };
         }
 
         clone() {
@@ -220,10 +233,14 @@
         applyHandUpdate(updates) {
             updates.forEach(u => {
                 u.hex.height += u.heightChange;
+                u.hex.visualHeight = u.hex.height; // 初期化や即時反映用
                 // オーナーの更新
                 if (u.hex.height > 0) u.hex.owner = 1;
                 else if (u.hex.height < 0) u.hex.owner = 2;
                 else u.hex.owner = 0;
+
+                // フラッグとの整合性 (hasFlagかつオーナー不一致なら消える、等の基本ロジック)
+                // ただし手札ではフラッグは基本扱わない
             });
         }
 

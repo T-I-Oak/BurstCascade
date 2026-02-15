@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
     <link rel="stylesheet" href="burst_cascade/style.css">
+    <link rel="stylesheet" href="burst_cascade/achievement_style.css">
 </head>
 
 <body>
@@ -60,6 +61,7 @@
                             </div>
                         </div>
                         <button id="game-start-btn" class="menu-btn primary large">GAME START</button>
+                        <button id="achievements-btn" class="menu-btn secondary">ACHIEVEMENTS</button>
                     </div>
                     <div class="menu-footer">
                         <span id="start-help-btn" class="footer-link">HOW TO PLAY</span>
@@ -95,15 +97,24 @@
                         <div style="clear: both;"></div>
                         <section class="help-section">
                             <h3>システム・ルール</h3>
+                            <p>このゲームは、<strong>「ターン」</strong>という単位で進行します。1つのターンは以下のフェーズのサイクルで構成されます。</p>
+                            <ul class="help-list" style="margin-bottom: 20px;">
+                                <li><strong>エネルギー注入フェーズ</strong>: エネルギー注入のアクションを行う段階です。</li>
+                                <li><strong>供給エネルギー再構築フェーズ</strong>: アクションの結果を受け、供給エネルギーが変化する段階です。</li>
+                                <li><strong>ターン継続チェックフェーズ</strong>: 次のターンに進むか、このターンのままアクションを続けるかを判定する段階です。</li>
+                            </ul>
+
                             <div class="rule-item">
                                 <div class="tutorial-float-right">
                                     <canvas id="help-inject-canvas" class="tutorial-canvas" width="120"
                                         height="120"></canvas>
                                     <p class="tutorial-caption">エネルギー注入</p>
                                 </div>
-                                <h4>エネルギー注入プロセス</h4>
-                                <p>ターン開始時、マップ中の自勢力のグリッドを選択して供給エネルギーを注入するプロセスです。</p>
+                                <h4>1. エネルギー注入フェーズ</h4>
+                                <p>自勢力のグリッドを選択してエネルギーを注入する<strong>アクション</strong>を行います。この結果により、爆発（Burst）や共鳴（Resonance）が発生します。
+                                </p>
                             </div>
+
                             <div class="rule-item">
                                 <div class="tutorial-float-right">
                                     <canvas id="help-overload-canvas" class="tutorial-canvas" width="120"
@@ -111,63 +122,92 @@
                                     <p class="tutorial-caption">爆発（Burst）</p>
                                 </div>
                                 <h4>爆発（Burst）</h4>
-                                <p>エネルギー注入によってグリッドのポテンシャルが限界（エネルギー値9）を超えたときに発生します。</p>
+                                <p>アクションによって注入されたエネルギーが限界（エネルギー値9）を超えたときに発生します。</p>
                                 <ul class="help-list">
                                     <li>蓄積されたエネルギーを放出し、グリッドは<strong>基底状態</strong>（0）へ戻ります。</li>
-                                    <li>この時、そのグリッドに配置されていた共鳴中枢（Core）は<strong>無効化</strong>されます。</li>
+                                    <li>そのグリッドに配置されていた共鳴中枢（Core）は<strong>無効化</strong>されます。</li>
                                 </ul>
                             </div>
+
                             <div class="rule-item">
                                 <h4>共鳴（Resonance）</h4>
-                                <p>爆発（Burst）の発生に応じて得られる報酬です。</p>
+                                <p>爆発（Burst）の発生回数に応じて発動する効果です。</p>
                                 <ul class="help-list">
                                     <li><strong>供給エネルギー強化</strong>:
-                                        1ターン内に自勢力の爆発（Burst）が4回発生すると、供給エネルギーがランダムに1エネルギー強化されます。このとき、アクティブプレイヤーが交代します。
+                                        1ターンの間に自勢力の爆発（Burst）が4回発生すると、供給エネルギーがランダムに1エネルギー強化されます。このとき、自動的に<strong>ターン終了</strong>となります。
                                     </li>
                                     <li><strong>共鳴中枢（Core）追加</strong>:
-                                        相手勢力の爆発（Burst）を通算で2回発生させるたびに、共鳴中枢（Core）がランダムに1つ増えます。</li>
+                                        相手勢力の爆発（Burst）を通算2回発生させるたびに、共鳴中枢（Core）がランダムに1つ増えます。</li>
                                 </ul>
                             </div>
+
                             <div class="rule-item">
                                 <div class="tutorial-float-right">
                                     <canvas id="help-reconstruct-canvas" class="tutorial-canvas" width="120"
                                         height="120"></canvas>
                                     <p class="tutorial-caption">供給エネルギー再構築</p>
                                 </div>
-                                <h4>供給エネルギーの再構築</h4>
-                                <p>エネルギー注入後、7つの供給エネルギーのうちランダムな2つが選ばれ、再構築されます（±1 ずつ変化）。</p>
+                                <h4>2. 供給エネルギー再構築フェーズ</h4>
+                                <p>アクション終了後、7つの供給エネルギーのうちランダムな2つが選ばれ、再構築されます（±1 ずつ変化）。</p>
                                 <ul class="help-list">
-                                    <li><strong>爆発（Burst）未発生時 → 集束（Focus）</strong>:
-                                        <br>エネルギー差が開くように移動します。<br>
-                                        <small>（例: 2と4 → 1と5）</small>
+                                    <li><strong>爆発未発生時 → 集束（Focus）</strong>: エネルギー差が開くように移動します。
+                                        <br><small>（例: 2と4 → 1と5）</small>
                                     </li>
-                                    <li><strong>爆発（Burst）発生時 → 拡散（Diffuse）</strong>:
-                                        <br>エネルギー差が縮まるように移動します。<br>
-                                        <small>（例: 1と5 → 2と4）</small>
+                                    <li><strong>爆発発生時 → 拡散（Diffuse）</strong>: エネルギー差が縮まるように移動します。
+                                        <br><small>（例: 1と5 → 2と4）</small>
                                     </li>
                                 </ul>
                             </div>
                         </section>
 
                         <section class="help-section">
-                            <h3>ターンの終了と継続</h3>
-                            <p>行動の結果、次のターンの<strong>アクティブプレイヤー</strong>が決まります。</p>
+                            <h4>3. ターン継続チェックフェーズ</h4>
+                            <p>爆発や共鳴の結果に応じて、次のターンに進むか、エネルギー注入フェーズに戻るかが確定します。</p>
                             <ul class="help-list">
-                                <li><strong>停滞 (Stagnation)</strong>: <br>
-                                    爆発（Burst）が発生しなかった場合。<br>
-                                    → <strong>交代</strong>（相手がアクティブプレイヤーになります）</li>
-                                <li><strong>飽和 (Saturation)</strong>: <br>
-                                    供給エネルギー強化が発生した場合。<br>
-                                    → <strong>交代</strong>（相手がアクティブプレイヤーになります）</li>
-                                <li><strong>連鎖 (Cascade)</strong>: <br>
-                                    爆発（Burst）が発生し、かつ飽和に至らなかった場合。<br>
-                                    → <strong>継続</strong>（自分が引き続きアクティブプレイヤーとなります）</li>
+                                <li><strong>停滞 (Stagnation)</strong>: 爆発（Burst）が発生しなかった場合。<br>
+                                    → <strong>ターン終了（交代）</strong></li>
+                                <li><strong>飽和 (Saturation)</strong>: 共鳴（Resonance）により供給エネルギー強化が発生した場合。<br>
+                                    → <strong>ターン終了（交代）</strong></li>
+                                <li><strong>連鎖 (Cascade)</strong>: 爆発（Burst）が発生し、かつ飽和に至らなかった場合。<br>
+                                    → <strong>ターン継続（引き続き、エネルギー注入フェーズとしてアクションを行えます）</strong></li>
                             </ul>
                         </section>
 
                     </div>
-                    <button class="close-btn help-back-btn">タイトルに戻る</button>
-                    <button id="help-close-btn" class="close-btn hidden">閉じる</button>
+                    <button id="help-bottom-back-btn" class="close-btn help-back-btn">RETURN TO TITLE</button>
+                    <button id="help-close-btn" class="close-btn hidden">CLOSE</button>
+                </div>
+
+                <!-- 実績画面 (Ver 4.7.0) -->
+                <div id="achievements-content" class="modal-content hidden">
+                    <h2>ACHIEVEMENTS <span id="achievement-percent"
+                            style="font-size: 0.6em; margin-left: 10px;">0%</span></h2>
+
+                    <div class="tabs">
+                        <button class="tab-btn" data-map="mini">MINI</button>
+                        <button class="tab-btn active" data-map="regular">REGULAR</button>
+                    </div>
+
+                    <div class="achievements-scroll-container">
+                        <table id="achievements-table">
+                            <thead>
+                                <tr>
+                                    <th>ACHIEVEMENT</th>
+                                    <th>EASY</th>
+                                    <th>NORMAL</th>
+                                    <th>HARD</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- JSで動的に生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between;">
+                        <button id="achievement-reset-btn" class="debug-btn" style="opacity: 0.5;">DEBUG RESET</button>
+                        <button id="achievements-back-btn" class="close-btn">RETURN TO TITLE</button>
+                    </div>
                 </div>
 
                 <!-- ゲームオーバー -->
@@ -175,13 +215,13 @@
                     <h2 id="winner-text">Player 1 Wins!</h2>
                     <p>Dominance established.</p>
                     <div class="menu-options">
-                        <button id="restart-btn" class="menu-btn primary">TITLE SCREEN</button>
+                        <button id="restart-btn" class="menu-btn primary">RETURN TO TITLE</button>
                     </div>
                 </div>
             </div>
 
             <!-- 盤面覗き見ボタン (ホールドで非表示) -->
-            <button id="peek-board-btn" class="overlay-toggle-btn hidden">HOLD TO VIEW</button>
+            <button id="peek-board-btn" class="overlay-toggle-btn hidden">PEEK BOARD</button>
 
             <!-- CPU思考中オーバーレイ（回路アニメーション用） -->
             <div id="ai-thinking-overlay" class="hidden">
@@ -201,6 +241,7 @@
         </footer>
     </div>
     <script src="burst_cascade/map.js"></script>
+    <script src="burst_cascade/achievements.js"></script>
     <script src="burst_cascade/ai.js"></script>
     <script src="burst_cascade/main.js"></script>
     <script src="burst_cascade/tutorial.js"></script>

@@ -418,4 +418,7 @@
     window.addEventListener('load', () => {
         window.tutorialRenderer = new TutorialRenderer();
     });
+
+    window.BurstCascade = window.BurstCascade || {};
+    window.BurstCascade.TutorialRenderer = TutorialRenderer;
 })();

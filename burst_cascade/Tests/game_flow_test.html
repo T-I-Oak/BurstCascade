@@ -38,15 +38,27 @@
     <canvas id="game-canvas"></canvas>
     <div id="overlay">
         <div id="mode-selection-content">
-            <div id="player-select"><button class="toggle-btn selected" data-value="pvp">PVP</button></div>
-            <div id="size-select"><button class="toggle-btn selected" data-value="regular">REGULAR</button></div>
-            <div id="ai-level-select"><button class="toggle-btn selected" data-value="normal">NORMAL</button></div>
+            <div id="player-select">
+                <button class="toggle-btn selected" data-value="pvc">PVC</button>
+                <button class="toggle-btn" data-value="pvp">PVP</button>
+            </div>
+            <div id="size-select">
+                <button class="toggle-btn" data-value="mini">MINI</button>
+                <button class="toggle-btn selected" data-value="regular">REGULAR</button>
+            </div>
+            <div id="ai-level-select">
+                <button class="toggle-btn" data-value="easy">EASY</button>
+                <button class="toggle-btn selected" data-value="normal">NORMAL</button>
+                <button class="toggle-btn" data-value="hard">HARD</button>
+            </div>
             <div id="ai-level-group"></div>
             <button id="game-start-btn">START</button>
         </div>
         <div id="help-content" class="hidden"></div>
         <div id="game-over-content" class="hidden">
-            <h2 id="winner-text"></h2><button id="restart-btn"></button>
+            <h2 id="winner-text"></h2>
+            <p></p>
+            <button id="restart-btn"></button>
         </div>
     </div>
     <div id="status-container">
@@ -60,14 +72,25 @@
     <button class="help-back-btn"></button>
     <button id="peek-board-btn"></button>
     <div id="ai-thinking-overlay" class="hidden"></div>
+    <div id="achievements-btn"></div>
+    <div id="achievements-content"></div>
+    <div id="achievements-back-btn"></div>
+    <div id="achievement-reset-btn"></div>
+    <div id="achievement-percent"></div>
+    <table id="achievements-table">
+        <tbody></tbody>
+    </table>
+    <div class="tab-btn" data-map="mini"></div>
+    <div class="tab-btn" data-map="regular"></div>
 
     <div id="test-results"></div>
 
     <!-- スクリプトの読み込み -->
     <script src="../map.js"></script>
+    <script src="../achievements.js"></script>
     <script src="../ai.js"></script>
-    <!-- main.js は最後に読み込み、実行される -->
     <script src="../main.js"></script>
+    <script src="../tutorial.js"></script>
 
     <script>
         const results = document.getElementById('test-results');
