@@ -1,23 +1,15 @@
-const fs = require('fs');
-const path = require('path');
+// Load dependencies (Environment-aware)
+if (typeof require !== 'undefined') {
+    const fs = require('fs');
+    const path = require('path');
+    const files = ['map.js', 'ai.js'];
+    files.forEach(f => {
+        const code = fs.readFileSync(path.resolve(__dirname, '../../', f), 'utf8');
+        eval(code);
+    });
+}
 
-// Mock browser globals
-global.window = global;
-global.BurstCascade = {};
-global.document = {
-    getElementById: jest.fn(),
-    createElement: jest.fn(() => ({})),
-};
-global.console = console;
-
-// Load source files in order
-const files = ['map.js', 'ai.js'];
-files.forEach(f => {
-    const code = fs.readFileSync(path.resolve(__dirname, '../../', f), 'utf8');
-    eval(code);
-});
-
-const { HexMap, AI } = global.BurstCascade;
+const { HexMap, AI } = window.BurstCascade || global.BurstCascade || {};
 
 describe('Game Rules (AI Simulation)', () => {
     let ai;

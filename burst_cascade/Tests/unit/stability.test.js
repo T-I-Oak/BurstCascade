@@ -88,19 +88,25 @@ global.AudioContext = jest.fn().mockImplementation(() => ({
     decodeAudioData: jest.fn()
 }));
 
-// Load source files
-const files = ['map.js', 'achievements.js', 'ai.js', 'main.js'];
-files.forEach(f => {
-    const code = fs.readFileSync(path.resolve(__dirname, '../../', f), 'utf8');
-    try {
-        eval(code);
-    } catch (e) {
-        console.error(`Error loading ${f}:`, e);
-        throw e;
-    }
-});
+// Load dependencies (Environment-aware)
+if (typeof require !== 'undefined') {
+    const fs = require('fs');
+    const path = require('path');
 
-const { Game, AchievementManager, HexMap } = global.BurstCascade;
+    // Set up global mocks for Node
+    global.window = global;
+    global.BurstCascade = {};
+    global.console = console;
+
+    // Load source files
+    const files = ['map.js', 'achievements.js', 'ai.js', 'main.js'];
+    files.forEach(f => {
+        const code = fs.readFileSync(path.resolve(__dirname, '../../', f), 'utf8');
+        eval(code);
+    });
+}
+
+const { Game, AchievementManager, HexMap } = window.BurstCascade || global.BurstCascade || {};
 
 describe('System Stability (Game & Managers)', () => {
     let game;

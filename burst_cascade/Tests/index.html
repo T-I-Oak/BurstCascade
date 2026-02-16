@@ -398,14 +398,20 @@
     <script src="../achievements.js"></script>
     <script src="../ai.js"></script>
     <script src="../main.js"></script>
+    <script src="jest-browser-shim.js"></script>
 
     <script>
-        const TEST_CONFIGS = [
-            { id: 'stability', file: 'stability_test.js', title: 'System Stability', desc: '主要クラスの定義、プロパティの存在、初期化フローの整合性を検証します。' },
-            { id: 'rules', file: 'rules_test.js', title: 'Core Rules', desc: '爆発、報酬獲得、手番交代などのゲーム基本ルールをシミュレーションします。' },
-            { id: 'logic_v5', file: 'test_logic_v5.js', title: 'Logic Ver.5', desc: '31種の実績ロジック、セグメンテーション、統計リセットを詳細に検証します。' },
-            { id: 'achievements_v5', file: 'test_achievements_v5_2.js', title: 'Achievements v5.2', desc: '新実績（自殺勝利、連勝、総勝利数など）の永続化と解除条件を検証します。' },
-            { id: 'range_stats', file: 'test_range_stats_v5.js', title: 'Range Stats', desc: 'グリッド数やコア数の変動（最小・最大値トラッキング）の正確性を検証します。' },
+        const JEST_TESTS = [
+            { id: 'jest-achievements', file: 'unit/achievements.test.js', title: 'Jest: Achievement Manager' },
+            { id: 'jest-stats', file: 'unit/stats.test.js', title: 'Jest: Stat Items' },
+            { id: 'jest-rules', file: 'unit/rules.test.js', title: 'Jest: Game Rules' },
+            { id: 'jest-stability', file: 'unit/stability.test.js', title: 'Jest: System Stability' }
+        ];
+
+        const BROWSER_TESTS = [
+            { id: 'logic_v5', file: 'test_logic_v5.js', title: 'Achievement Logic v5', desc: '実績ロジック、セグメンテーション、統計リセットの検証。' },
+            { id: 'achievements_v5', file: 'test_achievements_v5_2.js', title: 'Achievements Integration', desc: '新実績（自殺勝利、連勝、総勝利数など）の永続化と解除条件を検証します。' },
+            { id: 'range_stats', file: 'test_range_stats_v5.js', title: 'Range Stats Integration', desc: 'グリッド数やコア数の変動（最小・最大値）の正確性を検証します。' },
             { id: 'burst_extra', file: 'test_burst_extra_move.js', title: 'Burst Continuity', desc: '敵陣でのバースト発生時に正しく手番が継続するかを重点的に確認します。' },
             { id: 'ai_diff', file: 'test_ai_difficulty.js', title: 'AI Difficulty', desc: '各難度(Easy/Normal/Hard)のAI探索深度と評価係数が正しく適用されているか確認します。' },
             { id: 'minimap', file: 'test_minimap.js', title: 'Minimap Logic', desc: 'MINIマップ特有の領域制限と無効化マスへの処理を検証します。' }
@@ -415,21 +421,40 @@
         const summaryText = document.getElementById('test-summary');
         const dashboard = document.getElementById('dashboard');
 
-        // Initialize Dashboard
-        TEST_CONFIGS.forEach(test => {
+        // Initialize Dashboard with Categories
+        function initDashboard() {
+            dashboard.innerHTML = '';
+
+            // Jest Category Header
+            addCategoryHeader('Jest Tests (Core Logic)');
+            JEST_TESTS.forEach(test => addTestCard(test, 'jest'));
+
+            // Browser Category Header
+            addCategoryHeader('Browser Specific Tests');
+            BROWSER_TESTS.forEach(test => addTestCard(test, 'browser'));
+        }
+
+        function addCategoryHeader(title) {
+            const header = document.createElement('div');
+            header.style.cssText = 'grid-column: 1 / -1; margin: 20px 0 10px 0; color: var(--accent-color); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid rgba(56, 189, 248, 0.2); padding-bottom: 8px;';
+            header.textContent = title;
+            dashboard.appendChild(header);
+        }
+
+        function addTestCard(test, type) {
             const card = document.createElement('div');
             card.className = 'test-card';
             card.id = `card-${test.id}`;
             card.innerHTML = `
                 <h3>${test.title}</h3>
-                <p>${test.desc}</p>
+                <p>${test.desc || test.file}</p>
                 <div class="card-footer">
                     <span class="status-badge" id="badge-${test.id}">Pending</span>
-                    <button class="btn btn-sm" style="padding: 6px 12px; font-size: 0.8rem;" onclick="runSingleTest('${test.id}')">Run</button>
+                    <button class="btn btn-sm" style="padding: 6px 12px; font-size: 0.8rem;" onclick="runSingleTest('${test.id}', '${type}')">Run</button>
                 </div>
             `;
             dashboard.appendChild(card);
-        });
+        }
 
         function log(msg, type = 'info') {
             const container = document.getElementById('console-container');
@@ -478,8 +503,8 @@
             });
         }
 
-        async function runSingleTest(id) {
-            const test = TEST_CONFIGS.find(t => t.id === id);
+        async function runSingleTest(id, type) {
+            const test = [...JEST_TESTS, ...BROWSER_TESTS].find(t => t.id === id);
             const card = document.getElementById(`card-${id}`);
             const badge = document.getElementById(`badge-${id}`);
 
@@ -488,8 +513,8 @@
             log(test.title.toUpperCase(), 'header');
 
             try {
-                // Pre-run setup for specific tests
-                if (test.file === 'stability_test.js' && !window.game) {
+                // Pre-run setup
+                if (!window.game && (id === 'jest-stability' || test.file === 'stability_test.js' || id === 'jest-rules')) {
                     window.game = new window.BurstCascade.Game();
                 }
 
@@ -497,11 +522,9 @@
                 if (old) old.remove();
                 await loadScript(test.file);
 
-                // Check for functions that need explicit calling
                 const functionMap = {
                     'stability_test.js': 'runStabilityTest',
-                    'test_burst_extra_move.js': 'runBurstExtraMoveTest',
-                    'test_achievements.js': 'runAchievementTest'
+                    'test_burst_extra_move.js': 'runBurstExtraMoveTest'
                 };
 
                 const fn = functionMap[test.file];
@@ -509,8 +532,6 @@
                     await window[fn]();
                 }
 
-                // Temporary logic to detect pass/fail from logs since tests are heterogeneous
-                // In a perfect world, they'd return a promise with results
                 card.className = 'test-card status-pass';
                 badge.textContent = 'Passed';
             } catch (e) {
@@ -522,22 +543,25 @@
 
         async function runAllTests() {
             clearLogs();
-            log('Starting Automated Test Suite', 'header');
+            log('Starting FULL Consolidated Test Suite', 'header');
 
-            let total = TEST_CONFIGS.length;
+            const allTests = [...JEST_TESTS, ...BROWSER_TESTS];
+            let total = allTests.length;
             let current = 0;
 
-            for (const test of TEST_CONFIGS) {
+            for (const test of allTests) {
+                const type = JEST_TESTS.includes(test) ? 'jest' : 'browser';
                 current++;
                 summaryText.textContent = `Running ${current} / ${total}...`;
-                await runSingleTest(test.id);
-                // Tiny delay for visual feedback
-                await new Promise(r => setTimeout(r, 300));
+                await runSingleTest(test.id, type);
+                await new Promise(r => setTimeout(r, 200));
             }
 
             summaryText.textContent = 'All Tests Completed';
             log('Sequence Finished', 'header');
         }
+
+        initDashboard();
     </script>
 </body>
 

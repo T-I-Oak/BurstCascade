@@ -1,23 +1,12 @@
-const fs = require('fs');
-const path = require('path');
+// Load dependencies (Environment-aware)
+if (typeof require !== 'undefined') {
+    const fs = require('fs');
+    const path = require('path');
+    const code = fs.readFileSync(path.resolve(__dirname, '../../achievements.js'), 'utf8');
+    eval(code);
+}
 
-// Mock localStorage
-global.localStorage = {
-    getItem: jest.fn(),
-    setItem: jest.fn(),
-    removeItem: jest.fn(),
-    clear: jest.fn()
-};
-
-// Mock window and BurstCascade namespace
-global.window = global;
-global.BurstCascade = {};
-
-// Load achievements.js
-const code = fs.readFileSync(path.resolve(__dirname, '../../achievements.js'), 'utf8');
-eval(code);
-
-const { StatItem, RangeStatItem } = global.BurstCascade;
+const { StatItem, RangeStatItem } = window.BurstCascade || global.BurstCascade || {};
 
 describe('StatItem', () => {
     let item;

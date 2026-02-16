@@ -1,28 +1,12 @@
-const fs = require('fs');
-const path = require('path');
+// Load dependencies (Environment-aware)
+if (typeof require !== 'undefined') {
+    const fs = require('fs');
+    const path = require('path');
+    const code = fs.readFileSync(path.resolve(__dirname, '../../achievements.js'), 'utf8');
+    eval(code);
+}
 
-// Setup localStorage mock correctly for JSDOM
-const storageMock = (() => {
-    let store = {};
-    return {
-        getItem: jest.fn(key => store[key] || null),
-        setItem: jest.fn((key, value) => { store[key] = value.toString(); }),
-        clear: jest.fn(() => { store = {}; }),
-        removeItem: jest.fn(key => { delete store[key]; }),
-    };
-})();
-
-Object.defineProperty(window, 'localStorage', { value: storageMock });
-
-// Mock window and BurstCascade namespace
-global.window = global;
-global.BurstCascade = {};
-
-// Load achievements.js
-const code = fs.readFileSync(path.resolve(__dirname, '../../achievements.js'), 'utf8');
-eval(code);
-
-const { AchievementManager } = global.BurstCascade;
+const { AchievementManager } = window.BurstCascade || global.BurstCascade || {};
 
 describe('AchievementManager', () => {
     let am;
