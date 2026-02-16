@@ -15,12 +15,15 @@
 
         console.log("Initial state: Hex(0,0) height 9 (force owned by P2)");
 
-        // P1の手札を準備 (高さ1の土地を降らせる)
+        // P1の手札を準備 (中心を確実に1にする)
         game.currentPlayer = 1;
-        game.map.performHandUpdate('hand-p1', 'focus');
+        const handZoneId = 'hand-p1';
+        const handOffset = game.map.offsets[handZoneId];
+        const centerHandHex = game.map.hexes.find(h => h.zone === handZoneId && h.q === handOffset.q && h.r === handOffset.r);
+        if (centerHandHex) centerHandHex.height = 1;
 
         // 2. ターゲットをクリックしてドロップを誘発
-        console.log("P1 playing at (0,0) to trigger enemy burst...");
+        console.log("P1 playing at (0,0) with hand height 1 to trigger enemy burst...");
         game.handleClick({ clientX: 0, clientY: 0, isSimulated: true, simulatedHex: targetHex });
 
         // 3. 演出完了を待つ
