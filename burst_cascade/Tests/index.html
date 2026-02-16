@@ -8,6 +8,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono&display=swap"
         rel="stylesheet">
     <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
         :root {
             --bg-color: #020617;
             --card-bg: #0f172a;
@@ -28,23 +34,26 @@
             color: var(--text-color);
             font-family: 'Outfit', sans-serif;
             margin: 0;
-            padding: 40px;
-            min-height: 100vh;
+            padding: 20px;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            overflow: hidden;
+            /* Prevent body-level scrolling */
+            box-sizing: border-box;
         }
 
         header {
-            text-align: center;
-            margin-bottom: 50px;
-            animation: fadeInDown 0.8s ease-out;
+            text-align: left;
+            margin-bottom: 24px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         h1 {
-            font-size: 2.5rem;
+            font-size: 1.8rem;
             font-weight: 600;
-            margin-bottom: 8px;
+            margin: 0 0 4px 0;
             letter-spacing: -0.02em;
             background: linear-gradient(135deg, #38bdf8, #818cf8, #c084fc);
             -webkit-background-clip: text;
@@ -53,15 +62,16 @@
         }
 
         .subtitle {
-            font-size: 1.1rem;
+            font-size: 0.9rem;
             opacity: 0.6;
             font-weight: 300;
         }
 
         .controls {
-            margin-bottom: 40px;
+            margin-bottom: 24px;
             display: flex;
-            gap: 16px;
+            flex-direction: column;
+            gap: 12px;
         }
 
         .btn {
@@ -69,14 +79,15 @@
             backdrop-filter: blur(8px);
             color: var(--text-color);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 14px 28px;
-            border-radius: 12px;
+            padding: 10px 20px;
+            border-radius: 10px;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 0.9rem;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
         }
 
@@ -94,8 +105,10 @@
         }
 
         .btn-primary:hover {
-            opacity: 0.9;
-            box-shadow: 0 10px 25px -5px rgba(56, 189, 248, 0.5);
+            background: linear-gradient(135deg, #7dd3fc, #a5b4fc);
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px -5px rgba(56, 189, 248, 0.6);
+            opacity: 1;
         }
 
         .main-layout {
@@ -104,15 +117,59 @@
             width: 100%;
             max-width: 1400px;
             margin: 0 auto;
-            align-items: flex-start;
+            flex: 1;
+            min-height: 0;
+            align-items: stretch;
         }
 
         .dashboard {
             flex: 0 0 380px;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.3);
+            /* Subtle background to define the area */
+            border-radius: var(--border-radius);
+            padding: 24px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            animation: fadeInUp 0.8s ease-out;
+            min-height: 0;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #dashboard {
+            flex: 1;
+            overflow-y: auto;
             display: grid;
             grid-template-columns: 1fr;
             gap: 16px;
-            animation: fadeInUp 0.8s ease-out;
+            padding-right: 12px;
+            margin-right: -12px;
+            /* Pull scrollbar to the edge */
+            padding-bottom: 20px;
+        }
+
+        /* Custom Scrollbar for a premium look */
+        #dashboard::-webkit-scrollbar,
+        #console-output::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        #dashboard::-webkit-scrollbar-track,
+        #console-output::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        #dashboard::-webkit-scrollbar-thumb,
+        #console-output::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        #dashboard::-webkit-scrollbar-thumb:hover,
+        #console-output::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
         }
 
         .test-card {
@@ -121,7 +178,6 @@
             border-radius: var(--border-radius);
             padding: 20px;
             position: relative;
-            overflow: hidden;
             transition: all 0.3s ease;
         }
 
@@ -199,12 +255,10 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
             overflow: hidden;
             box-shadow: 0 20px 50px -20px rgba(0, 0, 0, 0.5);
-            position: sticky;
-            top: 40px;
             display: flex;
             flex-direction: column;
-            height: calc(100vh - 120px);
-            min-height: 500px;
+            height: 100%;
+            min-height: 0;
         }
 
         .console-header {
@@ -235,13 +289,18 @@
             }
 
             .dashboard {
+                position: static;
+                height: auto;
                 flex: none;
-                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                display: block;
             }
 
-            #console-container {
-                position: static;
-                height: 500px;
+            #dashboard {
+                overflow-y: visible;
+                height: auto;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                margin-right: 0;
+                padding-right: 0;
             }
         }
 
@@ -318,30 +377,46 @@
 
 <body>
 
-    <header>
-        <h1>BURST CASCADE</h1>
-        <div class="subtitle">Core Engine & Game Logic Test Suite</div>
-    </header>
-
-    <div class="controls">
-        <button id="run-all-btn" class="btn btn-primary" onclick="runAllTests()">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="5 3 19 12 5 21 5 3"></polygon>
-            </svg>
-            Run All Tests
-        </button>
-        <button class="btn" onclick="clearLogs()">Clear Console</button>
-    </div>
-
     <div class="main-layout">
-        <div class="dashboard" id="dashboard">
-            <!-- Cards will be generated here -->
+        <div class="dashboard" id="dashboard-column">
+            <header>
+                <h1>BURST CASCADE</h1>
+                <div class="subtitle">Test Suite Console</div>
+            </header>
+
+            <div class="controls">
+                <button id="run-all-btn" class="btn btn-primary" onclick="runAllTests()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                    Run All Tests
+                </button>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn" style="flex: 1;" onclick="clearLogs()">Clear</button>
+                    <button class="btn" style="flex: 1;" onclick="copyLogs()">Copy All</button>
+                    <button class="btn" style="flex: 1; border-color: rgba(239, 68, 68, 0.3);" onclick="copyErrors()">
+                        <span style="color: var(--error-color);">Errors</span>
+                    </button>
+                </div>
+            </div>
+
+            <div id="dashboard">
+                <!-- Cards will be generated here -->
+            </div>
         </div>
 
         <div id="console-container">
             <div class="console-header">
-                <span>TERMINAL OUTPUT</span>
-                <span id="test-summary">Ready</span>
+                <div>TERMINAL OUTPUT <span id="test-summary"
+                        style="margin-left: 10px; font-weight: normal; opacity: 0.7;">Ready</span></div>
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-sm"
+                        style="padding: 4px 8px; font-size: 0.7rem; background: rgba(255,255,255,0.05);"
+                        onclick="copyLogs()">Copy All</button>
+                    <button class="btn btn-sm"
+                        style="padding: 4px 8px; font-size: 0.7rem; background: rgba(239, 68, 68, 0.1); color: var(--error-color); border-color: rgba(239, 68, 68, 0.2);"
+                        onclick="copyErrors()">Copy Errors Only</button>
+                </div>
             </div>
             <div id="console-output"></div>
         </div>
@@ -398,38 +473,63 @@
     <script src="../achievements.js"></script>
     <script src="../ai.js"></script>
     <script src="../main.js"></script>
+    <script src="jest-browser-shim.js"></script>
 
     <script>
-        const TEST_CONFIGS = [
-            { id: 'stability', file: 'stability_test.js', title: 'System Stability', desc: '主要クラスの定義、プロパティの存在、初期化フローの整合性を検証します。' },
-            { id: 'rules', file: 'rules_test.js', title: 'Core Rules', desc: '爆発、報酬獲得、手番交代などのゲーム基本ルールをシミュレーションします。' },
-            { id: 'logic_v5', file: 'test_logic_v5.js', title: 'Logic Ver.5', desc: '31種の実績ロジック、セグメンテーション、統計リセットを詳細に検証します。' },
-            { id: 'achievements_v5', file: 'test_achievements_v5_2.js', title: 'Achievements v5.2', desc: '新実績（自殺勝利、連勝、総勝利数など）の永続化と解除条件を検証します。' },
-            { id: 'range_stats', file: 'test_range_stats_v5.js', title: 'Range Stats', desc: 'グリッド数やコア数の変動（最小・最大値トラッキング）の正確性を検証します。' },
-            { id: 'burst_extra', file: 'test_burst_extra_move.js', title: 'Burst Continuity', desc: '敵陣でのバースト発生時に正しく手番が継続するかを重点的に確認します。' },
-            { id: 'ai_diff', file: 'test_ai_difficulty.js', title: 'AI Difficulty', desc: '各難度(Easy/Normal/Hard)のAI探索深度と評価係数が正しく適用されているか確認します。' },
-            { id: 'minimap', file: 'test_minimap.js', title: 'Minimap Logic', desc: 'MINIマップ特有の領域制限と無効化マスへの処理を検証します。' }
+        const JEST_TESTS = [
+            { id: 'jest-achievements', file: 'unit/achievements.test.js', title: 'Jest: Achievement Manager' },
+            { id: 'jest-stats', file: 'unit/stats.test.js', title: 'Jest: Stat Items' },
+            { id: 'jest-rules', file: 'unit/rules.test.js', title: 'Jest: Game Rules' },
+            { id: 'jest-stability', file: 'unit/stability.test.js', title: 'Jest: System Stability' }
+        ];
+
+        const BROWSER_TESTS = [
+            { id: 'logic_v5', file: 'test_logic_v5.js', title: 'Achievement Logic v5', desc: '実績ロジック、セグメンテーション、統計リセットの検証。' },
+            { id: 'achievements_v5', file: 'test_achievements_v5_2.js', title: 'Achievements Integration', desc: '新実績（自殺勝利、連勝、総勝利数など）の永続化と解除条件。' },
+            { id: 'range_stats', file: 'test_range_stats_v5.js', title: 'Range Stats Integration', desc: 'グリッド数やコア数の変動（最小・最大値）の正確性。' },
+            { id: 'burst_extra', file: 'test_burst_extra_move.js', title: 'Burst Continuity', desc: '敵陣バースト時の手番継続確認。' },
+            { id: 'ai_diff', file: 'test_ai_difficulty.js', title: 'AI Difficulty', desc: 'AI探索深度と評価係数の適用確認。' },
+            { id: 'minimap', file: 'test_minimap.js', title: 'Minimap Logic', desc: 'MINIマップ特有の領域制限と処理。' }
         ];
 
         const consoleOutput = document.getElementById('console-output');
         const summaryText = document.getElementById('test-summary');
         const dashboard = document.getElementById('dashboard');
 
-        // Initialize Dashboard
-        TEST_CONFIGS.forEach(test => {
+        // Initialize Dashboard with Categories
+        function initDashboard() {
+            dashboard.innerHTML = '';
+
+            // Jest Category Header
+            addCategoryHeader('Jest Tests (Core Logic)');
+            JEST_TESTS.forEach(test => addTestCard(test, 'jest'));
+
+            // Browser Category Header
+            addCategoryHeader('Browser Specific Tests');
+            BROWSER_TESTS.forEach(test => addTestCard(test, 'browser'));
+        }
+
+        function addCategoryHeader(title) {
+            const header = document.createElement('div');
+            header.style.cssText = 'grid-column: 1 / -1; margin: 20px 0 10px 0; color: var(--accent-color); font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; border-bottom: 1px solid rgba(56, 189, 248, 0.2); padding-bottom: 8px;';
+            header.textContent = title;
+            dashboard.appendChild(header);
+        }
+
+        function addTestCard(test, type) {
             const card = document.createElement('div');
             card.className = 'test-card';
             card.id = `card-${test.id}`;
             card.innerHTML = `
                 <h3>${test.title}</h3>
-                <p>${test.desc}</p>
+                <p>${test.desc || test.file}</p>
                 <div class="card-footer">
                     <span class="status-badge" id="badge-${test.id}">Pending</span>
-                    <button class="btn btn-sm" style="padding: 6px 12px; font-size: 0.8rem;" onclick="runSingleTest('${test.id}')">Run</button>
+                    <button class="btn btn-sm" style="padding: 6px 12px; font-size: 0.8rem;" onclick="runSingleTest('${test.id}', '${type}')">Run</button>
                 </div>
             `;
             dashboard.appendChild(card);
-        });
+        }
 
         function log(msg, type = 'info') {
             const container = document.getElementById('console-container');
@@ -448,8 +548,27 @@
         // Hook console
         const originalLog = console.log;
         const originalError = console.error;
+
+        function processLogArgs(args) {
+            if (args.length === 0) return '';
+
+            // Handle %c (CSS styling) for browser console compatibility
+            if (typeof args[0] === 'string' && args[0].includes('%c')) {
+                let msg = String(args[0]).replace(/%c/g, '');
+                return msg;
+            }
+
+            return args.map(a => {
+                if (a instanceof Error) return a.stack || a.message;
+                if (typeof a === 'object' && a !== null) {
+                    try { return JSON.stringify(a, null, 2); } catch (e) { return String(a); }
+                }
+                return String(a);
+            }).join(' ');
+        }
+
         console.log = (...args) => {
-            const msg = args.join(' ');
+            const msg = processLogArgs(args);
             if (msg.includes('[PASS]')) log(msg, 'success');
             else if (msg.includes('✅')) log(msg, 'success');
             else if (msg.includes('❌') || msg.includes('[FAIL]')) log(msg, 'error');
@@ -457,29 +576,94 @@
             originalLog.apply(console, args);
         };
         console.error = (...args) => {
-            log(args.join(' '), 'error');
+            log(processLogArgs(args), 'error');
             originalError.apply(console, args);
         };
 
         function clearLogs() {
             consoleOutput.innerHTML = '';
-            // We keep it visible in 2-column layout but could hide if preferred
-            // document.getElementById('console-container').style.display = 'none';
             summaryText.textContent = 'Ready';
         }
 
+        async function copyLogs() {
+            const text = consoleOutput.innerText;
+            await doCopy(text, 'button[onclick="copyLogs()"]');
+        }
+
+        async function copyErrors() {
+            const entries = Array.from(consoleOutput.children);
+            const errorBlocks = [];
+            let currentBlock = [];
+            let hasError = false;
+
+            entries.forEach(entry => {
+                // If it's a header, it's the start of a new potential context block
+                if (entry.classList.contains('log-header')) {
+                    // If the previous block had an error, finalize it
+                    if (hasError && currentBlock.length > 0) {
+                        errorBlocks.push(currentBlock.map(el => el.innerText).join('\n'));
+                    }
+                    // Reset for new block
+                    currentBlock = [entry];
+                    hasError = false;
+                } else {
+                    currentBlock.push(entry);
+                    if (entry.classList.contains('log-error')) {
+                        hasError = true;
+                    }
+                }
+            });
+
+            // Check the final block
+            if (hasError && currentBlock.length > 0) {
+                errorBlocks.push(currentBlock.map(el => el.innerText).join('\n'));
+            }
+
+            if (errorBlocks.length === 0) {
+                alert('No errors found to copy.');
+                return;
+            }
+
+            const text = errorBlocks.join('\n\n' + '='.repeat(40) + '\n\n');
+            await doCopy(text, 'button[onclick="copyErrors()"]');
+        }
+
+        async function doCopy(text, selector) {
+            try {
+                await navigator.clipboard.writeText(text);
+
+                // Show visual feedback on buttons
+                const buttons = document.querySelectorAll(selector);
+                buttons.forEach(btn => {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Copied!';
+                    setTimeout(() => { btn.innerHTML = originalText; }, 2000);
+                });
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                alert('Copy failed. Please select and copy manually.');
+            }
+        }
+
         async function loadScript(path) {
+            console.log(`DEBUG: Attempting to load ${path}`);
             return new Promise((resolve, reject) => {
                 const script = document.createElement('script');
                 script.src = path;
-                script.onload = () => resolve();
-                script.onerror = () => reject(`Failed to load ${path}`);
+                script.onload = () => {
+                    console.log(`DEBUG: Successfully loaded ${path}`);
+                    resolve();
+                };
+                script.onerror = (e) => {
+                    console.error(`DEBUG: Failed to load ${path}`, e);
+                    reject(new Error(`Failed to load ${path}`));
+                };
                 document.body.appendChild(script);
             });
         }
 
-        async function runSingleTest(id) {
-            const test = TEST_CONFIGS.find(t => t.id === id);
+        async function runSingleTest(id, type) {
+            const test = [...JEST_TESTS, ...BROWSER_TESTS].find(t => t.id === id);
             const card = document.getElementById(`card-${id}`);
             const badge = document.getElementById(`badge-${id}`);
 
@@ -488,32 +672,48 @@
             log(test.title.toUpperCase(), 'header');
 
             try {
+                // Ensure BurstCascade namespace exists
+                window.BurstCascade = window.BurstCascade || {};
+
                 // Pre-run setup for specific tests
-                if (test.file === 'stability_test.js' && !window.game) {
-                    window.game = new window.BurstCascade.Game();
+                if (!window.game && (id === 'jest-stability' || test.file === 'stability_test.js' || id === 'jest-rules')) {
+                    if (window.BurstCascade.Game) {
+                        window.game = new window.BurstCascade.Game();
+                    }
                 }
 
-                const old = document.querySelector(`script[src="${test.file}"]`);
-                if (old) old.remove();
+                // Cleanup previous script tags for this file
+                const selectors = [`script[src^="${test.file}"]`];
+                selectors.forEach(sel => {
+                    document.querySelectorAll(sel).forEach(el => el.remove());
+                });
+
                 await loadScript(test.file);
 
-                // Check for functions that need explicit calling
-                const functionMap = {
-                    'stability_test.js': 'runStabilityTest',
-                    'test_burst_extra_move.js': 'runBurstExtraMoveTest',
-                    'test_achievements.js': 'runAchievementTest'
-                };
-
-                const fn = functionMap[test.file];
-                if (fn && typeof window[fn] === 'function') {
-                    await window[fn]();
+                if (window.jest && window.jest.waitForTests) {
+                    await window.jest.waitForTests();
                 }
 
-                // Temporary logic to detect pass/fail from logs since tests are heterogeneous
-                // In a perfect world, they'd return a promise with results
-                card.className = 'test-card status-pass';
-                badge.textContent = 'Passed';
+                const functionMap = {
+                    'stability_test.js': 'runStabilityTest',
+                    'test_burst_extra_move.js': 'runBurstExtraMoveTest'
+                };
+
+                const fnName = functionMap[test.file];
+                if (fnName && typeof window[fnName] === 'function') {
+                    console.log(`DEBUG: Calling standalone function ${fnName}`);
+                    await window[fnName]();
+                }
+
+                // Check if the card is still "running" (meaning no error was logged by the shim)
+                // Actually, the shim handles individual test logs.
+                // If it reached here without throwing, we consider it finished.
+                if (card.className.includes('status-running')) {
+                    card.className = 'test-card status-pass';
+                    badge.textContent = 'Passed';
+                }
             } catch (e) {
+                console.error(`DEBUG: Error in runSingleTest for ${test.file}:`, e);
                 log(`Crash in ${test.file}: ${e.message}`, 'error');
                 card.className = 'test-card status-fail';
                 badge.textContent = 'Failed';
@@ -522,22 +722,25 @@
 
         async function runAllTests() {
             clearLogs();
-            log('Starting Automated Test Suite', 'header');
+            log('Starting FULL Consolidated Test Suite', 'header');
 
-            let total = TEST_CONFIGS.length;
+            const allTests = [...JEST_TESTS, ...BROWSER_TESTS];
+            let total = allTests.length;
             let current = 0;
 
-            for (const test of TEST_CONFIGS) {
+            for (const test of allTests) {
+                const type = JEST_TESTS.includes(test) ? 'jest' : 'browser';
                 current++;
                 summaryText.textContent = `Running ${current} / ${total}...`;
-                await runSingleTest(test.id);
-                // Tiny delay for visual feedback
-                await new Promise(r => setTimeout(r, 300));
+                await runSingleTest(test.id, type);
+                await new Promise(r => setTimeout(r, 200));
             }
 
             summaryText.textContent = 'All Tests Completed';
             log('Sequence Finished', 'header');
         }
+
+        initDashboard();
     </script>
 </body>
 
