@@ -1,38 +1,43 @@
-const fs = require('fs');
-const path = require('path');
-const vm = require('vm');
+let AchievementManager;
 
-// 1. Setup Sandbox Context
-const sandbox = {
-    window: {
-        BurstCascade: {
-            HexMap: class { constructor() { } },
-            Layout: class { constructor() { } }
-        }
-    },
-    console: console,
-    localStorage: {
-        getItem: () => null,
-        setItem: () => null,
-        removeItem: () => null
-    },
-    confirm: () => true
-};
-sandbox.window.self = sandbox.window;
-vm.createContext(sandbox);
+if (typeof require !== 'undefined' && typeof process !== 'undefined' && typeof window === 'undefined') {
+    // Node.js Standalone Mode
+    const fs = require('fs');
+    const path = require('path');
+    const vm = require('vm');
 
-// 2. Load Logic File
-const code = fs.readFileSync(path.join(__dirname, '..', 'achievements.js'), 'utf8');
-vm.runInContext(code, sandbox);
+    const sandbox = {
+        window: {
+            BurstCascade: {
+                HexMap: class { constructor() { } },
+                Layout: class { constructor() { } }
+            }
+        },
+        console: console,
+        localStorage: {
+            getItem: () => null,
+            setItem: () => null,
+            removeItem: () => null
+        },
+        confirm: () => true
+    };
+    sandbox.window.self = sandbox.window;
+    vm.createContext(sandbox);
 
-const { AchievementManager } = sandbox.window.BurstCascade;
+    const code = fs.readFileSync(path.join(__dirname, '..', 'achievements.js'), 'utf8');
+    vm.runInContext(code, sandbox);
+    AchievementManager = sandbox.window.BurstCascade.AchievementManager;
+} else {
+    // Browser or Jest Mode
+    AchievementManager = (window.BurstCascade || {}).AchievementManager;
+}
 
 function assert(condition, message, extra = "") {
     if (condition) {
         console.log(`✅ [PASS] ${message} ${extra}`);
     } else {
         console.error(`❌ [FAIL] ${message} ${extra}`);
-        process.exit(1);
+        if (typeof process !== 'undefined' && process.exit) process.exit(1);
     }
 }
 
