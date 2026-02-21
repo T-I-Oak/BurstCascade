@@ -146,9 +146,20 @@
                 const curX = start.x + (end.x - start.x) * p;
                 const curY = start.y + (end.y - start.y) * p - Math.sin(p * Math.PI) * 20;
 
-                ctx.fillStyle = '#fbbf24'; // Amber for energy
+                const startS = isFocusPhase ? 14 : 2;
+                const endS = isFocusPhase ? 2 : 14;
+                const curS = startS + (endS - startS) * p;
+
+                // Color Graduation: RGB(217, 70, 239) Magenta vs RGB(251, 191, 36) Yellow
+                const startRGB = isFocusPhase ? { r: 217, g: 70, b: 239 } : { r: 251, g: 191, b: 36 };
+                const endRGB = isFocusPhase ? { r: 251, g: 191, b: 36 } : { r: 217, g: 70, b: 239 };
+                const r = Math.round(startRGB.r + (endRGB.r - startRGB.r) * p);
+                const g = Math.round(startRGB.g + (endRGB.g - startRGB.g) * p);
+                const b = Math.round(startRGB.b + (endRGB.b - startRGB.b) * p);
+
+                ctx.fillStyle = `rgb(${r},${g},${b})`;
                 ctx.beginPath();
-                ctx.arc(curX, curY, 4, 0, Math.PI * 2);
+                ctx.arc(curX, curY, curS / 2, 0, Math.PI * 2);
                 ctx.fill();
             }
 

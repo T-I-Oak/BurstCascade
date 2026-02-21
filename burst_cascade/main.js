@@ -837,6 +837,20 @@
                         const p = el / ef.duration;
                         ef.x = ef.startX + (ef.endX - ef.startX) * p;
                         ef.y = ef.startY + (ef.endY - ef.startY) * p - Math.sin(p * Math.PI) * 50; // 高さ50の放物線
+
+                        // Ver 4.6.2: サイズと色の動的変化 (Graduation)
+                        if (ef.startSize !== undefined && ef.endSize !== undefined) {
+                            ef.size = ef.startSize + (ef.endSize - ef.startSize) * p;
+
+                            // 色の補間 (RGB)
+                            if (ef.startRGB && ef.endRGB) {
+                                const r = Math.round(ef.startRGB.r + (ef.endRGB.r - ef.startRGB.r) * p);
+                                const g = Math.round(ef.startRGB.g + (ef.endRGB.g - ef.startRGB.g) * p);
+                                const b = Math.round(ef.startRGB.b + (ef.endRGB.b - ef.startRGB.b) * p);
+                                ef.color = `rgb(${r},${g},${b})`;
+                            }
+                        }
+
                         survivors.push(ef);
                     }
                 } else if (ef.type === 'floating_text') {
@@ -1330,7 +1344,7 @@
             const result = this.map.calculateHandUpdate(handZoneId, pattern);
 
             if (result && result.success) {
-                this.triggerReconstructEffect(result.giver, result.receiver, result.updates);
+                this.triggerReconstructEffect(result.giver, result.receiver, result.updates, pattern);
             }
 
             const stillBursting = this.map.mainHexes.some(h => h.height > 9 || h.height < -9);
@@ -2102,8 +2116,8 @@
             ctx.restore();
         }
 
-        // Ver 4.6.0: 再構築エフェクト（黄色いドットと数値ポップ）
-        triggerReconstructEffect(giver, receiver, updates) {
+        // Ver 4.6.0: 再構築エフェクト（黄色/水色のドットと数値ポップ）
+        triggerReconstructEffect(giver, receiver, updates, pattern) {
             let startHex = giver;
             let endHex = receiver;
 
@@ -2134,20 +2148,30 @@
             start.y -= startH;
             end.y -= endH;
 
-            // 黄色いドットの発射
+            // 放物線移動ドット (Ver 4.6.2: Color Graduation)
+            const isFocus = (pattern === 'focus');
+
+            // RGB Definitions: Magenta(217, 70, 239), Yellow(251, 191, 36)
+            const magenta = { r: 217, g: 70, b: 239 };
+            const yellow = { r: 251, g: 191, b: 36 };
+
             this.effects.push({
                 x: start.x, y: start.y,
                 vx: 0, vy: 0,
                 life: 1.0,
-                color: '#fbbf24',
-                size: 8, // Ver 4.6.1: サイズ倍増 (4 -> 8)
+                color: isFocus ? '#d946ef' : '#fbbf24', // Start color
+                startRGB: isFocus ? magenta : yellow,
+                endRGB: isFocus ? yellow : magenta,
+                size: isFocus ? 14 : 2,
+                startSize: isFocus ? 14 : 2,
+                endSize: isFocus ? 2 : 14,
                 type: 'reconstruct_dot',
                 startX: start.x, startY: start.y,
                 endX: end.x, endY: end.y,
                 startTime: Date.now(),
-                duration: 500, // 0.5秒で到達
+                duration: 500,
                 giver: giver, receiver: receiver,
-                updates: updates // 遅延更新用データ
+                updates: updates
             });
         }
 
