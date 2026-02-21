@@ -14,6 +14,7 @@
             this.targetBpm = 120;
             this.masterVolume = 0.4;
             this.isMuted = false;
+            this.masterGain = null;
             // Dynamic Rhythmic Intensities
             this.p1Intensity = 0;
             this.p2Intensity = 0;
@@ -69,6 +70,9 @@
             this.delayGain = this.ctx.createGain();
             this.delayGain.gain.setValueAtTime(0.1, this.ctx.currentTime);
 
+            this.masterGain = this.ctx.createGain();
+            this.masterGain.connect(this.ctx.destination);
+
             // Routing
             this.bgmGain.connect(this.masterCompressor);
             this.bgmGain.connect(this.delayNode);
@@ -79,8 +83,8 @@
 
             this.masterCompressor.connect(this.reverbNode);
             this.reverbNode.connect(this.reverbGain);
-            this.reverbGain.connect(this.ctx.destination);
-            this.masterCompressor.connect(this.ctx.destination);
+            this.reverbGain.connect(this.masterGain);
+            this.masterCompressor.connect(this.masterGain);
 
             this.updateVolume();
             console.log("High-end BGM Engine initialized.");
@@ -96,9 +100,11 @@
         }
 
         updateVolume() {
-            if (!this.bgmGain) return;
-            const vol = this.isMuted ? 0 : this.masterVolume;
-            this.bgmGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
+            if (!this.bgmGain || !this.masterGain) return;
+            // masterGain handles global mute
+            this.masterGain.gain.setTargetAtTime(this.isMuted ? 0 : 1.0, this.ctx.currentTime, 0.1);
+            // bgmGain handles the masterVolume of the BGM part
+            this.bgmGain.gain.setTargetAtTime(this.masterVolume, this.ctx.currentTime, 0.1);
         }
 
         // --- SFX ---
@@ -112,7 +118,7 @@
             gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.masterGain);
             osc.start();
             osc.stop(this.ctx.currentTime + 0.1);
         }
@@ -127,7 +133,7 @@
             gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
             gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.masterGain);
             osc.start();
             osc.stop(this.ctx.currentTime + 0.2);
         }
@@ -143,7 +149,7 @@
                 gain.gain.setValueAtTime(0.05, now + i * 0.05);
                 gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.05 + 0.2);
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
+                gain.connect(this.masterGain);
                 osc.start(now + i * 0.05);
                 osc.stop(now + i * 0.05 + 0.2);
             });
@@ -158,7 +164,7 @@
             gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
             gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.05);
             osc.connect(gain);
-            gain.connect(this.ctx.destination);
+            gain.connect(this.masterGain);
             osc.start();
             osc.stop(this.ctx.currentTime + 0.05);
         }
