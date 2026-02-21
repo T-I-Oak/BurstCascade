@@ -39,7 +39,7 @@ header {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    gap: 1.5rem;
+    gap: 1rem;
     background: linear-gradient(to bottom, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.8));
     backdrop-filter: blur(12px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -63,9 +63,10 @@ h1 {
 #status-container {
     display: flex;
     align-items: center;
-    gap: 2rem;
+    gap: 1.2rem;
     flex: 1;
     justify-content: flex-end;
+    min-width: 0;
 }
 
 #turn-indicator {
@@ -74,8 +75,8 @@ h1 {
 }
 
 #war-gauge-container {
-    width: 320px;
-    /* 少し長くして存在感を出す */
+    width: 100%;
+    max-width: 320px;
     height: 16px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
@@ -84,6 +85,7 @@ h1 {
     border: 1px solid rgba(255, 255, 255, 0.15);
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5), 0 0 15px rgba(0, 0, 0, 0.2);
     position: relative;
+    flex-shrink: 1;
 }
 
 .gauge-bar {
@@ -161,6 +163,39 @@ h1 {
 
 #p2-chain {
     border-left: 3px solid #f87171;
+}
+
+/* Responsive Header Tweaks */
+@media (max-width: 600px) {
+    header {
+        padding: 0.4rem 0.8rem;
+        gap: 0.5rem;
+    }
+
+    h1 {
+        font-size: 1rem;
+    }
+
+    h1 small {
+        display: none;
+        /* バージョン情報を隠してスペース確保 */
+    }
+
+    #status-container {
+        gap: 0.5rem;
+    }
+
+    #help-btn {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+        white-space: nowrap;
+    }
+
+    .chain-counter {
+        min-width: 50px;
+        font-size: 0.7rem;
+        padding: 0.1rem 0.4rem;
+    }
 }
 
 main {
