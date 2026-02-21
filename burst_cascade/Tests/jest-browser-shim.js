@@ -147,9 +147,12 @@
     };
 
     window.expect = function (actual) {
-        return {
+        const matchers = {
             toBe: (expected) => {
                 if (actual !== expected) throw new Error(`Expected ${expected} but got ${actual}`);
+            },
+            toBeNull: () => {
+                if (actual !== null) throw new Error(`Expected null but got ${actual}`);
             },
             toBeDefined: () => {
                 if (actual === undefined) throw new Error(`Expected value to be defined`);
@@ -176,6 +179,15 @@
                     throw new Error(`Expected function to have been called${info}`);
                 }
             },
+            toHaveBeenCalledWith: (...expectedArgs) => {
+                if (!actual || !actual.mock || actual.mock.calls.length === 0) {
+                    throw new Error(`Expected function to have been called with ${JSON.stringify(expectedArgs)} but it was never called.`);
+                }
+                const wasCalledWith = actual.mock.calls.some(call => JSON.stringify(call) === JSON.stringify(expectedArgs));
+                if (!wasCalledWith) {
+                    throw new Error(`Expected function to have been called with ${JSON.stringify(expectedArgs)}, but calls were: ${JSON.stringify(actual.mock.calls)}`);
+                }
+            },
             toBeInstanceOf: (expected) => {
                 if (!(actual instanceof expected)) {
                     const actualName = actual ? (actual.constructor ? actual.constructor.name : typeof actual) : String(actual);
@@ -187,8 +199,27 @@
             },
             toBeLessThan: (expected) => {
                 if (!(actual < expected)) throw new Error(`Expected ${actual} to be < ${expected}`);
+            },
+            toBeLessThanOrEqual: (expected) => {
+                if (!(actual <= expected)) throw new Error(`Expected ${actual} to be <= ${expected}`);
             }
         };
+
+        // Add 'not' proxy
+        matchers.not = {};
+        for (let key in matchers) {
+            if (key === 'not') continue;
+            matchers.not[key] = (...args) => {
+                try {
+                    matchers[key](...args);
+                } catch (e) {
+                    return; // Pass if original matcher failed
+                }
+                throw new Error(`Expected NOT ${key} with ${args.join(', ')} but it passed.`);
+            };
+        }
+
+        return matchers;
     };
 
     window.addEventListener('error', e => console.error(`[Global Error] ${e.message} at ${e.filename}:${e.lineno}`));

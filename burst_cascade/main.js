@@ -4,24 +4,106 @@
     class SoundManager {
         constructor() {
             this.ctx = null;
+            this.bgmGain = null;
+            this.isPlaying = false;
+            this.bpm = 120;
+            this.nextNoteTime = 0;
+            this.tick = 0;
+            this.schedulerId = null;
+            this.currentPattern = null;
+            this.targetBpm = 120;
+            this.masterVolume = 0.4;
+            this.isMuted = false;
+            // Dynamic Rhythmic Intensities
+            this.p1Intensity = 0;
+            this.p2Intensity = 0;
+            this.maxCores = 5; // Default normalized ceiling
+            this.patternStartTick = 0; // Ver 4.7.20: Track pattern change time
+        }
+
+        updateContextData(cores1, cores2, totalCores = 0) {
+            if (totalCores > 0) this.maxCores = totalCores;
+            const max = this.maxCores;
+            // Ver 4.7.11: Corrected Intensity Mapping (P1=cores1, P2=cores2)
+            // Morphing intensity (Higher is more aggressive)
+            this.p1Intensity = Math.max(0, 1.0 - cores1 / max);
+            this.p2Intensity = Math.max(0, 1.0 - cores2 / max);
         }
 
         init() {
             if (this.ctx) return;
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.ctx = new AudioContext();
-            console.log("AudioContext initialized.");
+
+            // --- High-end FX Chain ---
+            this.masterCompressor = this.ctx.createDynamicsCompressor();
+            this.masterCompressor.threshold.setValueAtTime(-24, this.ctx.currentTime);
+            this.masterCompressor.knee.setValueAtTime(40, this.ctx.currentTime);
+            this.masterCompressor.ratio.setValueAtTime(12, this.ctx.currentTime);
+            this.masterCompressor.attack.setValueAtTime(0, this.ctx.currentTime);
+            this.masterCompressor.release.setValueAtTime(0.25, this.ctx.currentTime);
+
+            this.bgmGain = this.ctx.createGain();
+
+            // Reverb (Simple Impulse Response hack using noise)
+            this.reverbNode = this.ctx.createConvolver();
+            const revDur = 2.5;
+            const revRate = this.ctx.sampleRate;
+            const revLen = revRate * revDur;
+            const revBuffer = this.ctx.createBuffer(2, revLen, revRate);
+            for (let c = 0; c < 2; c++) {
+                const data = revBuffer.getChannelData(c);
+                for (let i = 0; i < revLen; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 2);
+                }
+            }
+            this.reverbNode.buffer = revBuffer;
+            this.reverbGain = this.ctx.createGain();
+            this.reverbGain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+
+            // Delay FX
+            this.delayNode = this.ctx.createDelay(1.0);
+            this.delayNode.delayTime.setValueAtTime(0.375, this.ctx.currentTime); // Dotted 8th at 120BPM
+            this.delayFeedback = this.ctx.createGain();
+            this.delayFeedback.gain.setValueAtTime(0.3, this.ctx.currentTime);
+            this.delayGain = this.ctx.createGain();
+            this.delayGain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+
+            // Routing
+            this.bgmGain.connect(this.masterCompressor);
+            this.bgmGain.connect(this.delayNode);
+            this.delayNode.connect(this.delayFeedback);
+            this.delayFeedback.connect(this.delayNode);
+            this.delayNode.connect(this.delayGain);
+            this.delayGain.connect(this.masterCompressor);
+
+            this.masterCompressor.connect(this.reverbNode);
+            this.reverbNode.connect(this.reverbGain);
+            this.reverbGain.connect(this.ctx.destination);
+            this.masterCompressor.connect(this.ctx.destination);
+
+            this.updateVolume();
+            console.log("High-end BGM Engine initialized.");
         }
 
         resume() {
             if (this.ctx && this.ctx.state === 'suspended') {
-                this.ctx.resume();
+                return this.ctx.resume().catch(e => {
+                    // Suppress warning if called without gesture
+                });
             }
+            return Promise.resolve();
         }
 
+        updateVolume() {
+            if (!this.bgmGain) return;
+            const vol = this.isMuted ? 0 : this.masterVolume;
+            this.bgmGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.1);
+        }
+
+        // --- SFX ---
         playPlace() {
-            if (!this.ctx) return;
-            this.resume();
+            if (!this.ctx || this.ctx.state === 'suspended') return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sine';
@@ -36,8 +118,7 @@
         }
 
         playBurst() {
-            if (!this.ctx) return;
-            this.resume();
+            if (!this.ctx || this.ctx.state === 'suspended') return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'sawtooth';
@@ -52,8 +133,7 @@
         }
 
         playReward() {
-            if (!this.ctx) return;
-            this.resume();
+            if (!this.ctx || this.ctx.state === 'suspended') return;
             const now = this.ctx.currentTime;
             [1320, 1760, 2640].forEach((freq, i) => {
                 const osc = this.ctx.createOscillator();
@@ -70,8 +150,7 @@
         }
 
         playTurnChange() {
-            if (!this.ctx) return;
-            this.resume();
+            if (!this.ctx || this.ctx.state === 'suspended') return;
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
             osc.type = 'square';
@@ -82,6 +161,321 @@
             gain.connect(this.ctx.destination);
             osc.start();
             osc.stop(this.ctx.currentTime + 0.05);
+        }
+
+        // --- BGM Engine ---
+
+        startBgm(type) {
+            // Guard: If already playing AND scheduler is running, return.
+            if (this.currentPattern === type && this.isPlaying && this.schedulerId) return;
+
+            // PvP Victory Safeguard
+            if (this.currentPattern === 'victory' && this.isPlaying) return;
+
+            const prevPattern = this.currentPattern;
+            this.currentPattern = type;
+            this.isPlaying = true;
+
+            // Ensure context exists
+            if (!this.ctx) this.init();
+
+            // --- DEFERRED START ---
+            // If context is suspended, it will be resumed by Game's gesture listener.
+            if (this.ctx.state === 'suspended') {
+                return;
+            }
+
+            const shouldResetTick = (type === 'title' || prevPattern === 'title');
+            if (shouldResetTick || !this.schedulerId) {
+                this.tick = 0;
+            }
+            this.patternStartTick = this.tick; // Ver 4.7.20: Anchor for seamless transitions
+
+            // Dynamic BPM setup
+            if (type === 'title') this.targetBpm = 80;
+            else if (type === 'game') this.targetBpm = 120;
+            else if (type === 'pinch') this.targetBpm = 155;
+            else if (type === 'victory' || type === 'defeat') {
+                // Ver 4.7.21: Inherit current BPM (Normal or Pinch) for seamlessness
+                this.targetBpm = this.bpm;
+            }
+
+            if (this.schedulerId) return; // Prevent double scheduler
+
+            this.bpm = this.targetBpm;
+            this.nextNoteTime = this.ctx.currentTime + 0.1;
+            this.scheduler();
+        }
+
+        stopBgm() {
+            this.isPlaying = false;
+            if (this.schedulerId) {
+                clearTimeout(this.schedulerId);
+                this.schedulerId = null;
+            }
+        }
+
+        scheduler() {
+            if (!this.isPlaying) return;
+            while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
+                // If tick is stuck at 511 (end of one-shot), don't re-schedule the same note repeatedly
+                if (this.tick < 511 || (this.currentPattern !== 'victory' && this.currentPattern !== 'defeat')) {
+                    this.scheduleNote(this.tick, this.nextNoteTime);
+                }
+                this.advanceNote();
+            }
+            this.schedulerId = setTimeout(() => this.scheduler(), 25);
+        }
+
+        advanceNote() {
+            const secondsPerBeat = 60.0 / this.bpm;
+            this.nextNoteTime += 0.25 * secondsPerBeat;
+
+            // Ver 4.7.20: Stop relative to pattern start to ensure full 6-bar sequence
+            if (this.currentPattern === 'victory' || this.currentPattern === 'defeat') {
+                const elapsed = (this.tick - this.patternStartTick + 512) % 512;
+                if (elapsed < 96) {
+                    this.tick++;
+                } else {
+                    this.stopBgm();
+                }
+            } else {
+                this.tick = (this.tick + 1) % 512;
+            }
+
+            if (Math.abs(this.bpm - this.targetBpm) > 0.1) {
+                this.bpm += (this.targetBpm - this.bpm) * 0.05;
+                if (this.delayNode) {
+                    this.delayNode.delayTime.setTargetAtTime(0.375 * (120 / this.bpm), this.ctx.currentTime, 0.1);
+                }
+            } else {
+                this.bpm = this.targetBpm;
+            }
+        }
+
+        // --- Synth Helpers ---
+
+        playTone(freq, time, duration, vol, type = 'sine', filterType = 'none', filterFreq = 1000, res = 1, modulation = 0) {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, time);
+
+            let node = osc;
+
+            // --- FM Synthesis (Advanced Sound Color) ---
+            if (modulation > 0) {
+                const modOsc = this.ctx.createOscillator();
+                const modGain = this.ctx.createGain();
+                modOsc.frequency.setValueAtTime(freq * 1.5, time); // Harmonics
+                modGain.gain.setValueAtTime(modulation * freq, time);
+                modGain.gain.exponentialRampToValueAtTime(0.01, time + duration);
+                modOsc.connect(modGain);
+                modGain.connect(osc.frequency);
+                modOsc.start(time);
+                modOsc.stop(time + duration);
+            }
+
+            if (filterType !== 'none') {
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = filterType;
+                filter.frequency.setValueAtTime(filterFreq, time);
+                filter.Q.setValueAtTime(res, time);
+                filter.frequency.exponentialRampToValueAtTime(filterFreq * 0.1, time + duration);
+                osc.connect(filter);
+                node = filter;
+            }
+
+            gain.gain.setValueAtTime(0, time);
+            gain.gain.linearRampToValueAtTime(vol, time + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
+            node.connect(gain);
+            // gain.connect(this.bgmGain); // DELETE Ver 4.7.11: Double routing bug fix
+
+            // Stereopanner (random width for spatial richness)
+            const panner = this.ctx.createStereoPanner();
+            panner.pan.setValueAtTime((Math.random() * 2 - 1) * 0.5, time);
+            gain.connect(panner);
+            panner.connect(this.bgmGain);
+
+            osc.start(time);
+            osc.stop(time + duration);
+        }
+
+        playDrum(type, time, vol) {
+            const gain = this.ctx.createGain();
+            if (type === 'kick') {
+                const osc = this.ctx.createOscillator();
+                osc.frequency.setValueAtTime(180, time);
+                osc.frequency.exponentialRampToValueAtTime(40, time + 0.2);
+                gain.gain.setValueAtTime(vol * 2.5, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+                osc.connect(gain);
+                osc.start(time);
+                osc.stop(time + 0.2);
+            } else if (type === 'snare') {
+                const bufSize = this.ctx.sampleRate * 0.2;
+                const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1800;
+                gain.gain.setValueAtTime(vol * 1.5, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
+                noise.connect(filter);
+                filter.connect(gain);
+                noise.start(time);
+                noise.stop(time + 0.2);
+            } else if (type === 'hat') {
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 10000;
+                const bufSize = this.ctx.sampleRate * 0.05;
+                const noise = this.ctx.createBufferSource();
+                const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+                noise.buffer = buffer;
+                gain.gain.setValueAtTime(vol * 0.5, time);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+                noise.connect(filter);
+                filter.connect(gain);
+                noise.start(time);
+                noise.stop(time + 0.05);
+            }
+            gain.connect(this.bgmGain);
+        }
+
+        // --- Patterns ---
+
+        scheduleNote(tick, time) {
+            if (this.currentPattern === 'title') {
+                this.playTitle(tick, time);
+            } else if (this.currentPattern === 'victory') {
+                this.playVictory(tick, time);
+            } else if (this.currentPattern === 'defeat') {
+                this.playDefeat(tick, time);
+            } else {
+                this.playGame(tick, time, this.currentPattern === 'pinch');
+            }
+        }
+
+        playTitle(tick, time) {
+            // Ver 4.7.3: Use same basic rhythm as game but at 80BPM
+            const rhythm = tick % 16;
+
+            // Core Rhythms (Kick, Snare, Hat)
+            if (rhythm === 0) this.playDrum('kick', time, 0.12);
+            if (rhythm === 8) this.playDrum('snare', time, 0.08);
+            if (rhythm % 4 === 2) this.playDrum('hat', time, 0.02);
+
+            // Thin background ambience
+            if (tick % 64 === 0) {
+                this.playTone(55, time, 4.0, 0.04, 'sine', 'lowpass', 100, 1, 0);
+            }
+        }
+
+        playGame(tick, time, isPinch) {
+            const rhythm = tick % 16;
+
+            // --- Base Grooves (Kick/Snare/Hat) ---
+            if (rhythm === 0) this.playDrum('kick', time, 0.18);
+            if (rhythm === 8) this.playDrum('snare', time, 0.1);
+            if (rhythm % 4 === 2) this.playDrum('hat', time, 0.03);
+
+            // --- Dynamic Rhythmic Channels ---
+            // Ver 4.7.2: Sine/Triangle based soft sounds with pitch scaling
+
+            // P1 Channel: Xylophone (Ver 4.7.15: Balanced Dominance 0.15)
+            const p1Intensity = Math.pow(this.p1Intensity, 1.2);
+            const p1Prob = 0.25; // Fixed frequency
+            if (tick % 4 === 1 && (Math.random() < p1Prob)) {
+                // High presence fixed volume
+                const vol = 0.08;
+                const freq = 523.25 * (1 + p1Intensity); // C5 base
+                this.playTone(freq, time, 0.08, vol, 'triangle', 'lowpass', 1500, 1, 0);
+            }
+
+            // P2 Channel: Clarity Bell (Ver 4.7.15: Minimal Support 0.005)
+            const p2Intensity = Math.pow(this.p2Intensity, 1.2);
+            const p2Prob = 0.25; // Fixed frequency
+            if (tick % 4 === 3 && (Math.random() < p2Prob)) {
+                // Discrete support level (Sine wave is very piercing)
+                const vol = 0.010;
+                const freq = 880 * (1 + p2Intensity * 1.5);
+                this.playTone(freq, time, 0.1, vol, 'sine', 'none', 1000, 1, 0.5);
+            }
+
+            // --- Global Drone (Soft contrast) ---
+            if (tick % 64 === 0) {
+                const droneFreq = isPinch ? 41.2 : 55;
+                this.playTone(droneFreq, time, 8.0, 0.06, 'sine', 'lowpass', 150, 1, 0.2);
+            }
+        }
+
+        playVictory(tick, time) {
+            // Ver 4.7.19: Rhythmic Buildup & Finale (Shared Logic)
+            this.playSharedFinale(tick, time);
+        }
+
+        playDefeat(tick, time) {
+            // Ver 4.7.19: Rhythmic Buildup & Finale (Shared Logic)
+            this.playSharedFinale(tick, time);
+        }
+
+        playSharedFinale(tick, time) {
+            // Ver 4.7.20: Seamless Rhythmic Progression
+            // Calculate tick relative to the moment the pattern switched
+            const relTick = (tick - this.patternStartTick + 512) % 512;
+            const rhythm = tick % 16; // Standard 8-beat alignment
+
+            // Bars 1-3: Base Groove ("Tu-tu, Turn" - Sync with existing tick)
+            if (relTick < 48) {
+                if (rhythm === 0 || rhythm === 4) this.playDrum('kick', time, 0.18);
+                if (rhythm === 8) this.playDrum('snare', time, 0.1);
+                if (rhythm % 4 === 2) this.playDrum('hat', time, 0.03);
+                return;
+            }
+
+            // Bar 4 (relTick 48-63): "Tu-tu, Tu-tarn-tarn-tarn!" Buildup
+            // 48, 50: Tu-tu (Kick), 52, 56, 60: Tu-tarn (Kick+Snare)
+            if (relTick === 48 || relTick === 50) {
+                this.playDrum('kick', time, 0.3);
+            }
+            if (relTick === 52 || relTick === 56 || relTick === 60) {
+                this.playDrum('kick', time, 0.4);
+                this.playDrum('snare', time, 0.35);
+            }
+
+            // Bar 5 Beat 1 (relTick 64): "TAAAARN!" Final Explosion
+            if (relTick === 64) {
+                this.playDrum('kick', time, 0.6);
+                this.playDrum('snare', time, 0.5);
+
+                // Crash Cymbal synthesis
+                const bufSize = this.ctx.sampleRate * 3.5;
+                const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.value = 4000;
+                const qGain = this.ctx.createGain();
+                qGain.gain.setValueAtTime(0.5, time);
+                qGain.gain.exponentialRampToValueAtTime(0.001, time + 3.0);
+                noise.connect(filter);
+                filter.connect(qGain);
+                qGain.connect(this.bgmGain);
+                noise.start(time);
+
+                // Low impact thud (Boom)
+                this.playTone(35, time, 3.0, 0.6, 'sine', 'lowpass', 80, 1, 0);
+            }
         }
     }
 
@@ -120,97 +514,121 @@
             this.turnHadReward = false;   // ターン中に何らかの報酬が発生したか
             this.turnHadSelfReward = false; // ターン中に「自陣報酬」が発生したか (Ver 4.4.17)
 
-            // UI要素
-            this.overlay = document.getElementById('overlay');
-            this.helpBtn = document.getElementById('help-btn');
-            this.startHelpBtn = document.getElementById('start-help-btn');
-            this.helpContent = document.getElementById('help-content');
-            this.modeSelection = document.getElementById('mode-selection-content');
-            this.gameOverContent = document.getElementById('game-over-content');
-            this.aiOverlay = document.getElementById('ai-thinking-overlay');
+            // UI要素 (Ver 4.6.8: テスト環境でのクラッシュ防止のためNullガードを追加)
+            const getEl = (id) => document.getElementById(id);
+            this.overlay = getEl('overlay');
+            this.helpBtn = getEl('help-btn');
+            this.startHelpBtn = getEl('start-help-btn');
+            this.helpContent = getEl('help-content');
+            this.modeSelection = getEl('mode-selection-content');
+            this.gameOverContent = getEl('game-over-content');
+            this.aiOverlay = getEl('ai-thinking-overlay');
 
-            this.playerSelect = document.getElementById('player-select');
-            this.sizeSelect = document.getElementById('size-select');
-            this.aiLevelSelect = document.getElementById('ai-level-select');
-            this.aiLevelGroup = document.getElementById('ai-level-group');
+            this.playerSelect = getEl('player-select');
+            this.sizeSelect = getEl('size-select');
+            this.aiLevelSelect = getEl('ai-level-select');
+            this.aiLevelGroup = getEl('ai-level-group');
+            this.bgmSelect = getEl('bgm-select');
 
-            this.gameStartBtn = document.getElementById('game-start-btn');
-            this.restartBtn = document.getElementById('restart-btn');
-            this.helpCloseBtn = document.getElementById('help-close-btn');
+            this.gameStartBtn = getEl('game-start-btn');
+            this.restartBtn = getEl('restart-btn');
+            this.helpCloseBtn = getEl('help-close-btn');
             this.helpBackBtn = document.querySelector('.help-back-btn');
 
-            this.peekBoardBtn = document.getElementById('peek-board-btn');
+            this.peekBoardBtn = getEl('peek-board-btn');
 
             // Achievement UI elements
-            this.achievementsBtn = document.getElementById('achievements-btn');
-            this.achievementsContent = document.getElementById('achievements-content');
-            this.achievementsBackBtn = document.getElementById('achievements-back-btn');
-            this.achievementResetBtn = document.getElementById('achievement-reset-btn');
+            this.achievementsBtn = getEl('achievements-btn');
+            this.achievementsContent = getEl('achievements-content');
+            this.achievementsBackBtn = getEl('achievements-back-btn');
+            this.achievementResetBtn = getEl('achievement-reset-btn');
             this.achievementsTableBody = document.querySelector('#achievements-table tbody');
-            this.achievementPercent = document.getElementById('achievement-percent');
+            this.achievementPercent = getEl('achievement-percent');
             this.achievementTabs = document.querySelectorAll('.tab-btn');
 
-            this.focusEffects = []; // Ver 4.4.8: 初期化漏れを復旧
-            this.dropEffects = []; // Ver 4.4.7: 初期化漏れを復旧
+            this.focusEffects = [];
+            this.dropEffects = [];
 
-            // Achievement Stats
-            this.turnCount = 0; // Achievement: Speed Run / Endurance
-            this.turnCount = 0; // Achievement: Speed Run / Endurance
-            // Initialize Stats
-            this.achievementManager.startNewGame();
+            // --- UI初期化 (DOMが存在する場合のみ実行) ---
+            if (this.overlay) {
+                // リスナー
+                if (this.helpBtn) this.helpBtn.addEventListener('click', () => this.showHelp());
+                if (this.startHelpBtn) this.startHelpBtn.addEventListener('click', () => this.showHelp());
 
-
-            // リスナー
-            this.helpBtn.addEventListener('click', () => this.showHelp());
-            this.startHelpBtn.addEventListener('click', () => this.showHelp());
-
-            // 設定トグルボタンの制御
-            const setupToggleGroup = (group) => {
-                const btns = group.querySelectorAll('.toggle-btn');
-                btns.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        btns.forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        this.sound.playPlace(); // クリック音
+                // 設定トグルボタンの制御
+                const setupToggleGroup = (group) => {
+                    if (!group) return;
+                    const btns = group.querySelectorAll('.toggle-btn');
+                    btns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            btns.forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            this.sound.playPlace(); // クリック音
+                        });
                     });
-                });
-            };
-            setupToggleGroup(this.playerSelect);
-            setupToggleGroup(this.sizeSelect);
-            setupToggleGroup(this.aiLevelSelect);
+                };
+                setupToggleGroup(this.playerSelect);
+                setupToggleGroup(this.sizeSelect);
+                setupToggleGroup(this.aiLevelSelect);
+                setupToggleGroup(this.bgmSelect);
 
-            // プレイヤー人数変更時のAI設定表示制御
-            this.playerSelect.querySelectorAll('.toggle-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const mode = btn.dataset.value;
-                    if (mode === 'pvc') this.aiLevelGroup.classList.remove('hidden');
-                    else this.aiLevelGroup.classList.add('hidden');
-                });
-            });
-
-            this.gameStartBtn.addEventListener('click', () => this.startGame());
-            this.restartBtn.addEventListener('click', () => location.reload());
-            this.helpCloseBtn.addEventListener('click', () => this.closeOverlay());
-            this.helpBackBtn.addEventListener('click', () => this.showModeSelection());
-
-            // Achievement Event Listeners
-            this.achievementsBtn.addEventListener('click', () => this.showAchievements());
-            this.achievementsBackBtn.addEventListener('click', () => this.showModeSelection());
-            this.achievementResetBtn.addEventListener('click', () => {
-                if (confirm('Are you sure you want to reset all achievements?')) {
-                    this.achievementManager.resetData();
-                    this.updateAchievementsUI();
+                if (this.bgmSelect) {
+                    this.bgmSelect.querySelectorAll('.toggle-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            this.sound.isMuted = (btn.dataset.value === 'off');
+                            this.sound.updateVolume();
+                            this.saveSettings();
+                        });
+                    });
                 }
-            });
 
-            this.achievementTabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    this.achievementTabs.forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    this.updateAchievementsUI(tab.dataset.map);
-                    this.sound.playPlace();
+                if (this.playerSelect) {
+                    this.playerSelect.querySelectorAll('.toggle-btn').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const mode = btn.dataset.value;
+                            if (mode === 'pvc' && this.aiLevelGroup) this.aiLevelGroup.classList.remove('hidden');
+                            else if (this.aiLevelGroup) this.aiLevelGroup.classList.add('hidden');
+                        });
+                    });
+                }
+
+                if (this.gameStartBtn) this.gameStartBtn.addEventListener('click', () => this.startGame());
+                if (this.restartBtn) this.restartBtn.addEventListener('click', () => {
+                    // Ver 4.7.7: Dedicated Reset Logic (Fundamental approach)
+                    this.resetToTitle();
                 });
-            });
+                if (this.helpCloseBtn) this.helpCloseBtn.addEventListener('click', () => {
+                    this.closeOverlay();
+                    if (!this.gameMode) this.sound.startBgm('title');
+                });
+                if (this.helpBackBtn) this.helpBackBtn.addEventListener('click', () => this.showModeSelection());
+
+                if (this.achievementsBtn) this.achievementsBtn.addEventListener('click', () => this.showAchievements());
+                if (this.achievementsBackBtn) this.achievementsBackBtn.addEventListener('click', () => this.showModeSelection());
+                if (this.achievementResetBtn) this.achievementResetBtn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to reset all achievements?')) {
+                        this.achievementManager.resetData();
+                        this.updateAchievementsUI();
+                    }
+                });
+
+                if (this.achievementTabs) {
+                    this.achievementTabs.forEach(tab => {
+                        tab.addEventListener('click', () => {
+                            this.achievementTabs.forEach(t => t.classList.remove('active'));
+                            tab.classList.add('active');
+                            this.updateAchievementsUI(tab.dataset.map);
+                            this.sound.playPlace();
+                        });
+                    });
+                }
+            }
+
+            // Achievement Stats (Ver 4.6.8: UI以外の初期化は常に行う)
+            this.turnCount = 0;
+            if (this.achievementManager) {
+                this.achievementManager.startNewGame();
+            }
 
             // 盤面覗き見機能 (Hold to View)
             const startPeek = (e) => {
@@ -270,10 +688,34 @@
 
             this.loadSettings(); // 設定の読み込み
             this.init(); // Add: Start animation loop
+
+            // --- BGM Activation (Ver 4.6.8: Ultra-resilient activation) ---
+            const handleFirstGesture = async () => {
+                this.sound.init();
+                await this.sound.resume();
+
+                // If isPlaying is true, it means BGM was requested but deferred.
+                if (this.sound.isPlaying && this.sound.currentPattern) {
+                    this.sound.startBgm(this.sound.currentPattern);
+                } else if (!this.gameMode) {
+                    this.sound.startBgm('title');
+                }
+
+                document.removeEventListener('click', handleFirstGesture);
+                document.removeEventListener('touchstart', handleFirstGesture);
+            };
+            document.addEventListener('click', handleFirstGesture);
+            document.addEventListener('touchstart', handleFirstGesture);
+        }
+
+        init() {
+            this.resize();
+            requestAnimationFrame((t) => this.animate(t));
         }
 
         showHelp() {
             const isGameRunning = this.gameMode !== null;
+            if (!isGameRunning) this.sound.startBgm('title');
             this.overlay.classList.remove('hidden');
             this.helpContent.classList.remove('hidden');
             this.modeSelection.classList.add('hidden');
@@ -291,12 +733,31 @@
             }
         }
 
+        // Ver 4.7.7: Fundamental State Reset
+        resetToTitle() {
+            this.gameOver = false;
+            this.gameMode = null;
+            this.currentPlayer = 1;
+            this.map = null;
+            this.effects = [];
+            this.dropEffects = [];
+            this.delayedBursts = [];
+            this.isProcessingMove = false;
+            this.isAIThinking = false;
+            this.turnEndRequested = false;
+
+            this.sound.stopBgm();
+            this.showModeSelection();
+        }
+
         showModeSelection() {
-            this.overlay.classList.remove('hidden');
-            this.modeSelection.classList.remove('hidden');
-            this.helpContent.classList.add('hidden');
-            this.achievementsContent.classList.add('hidden');
-            this.gameOverContent.classList.add('hidden');
+            if (this.sound) this.sound.startBgm('title');
+            if (this.overlay) this.overlay.classList.remove('hidden');
+            if (this.modeSelection) this.modeSelection.classList.remove('hidden');
+            if (this.helpContent) this.helpContent.classList.add('hidden');
+            if (this.achievementsContent) this.achievementsContent.classList.add('hidden');
+            if (this.gameOverContent) this.gameOverContent.classList.add('hidden');
+            if (this.peekBoardBtn) this.peekBoardBtn.classList.add('hidden');
         }
 
         startGame() {
@@ -305,6 +766,7 @@
             const size = this.sizeSelect.querySelector('.selected').dataset.value;   // 'regular' or 'mini'
             const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value; // 'easy', 'normal', 'hard'
 
+            this.sound.startBgm('game');
             this.gameMode = mode;
             this.saveSettings(); // 設定の保存 (Ver 4.5.3)
 
@@ -329,6 +791,10 @@
                 2: this.map.mainHexes.filter(h => h.owner === 2 && h.hasFlag).length
             };
             this.achievementManager.startNewGame(initialGridCounts, initialCoreCounts);
+
+            // Ver 4.6.8: BGM状況テクスチャの最大天井を初期化
+            const totalCores = (initialCoreCounts[1] || 0) + (initialCoreCounts[2] || 0);
+            this.sound.updateContextData(initialCoreCounts[1], initialCoreCounts[2], totalCores);
 
 
             this.currentPlayer = 1;
@@ -388,7 +854,8 @@
             const settings = {
                 mode: this.playerSelect.querySelector('.selected').dataset.value,
                 size: this.sizeSelect.querySelector('.selected').dataset.value,
-                aiLevel: this.aiLevelSelect.querySelector('.selected').dataset.value
+                aiLevel: this.aiLevelSelect.querySelector('.selected').dataset.value,
+                bgm: this.bgmSelect.querySelector('.selected').dataset.value
             };
             localStorage.setItem('burst-cascade-settings', JSON.stringify(settings));
         }
@@ -401,6 +868,10 @@
                     if (settings.mode) this.applySetting('player-select', settings.mode);
                     if (settings.size) this.applySetting('size-select', settings.size);
                     if (settings.aiLevel) this.applySetting('ai-level-select', settings.aiLevel);
+                    if (settings.bgm) {
+                        this.applySetting('bgm-select', settings.bgm);
+                        this.sound.isMuted = (settings.bgm === 'off');
+                    }
 
                     // AIレベルグループの表示制御
                     if (settings.mode === 'pvc') {
@@ -616,14 +1087,22 @@
 
                 const unlocked = this.achievementManager.checkAchievements(this, mapType, aiLevel);
                 if (unlocked.length > 0) {
-                    // Show notification (simple alert or toast for now, or append to game over msg)
-                    // Let's add simple visual cue in game over screen?
+                    // Ver 4.7.22: Reverted to comma-separated list as requested
                     const p = document.createElement('p');
                     p.style.color = '#fbbf24';
                     p.style.fontWeight = 'bold';
-                    p.innerHTML = `🏆 ACHIEVEMENT UNLOCKED!<br><span style="font-size:0.8em">${unlocked.map(u => u.title).join(', ')}</span>`;
+                    p.style.marginTop = '10px';
+                    p.innerHTML = `🏆 ACHIEVEMENT UNLOCKED!<br><span style="font-size:0.85em; opacity:0.9;">${unlocked.map(u => u.title).join(', ')}</span>`;
                     document.querySelector('#game-over-content').appendChild(p);
                 }
+            }
+
+            if (this.gameMode === 'pvp') {
+                this.sound.startBgm('victory');
+            } else if (winner === 1) {
+                this.sound.startBgm('victory');
+            } else {
+                this.sound.startBgm('defeat');
             }
 
             winnerText.style.webkitBackgroundClip = 'text';
@@ -664,28 +1143,46 @@
             this.modeSelection.classList.add('hidden');
         }
 
-
-        init() {
-            this.resize();
-            this.animate();
-        }
-
         checkGameOverStatus() {
             if (!this.map || this.gameOver) return;
-            const mainHexes = this.map.hexes.filter(h => h.zone === 'main');
-            const flags1 = mainHexes.filter(h => h.hasFlag && h.flagOwner === 1).length;
-            const flags2 = mainHexes.filter(h => h.hasFlag && h.flagOwner === 2).length;
+            const mainHexes = this.map.mainHexes.filter(h => !h.isDisabled);
+            const cores1 = mainHexes.filter(h => h.owner === 1 && (h.isCore || h.hasFlag)).length;
+            const cores2 = mainHexes.filter(h => h.owner === 2 && (h.isCore || h.hasFlag)).length;
 
-            if (flags1 === 0 || flags2 === 0) {
-                let winner = 0;
-                if (flags1 === 0 && flags2 === 0) winner = 0; // Draw
-                else winner = flags1 > 0 ? 1 : 2;
-                this.showGameOver(winner);
+            if (cores1 === 0) {
+                // this.sound.stopBgm(); // DELETE Ver 4.7.16: Seamless transition
+                this.showGameOver(2);
+                return;
+            } else if (cores2 === 0) {
+                // this.sound.stopBgm(); // DELETE Ver 4.7.16: Seamless transition
+                this.showGameOver(1);
+                return;
+            }
+
+            // Ver 4.6.7: ゲーム中（gameModeが存在する）のみBGM状態を更新
+            if (this.gameMode) {
+                const targetBgm = (cores1 === 1 || cores2 === 1) ? 'pinch' : 'game';
+                if (this.sound.currentPattern !== targetBgm) {
+                    this.sound.startBgm(targetBgm);
+                }
+
+                // 状況テクスチャの更新
+                this.sound.updateContextData(cores1, cores2);
             }
         }
 
         animate(time) {
+            // Ver 4.7.9: Permanent Animation Engine
+            // Always request next frame even if map is null to keep pulseValue and UI alive.
+            requestAnimationFrame((t) => this.animate(t));
+
             this.pulseValue = (Math.sin(time / 500) + 1) / 2; // 0 to 1
+
+            // Guard for map-dependent logic
+            if (!this.map) {
+                this.render(); // Clear canvas and render UI labels if any
+                return;
+            }
 
             // Ver 4.4: 落下エフェクトの更新
             if (this.dropEffects.length > 0) {
@@ -931,7 +1428,6 @@
             });
 
             this.render();
-            requestAnimationFrame((t) => this.animate(t));
         }
 
         addParticles(x, y, color, isBig = false, targetDotKey = null, targetHex = null, reward = null) {

@@ -5,16 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
-    <link rel="stylesheet" href="burst_cascade/style.css?v=4.6.0">
-    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=4.6.0">
+    <link rel="stylesheet" href="burst_cascade/style.css?v=4.7.32">
+    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=4.7.32">
 </head>
 
 <body>
     <div id="app">
         <header>
-            <h1>BURST CASCADE <small
-                    style="font-size: 0.7rem; opacity: 0.6; font-weight: 400; vertical-align: middle; margin-left: 0.5rem;">Ver
-                    4.6.0</small></h1>
+            <h1>BURST CASCADE</h1>
             <span id="help-btn">HOW TO PLAY</span>
             <div id="status-container">
                 <div id="war-gauge-container">
@@ -31,11 +29,11 @@
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
                     <h1 class="title-logo">BURST CASCADE</h1>
-                    <div class="version-badge">Ver 4.6.0</div>
+                    <div class="version-badge">Ver 4.7.32</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
                     <div class="menu-options">
                         <div class="settings-container">
-                            <div class="setting-group">
+                            <div class="setting-group" id="player-group">
                                 <label>PLAYERS</label>
                                 <div class="toggle-options" id="player-select">
                                     <button class="toggle-btn selected" data-value="pvc">1P <span class="sub">vs
@@ -52,11 +50,18 @@
                                     <button class="toggle-btn" data-value="hard">HARD</button>
                                 </div>
                             </div>
-                            <div class="setting-group">
+                            <div class="setting-group" id="size-group">
                                 <label>MAP SIZE</label>
                                 <div class="toggle-options" id="size-select">
                                     <button class="toggle-btn" data-value="mini">MINI</button>
                                     <button class="toggle-btn selected" data-value="regular">REGULAR</button>
+                                </div>
+                            </div>
+                            <div class="setting-group" id="sound-group">
+                                <label>SOUND / BGM</label>
+                                <div class="toggle-options" id="bgm-select">
+                                    <button class="toggle-btn selected" data-value="on">ON</button>
+                                    <button class="toggle-btn" data-value="off">OFF</button>
                                 </div>
                             </div>
                         </div>
@@ -240,11 +245,11 @@
             </div>
         </footer>
     </div>
-    <script src="burst_cascade/map.js?v=4.6.0"></script>
-    <script src="burst_cascade/achievements.js?v=4.6.0"></script>
-    <script src="burst_cascade/ai.js?v=4.6.0"></script>
-    <script src="burst_cascade/main.js?v=4.6.0"></script>
-    <script src="burst_cascade/tutorial.js?v=4.6.0"></script>
+    <script src="burst_cascade/map.js?v=4.7.32"></script>
+    <script src="burst_cascade/achievements.js?v=4.7.32"></script>
+    <script src="burst_cascade/ai.js?v=4.7.32"></script>
+    <script src="burst_cascade/main.js?v=4.7.32"></script>
+    <script src="burst_cascade/tutorial.js?v=4.7.32"></script>
 </body>
 
 </html>

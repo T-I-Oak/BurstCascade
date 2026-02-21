@@ -300,7 +300,7 @@ class AchievementManager {
                 id: 'win_streak_5',
                 title: '五連覇',
                 description: 'AIに5連勝する',
-                condition: (game, context) => (context.winStreak >= 5)
+                condition: (game, context) => (context && context.winStreak >= 5)
             },
             {
                 id: 'endurance_win',
@@ -318,7 +318,7 @@ class AchievementManager {
                 id: 'total_wins_20',
                 title: '常勝軍団',
                 description: '通算20勝を達成する',
-                condition: (game, context) => (context.totalWins >= 20)
+                condition: (game, context) => (context && context.totalWins >= 20)
             }
         ];
     }

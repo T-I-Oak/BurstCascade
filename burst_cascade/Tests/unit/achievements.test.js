@@ -16,8 +16,8 @@
         });
 
         test('initialization should load default data', () => {
-            expect(am.data.totalWins).toBe(0);
-            expect(am.data.winStreak).toBe(0);
+            expect(am.data.progress.regular.normal.totalWins).toBe(0);
+            expect(am.data.progress.regular.normal.winStreak).toBe(0);
             expect(am.data.progress.regular).toBeDefined();
         });
 
@@ -26,9 +26,9 @@
             const unlocks = am.checkAchievements(gameMock, 'regular', 'normal');
 
             expect(unlocks.some(a => a.id === 'win')).toBe(true);
-            expect(am.data.progress.regular.normal.win).toBe(true);
-            expect(am.data.totalWins).toBe(1);
-            expect(am.data.winStreak).toBe(1);
+            expect(am.data.progress.regular.normal.achievements.win).toBe(true);
+            expect(am.data.progress.regular.normal.totalWins).toBe(1);
+            expect(am.data.progress.regular.normal.winStreak).toBe(1);
         });
 
         test('checkAchievements should track win streaks', () => {
@@ -36,11 +36,11 @@
             am.checkAchievements(gameMock, 'regular', 'normal');
             am.checkAchievements(gameMock, 'regular', 'normal');
 
-            expect(am.data.winStreak).toBe(2);
+            expect(am.data.progress.regular.normal.winStreak).toBe(2);
 
             // Loss resets streak
             am.checkAchievements({ winner: 2 }, 'regular', 'normal');
-            expect(am.data.winStreak).toBe(0);
+            expect(am.data.progress.regular.normal.winStreak).toBe(0);
         });
 
         test('suicide_victory condition', () => {
@@ -50,9 +50,9 @@
         });
 
         test('resetData should clear progress', () => {
-            am.data.totalWins = 10;
+            am.data.progress.regular.normal.totalWins = 10;
             am.resetData();
-            expect(am.data.totalWins).toBe(0);
+            expect(am.data.progress.regular.normal.totalWins).toBe(0);
             expect(global.localStorage.setItem).toHaveBeenCalled();
         });
     });

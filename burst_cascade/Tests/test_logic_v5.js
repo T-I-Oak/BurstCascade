@@ -99,11 +99,11 @@
         am.checkAchievements(gameMock, 'regular', 'easy');
 
         const progress = am.data.progress['regular']['easy'];
-        assert(progress['saboteur'] === true, "'saboteur' (p1.neut[2] >= 5)");
-        assert(progress['speed_run'] === true, "'speed_run' (turn <= 12)");
-        assert(progress['unscathed'] === true, "'unscathed' (p1.neut[1] == 0)");
-        assert(progress['core_shutdown'] === true, "'core_shutdown' (p2.reward == 0)");
-        assert(progress['suicide_victory'] === true, "'suicide_victory' (Win on AI turn)");
+        assert(progress.achievements['saboteur'] === true, "'saboteur' (p1.neut[2] >= 5)");
+        assert(progress.achievements['speed_run'] === true, "'speed_run' (turn <= 12)");
+        assert(progress.achievements['unscathed'] === true, "'unscathed' (p1.neut[1] == 0)");
+        assert(progress.achievements['core_shutdown'] === true, "'core_shutdown' (p2.reward == 0)");
+        assert(progress.achievements['suicide_victory'] === true, "'suicide_victory' (Win on AI turn)");
 
         console.log("\nALL BEHAVIORAL TESTS PASSED! 🏆");
 

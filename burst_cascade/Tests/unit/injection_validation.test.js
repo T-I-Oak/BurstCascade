@@ -31,7 +31,8 @@
                     if (hex.isDisabled) return;
                     if (this.isAIThinking || this.isProcessingMove || this.turnEndRequested) return;
 
-                    // MISSING GUARD HERE: hex.owner control
+                    // Validate owner (Only allow player 1 to inject into their own hexes)
+                    if (hex.owner !== this.currentPlayer) return;
 
                     this.sound.playPlace();
                     this.achievementManager.stats[this.currentPlayer].actions.add(1);

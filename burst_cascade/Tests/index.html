@@ -468,6 +468,78 @@
         <div class="tab-btn" data-map="mini"></div>
     </div>
 
+    <!-- Mock AudioContext to silence BGM during tests -->
+    <script>
+        (function () {
+            const MockAudioContext = function () {
+                this.state = 'suspended';
+                this.currentTime = 0;
+                this.sampleRate = 44100;
+                this.destination = {};
+                this.createGain = () => ({
+                    gain: {
+                        value: 1,
+                        setValueAtTime: function () { return this; },
+                        setTargetAtTime: function () { return this; },
+                        linearRampToValueAtTime: function () { return this; },
+                        exponentialRampToValueAtTime: function () { return this; }
+                    },
+                    connect: function () { return this; }
+                });
+                this.createOscillator = () => ({
+                    frequency: {
+                        setValueAtTime: function () { return this; },
+                        exponentialRampToValueAtTime: function () { return this; }
+                    },
+                    type: 'sine',
+                    connect: function () { return this; },
+                    start: function () { },
+                    stop: function () { }
+                });
+                this.createDynamicsCompressor = () => ({
+                    threshold: { setValueAtTime: function () { return this; } },
+                    knee: { setValueAtTime: function () { return this; } },
+                    ratio: { setValueAtTime: function () { return this; } },
+                    attack: { setValueAtTime: function () { return this; } },
+                    release: { setValueAtTime: function () { return this; } },
+                    connect: function () { return this; }
+                });
+                this.createConvolver = () => ({
+                    buffer: null,
+                    connect: function () { return this; }
+                });
+                this.createDelay = () => ({
+                    delayTime: {
+                        setValueAtTime: function () { return this; },
+                        setTargetAtTime: function () { return this; }
+                    },
+                    connect: function () { return this; }
+                });
+                this.createStereoPanner = () => ({
+                    pan: { setValueAtTime: function () { return this; } },
+                    connect: function () { return this; }
+                });
+                this.createBuffer = (ch, len, rate) => ({
+                    getChannelData: () => new Float32Array(len),
+                    length: len,
+                    duration: len / rate,
+                    sampleRate: rate
+                });
+                this.resume = () => {
+                    this.state = 'running';
+                    return Promise.resolve();
+                };
+                this.suspend = () => {
+                    this.state = 'suspended';
+                    return Promise.resolve();
+                };
+                this.close = () => Promise.resolve();
+            };
+            window.AudioContext = window.webkitAudioContext = MockAudioContext;
+            console.log("[Test Runner] AudioContext mocked for silent testing.");
+        })();
+    </script>
+
     <!-- Load dependencies -->
     <script src="../map.js"></script>
     <script src="../achievements.js"></script>
@@ -480,7 +552,9 @@
             { id: 'jest-achievements', file: 'unit/achievements.test.js', title: 'Jest: Achievement Manager' },
             { id: 'jest-stats', file: 'unit/stats.test.js', title: 'Jest: Stat Items' },
             { id: 'jest-rules', file: 'unit/rules.test.js', title: 'Jest: Game Rules' },
-            { id: 'jest-stability', file: 'unit/stability.test.js', title: 'Jest: System Stability' }
+            { id: 'jest-stability', file: 'unit/stability.test.js', title: 'Jest: System Stability' },
+            { id: 'jest-layout', file: 'unit/layout.test.js', title: 'Jest: Title Layout' },
+            { id: 'jest-injection', file: 'unit/injection_validation.test.js', title: 'Jest: Injection Logic' }
         ];
 
         const BROWSER_TESTS = [
@@ -675,10 +749,17 @@
                 // Ensure BurstCascade namespace exists
                 window.BurstCascade = window.BurstCascade || {};
 
-                // Pre-run setup for specific tests
-                if (!window.game && (id === 'jest-stability' || test.file === 'stability_test.js' || id === 'jest-rules')) {
+                // Pre-run setup for specific tests (Ver 4.6.8: ブラウザテスト全般でgameの初期化を許可)
+                const needsGame = (type === 'browser') || id === 'jest-stability' || id === 'jest-rules';
+                if (!window.game && needsGame) {
                     if (window.BurstCascade.Game) {
                         window.game = new window.BurstCascade.Game();
+                        // Disable BGM in test environment to avoid noise
+                        if (window.game.sound) {
+                            window.game.sound.isMuted = true;
+                            // Mock startBgm to completely prevent it from starting even if called
+                            window.game.sound.startBgm = () => console.log("[Test] startBgm suppressed");
+                        }
                     }
                 }
 

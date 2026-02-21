@@ -105,20 +105,21 @@
         // ==========================================
         console.log("\nTEST 6: Persistent Data (Streaks & TotalWins)");
         // Simulate game end 1st win
-        am.data.winStreak = 0;
-        am.data.totalWins = 0;
+        const context = am.data.progress.regular.normal;
+        context.winStreak = 0;
+        context.totalWins = 0;
         game.winner = 1;
         am.checkAchievements(game, 'regular', 'normal');
-        assert(am.data.winStreak === 1, "Win Streak incremented to 1");
-        assert(am.data.totalWins === 1, "Total Wins incremented to 1");
+        assert(context.winStreak === 1, "Win Streak incremented to 1");
+        assert(context.totalWins === 1, "Total Wins incremented to 1");
 
         const totalWinsAch = am.achievements.find(a => a.id === 'total_wins_20');
-        am.data.totalWins = 20;
-        assert(totalWinsAch.condition(game), "Total wins 20 detected");
+        context.totalWins = 20;
+        assert(totalWinsAch.condition(game, context), "Total wins 20 detected");
 
         const winStreakAch = am.achievements.find(a => a.id === 'win_streak_5');
-        am.data.winStreak = 5;
-        assert(winStreakAch.condition(game), "Win streak 5 detected");
+        context.winStreak = 5;
+        assert(winStreakAch.condition(game, context), "Win streak 5 detected");
 
         console.log("\nALL v5.2 OVERHAUL TESTS PASSED! 🏆");
 
