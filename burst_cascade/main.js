@@ -570,6 +570,7 @@
                             btns.forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
                             this.sound.playPlace(); // クリック音
+                            this.saveSettings(); // Ver 4.7.32: Always save on change
                         });
                     });
                 };
@@ -583,7 +584,6 @@
                         btn.addEventListener('click', () => {
                             this.sound.isMuted = (btn.dataset.value === 'off');
                             this.sound.updateVolume();
-                            this.saveSettings();
                         });
                     });
                 }
