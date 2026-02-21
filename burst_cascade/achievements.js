@@ -300,7 +300,7 @@ class AchievementManager {
                 id: 'win_streak_5',
                 title: '五連覇',
                 description: 'AIに5連勝する',
-                condition: (game) => game.winner === 1 && this.data.winStreak >= 5
+                condition: (game, context) => (context.winStreak >= 5)
             },
             {
                 id: 'endurance_win',
@@ -318,7 +318,7 @@ class AchievementManager {
                 id: 'total_wins_20',
                 title: '常勝軍団',
                 description: '通算20勝を達成する',
-                condition: (game) => this.data.totalWins >= 20
+                condition: (game, context) => (context.totalWins >= 20)
             }
         ];
     }
@@ -327,21 +327,32 @@ class AchievementManager {
     loadData() {
         const json = localStorage.getItem(this.STORAGE_KEY);
         const defaults = {
-            lossStreak: 0,
-            winStreak: 0,
-            totalWins: 0,
             progress: {
-                // [mapType]: { [diff]: { [achievementId]: boolean } }
-                regular: { easy: {}, normal: {}, hard: {} },
-                mini: { easy: {}, normal: {}, hard: {} }
+                // [mapType]: { [diff]: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 } }
+                regular: { easy: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }, normal: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }, hard: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 } },
+                mini: { easy: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }, normal: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }, hard: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 } }
             }
         };
 
         if (json) {
             try {
                 const data = JSON.parse(json);
-                // Merge process
-                return { ...defaults, ...data, progress: { ...defaults.progress, ...data.progress } };
+                const mergedProgress = JSON.parse(JSON.stringify(defaults.progress));
+                if (data.progress) {
+                    for (const map in data.progress) {
+                        for (const diff in data.progress[map]) {
+                            if (mergedProgress[map] && mergedProgress[map][diff]) {
+                                const oldData = data.progress[map][diff];
+                                if (oldData.achievements) {
+                                    mergedProgress[map][diff] = { ...mergedProgress[map][diff], ...oldData };
+                                } else {
+                                    mergedProgress[map][diff].achievements = oldData;
+                                }
+                            }
+                        }
+                    }
+                }
+                return { progress: mergedProgress };
             } catch (e) {
                 console.error('Achievement load error:', e);
                 return defaults;
@@ -351,32 +362,40 @@ class AchievementManager {
     }
 
     // ゲーム終了時のチェック
-    checkAchievements(game, mapType, diff, legacyHistory) {
+    checkAchievements(game, mapType, diff) {
         let newUnlocks = [];
         const diffKey = diff.toLowerCase(); // 'easy', 'normal', 'hard'
 
         // データ構造の初期化保証
-        if (!this.data.progress[mapType]) this.data.progress[mapType] = { easy: {}, normal: {}, hard: {} };
-        if (!this.data.progress[mapType][diffKey]) this.data.progress[mapType][diffKey] = {};
+        if (!this.data.progress[mapType]) {
+            this.data.progress[mapType] = {
+                easy: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 },
+                normal: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 },
+                hard: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }
+            };
+        }
+        if (!this.data.progress[mapType][diffKey]) {
+            this.data.progress[mapType][diffKey] = { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 };
+        }
+
+        const context = this.data.progress[mapType][diffKey];
 
         // 統計の更新
         if (game.winner === 2) {
-            this.data.lossStreak = (this.data.lossStreak || 0) + 1;
-            this.data.winStreak = 0;
+            context.lossStreak = (context.lossStreak || 0) + 1;
+            context.winStreak = 0;
         } else if (game.winner === 1) {
-            this.data.winStreak = (this.data.winStreak || 0) + 1;
-            this.data.totalWins = (this.data.totalWins || 0) + 1;
-            this.data.lossStreak = 0;
-        } else {
-            // 引き分け時はストリーク不変
+            context.winStreak = (context.winStreak || 0) + 1;
+            context.totalWins = (context.totalWins || 0) + 1;
+            context.lossStreak = 0;
         }
 
         this.achievements.forEach(ach => {
             // 既に取得済みならスキップ
-            if (this.data.progress[mapType][diffKey][ach.id]) return;
+            if (context.achievements[ach.id]) return;
 
-            if (ach.condition(game, legacyHistory)) {
-                this.data.progress[mapType][diffKey][ach.id] = true;
+            if (ach.condition(game, context)) {
+                context.achievements[ach.id] = true;
                 newUnlocks.push(ach);
             }
         });
@@ -392,9 +411,9 @@ class AchievementManager {
         return this.achievements.map(ach => {
             const p = this.data.progress[mapType] || {};
             const earned = {
-                easy: p.easy ? !!p.easy[ach.id] : false,
-                normal: p.normal ? !!p.normal[ach.id] : false,
-                hard: p.hard ? !!p.hard[ach.id] : false
+                easy: (p.easy && p.easy.achievements) ? !!p.easy.achievements[ach.id] : false,
+                normal: (p.normal && p.normal.achievements) ? !!p.normal.achievements[ach.id] : false,
+                hard: (p.hard && p.hard.achievements) ? !!p.hard.achievements[ach.id] : false
             };
 
             // 何らかの難易度・マップで一度でも達成していれば「公開」
@@ -414,7 +433,8 @@ class AchievementManager {
         for (const t of types) {
             if (!this.data.progress[t]) continue;
             for (const d of diffs) {
-                if (this.data.progress[t][d] && this.data.progress[t][d][achId]) {
+                const context = this.data.progress[t][d];
+                if (context && context.achievements && context.achievements[achId]) {
                     return true;
                 }
             }
@@ -456,12 +476,17 @@ class AchievementManager {
     // リセット
     resetData() {
         this.data = {
-            lossStreak: 0,
-            winStreak: 0,
-            totalWins: 0,
             progress: {
-                regular: { easy: {}, normal: {}, hard: {} },
-                mini: { easy: {}, normal: {}, hard: {} }
+                regular: {
+                    easy: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 },
+                    normal: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 },
+                    hard: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }
+                },
+                mini: {
+                    easy: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 },
+                    normal: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 },
+                    hard: { achievements: {}, winStreak: 0, lossStreak: 0, totalWins: 0 }
+                }
             }
         };
         this.saveData();

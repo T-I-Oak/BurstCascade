@@ -159,14 +159,6 @@
             // Initialize Stats
             this.achievementManager.startNewGame();
 
-            // Legacy history reference for compatibility (if needed by old code before full migration)
-            // We'll keep a minimal object or proxy if necessary, but ideally we use achievementManager.stats
-            this.history = {
-                // maxCellEnergy is unique as it's a peak value, not a counter. 
-                // We'll track it here for now or add a custom StatItem? 
-                // The plan didn't specify maxCellEnergy in StatItem, so let's keep it here.
-                maxCellEnergy: 0
-            };
 
             // リスナー
             this.helpBtn.addEventListener('click', () => this.showHelp());
@@ -249,8 +241,12 @@
                 this.isTouchDevice = true;
                 const rect = this.canvas.getBoundingClientRect();
                 const touch = e.touches[0];
-                const x = touch.clientX - rect.left;
-                const y = touch.clientY - rect.top;
+
+                // 表示サイズと内部解像度の比率を考慮
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                const x = (touch.clientX - rect.left) * scaleX;
+                const y = (touch.clientY - rect.top) * scaleY;
 
                 // mousemove相当の処理（ハイライト更新）
                 const nextHovered = this.findHexAt(x, y);
@@ -334,11 +330,6 @@
             };
             this.achievementManager.startNewGame(initialGridCounts, initialCoreCounts);
 
-            // Legacy history reference for compatibility
-            this.history = {
-                // maxCellEnergy is unique as it's a peak value, not a counter. 
-                maxCellEnergy: 0
-            };
 
             this.currentPlayer = 1;
             this.gameOver = false;
@@ -623,13 +614,7 @@
                 const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value;
                 const mapType = this.sizeSelect.querySelector('.selected').dataset.value;
 
-                // Pass legacy history for maxCellEnergy compatibility if not migrated to stats yet
-                // But we should use the new stats structure within checkAchievements.
-                // maxCellEnergy is not yet in stats, so we might need to track it separately or add to stats.
-                // Plan said "maxCellEnergy: 瞬間最大風速的な記録". It's not a counter.
-                const legacyHistory = { maxCellEnergy: this.history.maxCellEnergy || 0 };
-
-                const unlocked = this.achievementManager.checkAchievements(this, mapType, aiLevel, legacyHistory);
+                const unlocked = this.achievementManager.checkAchievements(this, mapType, aiLevel);
                 if (unlocked.length > 0) {
                     // Show notification (simple alert or toast for now, or append to game over msg)
                     // Let's add simple visual cue in game over screen?
@@ -652,13 +637,10 @@
             // Update range-based stats one last time
             this._updateRangeStats();
 
-            // Check Max Cell Energy (High Voltage) as a fallback
+            // Check Max Cell Energy (High Voltage)
             this.map.mainHexes.forEach(h => {
                 const absH = Math.abs(h.height);
-                if (absH > (this.history.maxCellEnergy || 0)) {
-                    this.history.maxCellEnergy = absH;
-                    this.achievementManager.stats[this.currentPlayer].maxCellEnergy.update(absH);
-                }
+                this.achievementManager.stats[this.currentPlayer].maxCellEnergy.update(absH);
             });
         }
 
@@ -968,32 +950,6 @@
         triggerChainAnim(player, type) {
             // 到着に合わせてアニメーションを開始
             this.chainAnims[player][type] = 1.0;
-
-            // 連鎖カウンターの更新
-            if (this.chains[player].self > this.history.maxChain) this.history.maxChain = this.chains[player].self;
-            // バースト数の更新 (ターン内の最大バースト数)
-            // Note: chains store current chain count. 
-            // Need to track bursts per turn separately if 'burst_lover' means "5 bursts in one turn".
-            // The current logic doesn't explicitly count "bursts per turn" in a simple property, 
-            // but we can infer from chain logic or add a counter.
-            // For now, let's use chain steps as proxy or add 'turnBurstCount' reset every turn.
-
-            if (this.turnBurstCount === undefined) this.turnBurstCount = 0; // Should be initialized at turn start
-            this.turnBurstCount++;
-            if (this.turnBurstCount > this.history.maxBurst) this.history.maxBurst = this.turnBurstCount;
-
-            // Enemy Core Damage Logic Check (One Shot)
-            // If cores changed, calculate diff.
-            // But core updates happen in `processTurn` -> `map.cores` update.
-            // We need to track it there.
-
-            // Check for High Voltage (Max Cell Energy)
-            for (const id in this.map.cells) {
-                const cell = this.map.cells[id];
-                if (Math.abs(cell.value) > this.history.maxCellEnergy) {
-                    this.history.maxCellEnergy = Math.abs(cell.value);
-                }
-            }
         }
 
         handleMouseMove(e) {
@@ -1002,8 +958,10 @@
             if (this.isTouchDevice && e.pointerType !== 'mouse') return;
 
             const rect = this.canvas.getBoundingClientRect();
-            const mouseX = e.clientX - rect.left;
-            const mouseY = e.clientY - rect.top;
+            const scaleX = this.canvas.width / rect.width;
+            const scaleY = this.canvas.height / rect.height;
+            const mouseX = (e.clientX - rect.left) * scaleX;
+            const mouseY = (e.clientY - rect.top) * scaleY;
 
             const nextHovered = this.findHexAt(mouseX, mouseY);
             if (this.hoveredHex !== nextHovered) {
@@ -1033,8 +991,10 @@
             if (e.isSimulated) {
                 hex = e.simulatedHex;
             } else {
-                mouseX = e.clientX - rect.left;
-                mouseY = e.clientY - rect.top;
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                mouseX = (e.clientX - rect.left) * scaleX;
+                mouseY = (e.clientY - rect.top) * scaleY;
                 hex = this.findHexAt(mouseX, mouseY);
             }
 
@@ -1045,29 +1005,28 @@
                 // 入力ロックのチェック（演出中やAI思考中は無効）
                 if (this.isAIThinking || this.isProcessingMove || this.turnEndRequested) return;
 
+                // 【修正】自勢力のグリッドではない場所へのエネルギー注入を禁止
+                if (hex.owner !== this.currentPlayer) {
+                    console.log(`[Validation] Invalid target. Owner: ${hex.owner}, Current: ${this.currentPlayer}`);
+                    return;
+                }
+
                 // Ver 4.3: 2ステップ確定ロジック (タッチデバイスの誤操作防止)
                 // マウスホバーがない環境（タッチ）を考慮し、1回目で選択、2回目で確定とする。
                 // すでにハイライト（hoveredHex）されているマス以外をクリックした場合は、選択のみ行う。
                 if (!e.isSimulated && this.hoveredHex !== hex) {
                     this.hoveredHex = hex;
                     this.hoveredNeighbors = [];
-                    if (hex.owner === this.currentPlayer) {
-                        const directions = [
-                            { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
-                            { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
-                        ];
-                        directions.forEach(dir => {
-                            const neighbor = this.map.getHexAt(hex.q + dir.q, hex.r + dir.r, 'main');
-                            if (neighbor) this.hoveredNeighbors.push(neighbor);
-                        });
-                    }
+                    // owner check is already done above, but keeping logic consistent
+                    const directions = [
+                        { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                        { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
+                    ];
+                    directions.forEach(dir => {
+                        const neighbor = this.map.getHexAt(hex.q + dir.q, hex.r + dir.r, 'main');
+                        if (neighbor) this.hoveredNeighbors.push(neighbor);
+                    });
                     this.sound.playPlace(); // 選択音
-                    return;
-                }
-
-                // PVCモードでCPUのターン中は、人間のクリックを無効化
-                if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !e.isSimulated) {
-                    if (hex.owner !== 0 && hex.owner !== this.currentPlayer) return;
                     return;
                 }
 
@@ -1268,39 +1227,22 @@
             // 非同期にバーストを発生させる
             console.log(`[Turn Log] Burst(s) detected. Count: ${overflowedHexes.length}`);
 
-            // High Voltage Check: バースト直前の最大エネルギーを記録
+            // High Voltage Check & Burst Tracking
             overflowedHexes.forEach(h => {
                 const energy = Math.abs(h.height);
-                if (energy > this.history.maxCellEnergy) {
-                    this.history.maxCellEnergy = energy;
-                }
+                const stats = this.achievementManager.stats[this.currentPlayer];
+                stats.maxCellEnergy.update(energy);
 
-                // Atomic Stats: Neutralize (Core only)
+                // Tracking bursts in stats
+                stats.burstGrid.both.add(1);
+
+                // Atomic Stats: Neutralize & BurstCore (Core only)
                 if (h.hasFlag) {
-                    const stats = this.achievementManager.stats[this.currentPlayer];
                     stats.neutralized[h.flagOwner].add(1);
                     stats.neutralized.both.add(1);
+                    stats.burstCore.both.add(1);
                 }
             });
-
-            // Double/Grand Sabotage: 1回目の非同期処理（注入直後）に限定してバーストをカウント
-            if (this.currentActionWaveCount === 0) {
-                // Double Sabotage: 敵陣 (Enemy Only)
-                const enemyId = this.currentPlayer === 1 ? 2 : 1;
-                const enemyBurstCount = overflowedHexes.filter(h => {
-                    const prevOwner = this.turnStartOwners.get(`${h.q},${h.r}`);
-                    return prevOwner === enemyId;
-                }).length;
-                if (enemyBurstCount > this.history.maxEnemyBurstDirect) {
-                    this.history.maxEnemyBurstDirect = enemyBurstCount;
-                }
-
-                // Grand Sabotage: 合計 (Total) - 連鎖の起点となる爆発数
-                const totalDirectBurst = overflowedHexes.length;
-                if (totalDirectBurst > this.history.maxDirectBurst) {
-                    this.history.maxDirectBurst = totalDirectBurst;
-                }
-            }
 
             overflowedHexes.forEach((hex, i) => {
                 const originalOwner = hex.owner;
@@ -1648,8 +1590,10 @@
 
         resize() {
             if (!this.map) return;
-            this.canvas.width = window.innerWidth;
-            this.canvas.height = window.innerHeight;
+            // 親要素（main）のサイズに合わせる
+            const parent = this.canvas.parentElement;
+            this.canvas.width = parent.clientWidth;
+            this.canvas.height = parent.clientHeight;
             const origin = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 
             const tempLayout = new Layout(1, { x: 0, y: 0 });
@@ -2236,11 +2180,6 @@
             const maxEnergy = mainEnergyHexes.length > 0 ? Math.max(...mainEnergyHexes.map(h => h.energy)) : 0;
             s1.maxCellEnergy.update(maxEnergy);
             s2.maxCellEnergy.update(maxEnergy);
-
-            // Legacy compatibility
-            if (maxEnergy > this.history.maxCellEnergy) {
-                this.history.maxCellEnergy = maxEnergy;
-            }
         }
     }
 
