@@ -735,6 +735,10 @@
 
         // Ver 4.7.7: Fundamental State Reset
         resetToTitle() {
+            // Ver 4.7.32: Clear achievement notification
+            const oldNotify = document.getElementById('achievement-notification');
+            if (oldNotify) oldNotify.remove();
+
             this.gameOver = false;
             this.gameMode = null;
             this.currentPlayer = 1;
@@ -761,6 +765,10 @@
         }
 
         startGame() {
+            // Ver 4.7.32: Clear achievement notification
+            const oldNotify = document.getElementById('achievement-notification');
+            if (oldNotify) oldNotify.remove();
+
             // 設定の読み取り
             const mode = this.playerSelect.querySelector('.selected').dataset.value; // 'pvc' or 'pvp'
             const size = this.sizeSelect.querySelector('.selected').dataset.value;   // 'regular' or 'mini'
@@ -1087,8 +1095,12 @@
 
                 const unlocked = this.achievementManager.checkAchievements(this, mapType, aiLevel);
                 if (unlocked.length > 0) {
-                    // Ver 4.7.22: Reverted to comma-separated list as requested
+                    // Ver 4.7.32: Clear previous achievement notification to prevent duplication
+                    const oldNotify = document.getElementById('achievement-notification');
+                    if (oldNotify) oldNotify.remove();
+
                     const p = document.createElement('p');
+                    p.id = 'achievement-notification';
                     p.style.color = '#fbbf24';
                     p.style.fontWeight = 'bold';
                     p.style.marginTop = '10px';
