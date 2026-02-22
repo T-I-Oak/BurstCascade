@@ -35,6 +35,65 @@ document.body.innerHTML = `
     <table id="achievements-table"><tbody></tbody></table>
 `;
 
+// Mock Web Audio API (Ver 5.2.1: Robust mock for SoundManager evolution)
+global.AudioContext = jest.fn().mockImplementation(() => {
+    const mockParam = {
+        setValueAtTime: jest.fn(),
+        setTargetAtTime: jest.fn(),
+        linearRampToValueAtTime: jest.fn(),
+        exponentialRampToValueAtTime: jest.fn(),
+        value: 1
+    };
+    const mockNode = { connect: jest.fn(), disconnect: jest.fn() };
+
+    return {
+        createOscillator: jest.fn(() => ({
+            ...mockNode,
+            start: jest.fn(),
+            stop: jest.fn(),
+            frequency: { ...mockParam },
+            type: 'sine'
+        })),
+        createGain: jest.fn(() => ({
+            ...mockNode,
+            gain: { ...mockParam }
+        })),
+        createDynamicsCompressor: jest.fn(() => ({
+            ...mockNode,
+            threshold: { ...mockParam },
+            knee: { ...mockParam },
+            ratio: { ...mockParam },
+            attack: { ...mockParam },
+            release: { ...mockParam }
+        })),
+        createConvolver: jest.fn(() => ({
+            ...mockNode,
+            buffer: null
+        })),
+        createDelay: jest.fn(() => ({
+            ...mockNode,
+            delayTime: { ...mockParam }
+        })),
+        createBuffer: jest.fn((channels, length, rate) => ({
+            getChannelData: jest.fn(() => new Float32Array(length)),
+            length,
+            duration: length / rate,
+            sampleRate: rate,
+            numberOfChannels: channels
+        })),
+        createStereoPanner: jest.fn(() => ({
+            ...mockNode,
+            pan: { ...mockParam }
+        })),
+        decodeAudioData: jest.fn().mockResolvedValue(new ArrayBuffer(0)),
+        currentTime: 0,
+        sampleRate: 44100,
+        destination: {},
+        state: 'suspended',
+        resume: jest.fn().mockResolvedValue()
+    };
+});
+
 // Mock Canvas/Context
 if (typeof HTMLCanvasElement !== 'undefined') {
     HTMLCanvasElement.prototype.getContext = jest.fn(() => ({
@@ -54,9 +113,11 @@ if (typeof HTMLCanvasElement !== 'undefined') {
         setTransform: jest.fn(),
         moveTo: jest.fn(),
         lineTo: jest.fn(),
+        setLineDash: jest.fn(), // Ver 5.2.0: Added for coin toss decoration
         strokeRect: jest.fn(),
         ellipse: jest.fn(),
         createLinearGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
+        createRadialGradient: jest.fn(() => ({ addColorStop: jest.fn() })),
         fillText: jest.fn(),
         measureText: jest.fn(() => ({ width: 0 })),
         canvas: { width: 800, height: 600 }

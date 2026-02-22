@@ -29,6 +29,7 @@
     function createLifeCycleMock(name, implementation) {
         const mockFn = function (...args) {
             mockFn.mock.calls.push(args);
+            if (mockFn.mockImplementation) return mockFn.mockImplementation(...args);
             return implementation ? implementation(...args) : undefined;
         };
         mockFn.mock = { calls: [] };
@@ -57,12 +58,14 @@
             const original = obj[method];
             const mock = createLifeCycleMock(method, original);
             obj[method] = mock;
-            return {
-                mockImplementation: fn => { mock.mockImplementation = fn; return this; },
-                mockReturnValue: val => { mock.mockImplementation = () => val; return this; },
-                mockClear: () => { mock.mock.calls = []; return this; },
-                mockRestore: () => { obj[method] = original; }
+            const res = {
+                mockImplementation: fn => { mock.mockImplementation = fn; return res; },
+                mockReturnValue: val => { mock.mockImplementation = () => val; return res; },
+                mockClear: () => { mock.mock.calls = []; return res; },
+                mockRestore: () => { obj[method] = original; },
+                mock: mock.mock // expect との互換性のために追加
             };
+            return res;
         },
         async waitForTests() {
             while (pendingTests.length > 0) {

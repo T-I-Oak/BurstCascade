@@ -7,6 +7,7 @@
     <title>Burst Cascade - Professional Test Suite</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=JetBrains+Mono&display=swap"
         rel="stylesheet">
+    <script>window.IS_TESTING = true;</script>
     <style>
         html,
         body {
@@ -607,14 +608,14 @@
     </script>
 
     <!-- Load dependencies -->
-    <script src="../constants.js"></script>
-    <script src="../utils.js"></script>
-    <script src="../map.js"></script>
-    <script src="../achievements.js"></script>
-    <script src="../sound.js"></script>
-    <script src="../renderer.js"></script>
-    <script src="../ai.js"></script>
-    <script src="../main.js"></script>
+    <script src="../constants.js?v=5.2.4"></script>
+    <script src="../utils.js?v=5.2.4"></script>
+    <script src="../map.js?v=5.2.4"></script>
+    <script src="../achievements.js?v=5.2.4"></script>
+    <script src="../sound.js?v=5.2.4"></script>
+    <script src="../renderer.js?v=5.2.4"></script>
+    <script src="../ai.js?v=5.2.4"></script>
+    <script src="../main.js?v=5.2.4"></script>
     <script src="jest-browser-shim.js"></script>
 
     <script>
@@ -623,6 +624,7 @@
             { id: 'jest-game', file: 'unit/core/game.test.js', title: 'Core: Game Instance' },
             { id: 'jest-map', file: 'unit/core/map.test.js', title: 'Core: Hex Map & Layout' },
             { id: 'jest-rules', file: 'unit/core/rules.test.js', title: 'Core: Game Rules' },
+            { id: 'jest-starter-decision', file: 'unit/core/game_starter_decision.test.js', title: 'Core: Game Starter Decision' },
             // Logic
             { id: 'jest-achievements', file: 'unit/logic/achievements.test.js', title: 'Logic: Achievement Manager' },
             { id: 'jest-stats', file: 'unit/logic/stats.test.js', title: 'Logic: Stat Items' },

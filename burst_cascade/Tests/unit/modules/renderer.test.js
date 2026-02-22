@@ -56,5 +56,20 @@
             renderer.drawHexNumber(100, 100, 10, color, 5, mockCtx, game.layout);
             expect(mockCtx.fillText).toHaveBeenCalled();
         });
+
+        test('drawCoinToss should not throw in any phase', () => {
+            const phases = ['gathering', 'fusion', 'burst', 'stabilized'];
+            game.startGame();
+
+            phases.forEach(phase => {
+                game.coinToss.phase = phase;
+                game.coinToss.timer = 500;
+                if (phase === 'stabilized') game.coinToss.ripple = 0.5;
+
+                expect(() => {
+                    renderer.drawCoinToss();
+                }).not.toThrow();
+            });
+        });
     });
 })();

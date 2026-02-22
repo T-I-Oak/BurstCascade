@@ -37,6 +37,19 @@
             this.turnHadReward = false;   // ターン中に何らかの報酬が発生したか
             this.turnHadSelfReward = false; // ターン中に「自陣報酬」が発生したか (Ver 4.4.17)
 
+            // 先行抽選演出用 (Ver 5.3.0: 「共鳴同調」演出へ刷新)
+            this.coinToss = {
+                active: false,
+                phase: 'gathering', // gathering -> fusion -> burst -> stabilized
+                timer: 0,
+                result: 0,
+                particles: [],
+                pulse: 0,
+                ripple: 0,
+                ballSize: 0,
+                showArrow: false // 確定時にラベルの◀を表示するフラグ
+            };
+
             // UI要素 (Ver 4.6.8: テスト環境でのクラッシュ防止のためNullガードを追加)
             const getEl = (id) => document.getElementById(id);
             this.overlay = getEl('overlay');
@@ -214,7 +227,12 @@
             this.canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
 
             this.loadSettings(); // 設定の読み込み
-            this.init(); // Add: Start animation loop
+            this.resize(); // Ver 5.2.3: Always resize to setup layout even in tests
+
+            // アニメーションループのみテスト環境で抑制
+            if (!window.IS_TESTING) {
+                requestAnimationFrame((t) => this.animate(t));
+            }
 
             // --- BGM Activation (Ver 4.6.8: Ultra-resilient activation) ---
             const handleFirstGesture = async () => {
@@ -224,7 +242,7 @@
                 // If isPlaying is true, it means BGM was requested but deferred.
                 if (this.sound.isPlaying && this.sound.currentPattern) {
                     this.sound.startBgm(this.sound.currentPattern);
-                } else if (!this.gameMode) {
+                } else if (!this.gameMode && !window.IS_TESTING) {
                     this.sound.startBgm('title');
                 }
 
@@ -296,10 +314,14 @@
             const oldNotify = document.getElementById('achievement-notification');
             if (oldNotify) oldNotify.remove();
 
-            // 設定の読み取り
-            const mode = this.playerSelect.querySelector('.selected').dataset.value; // 'pvc' or 'pvp'
-            const size = this.sizeSelect.querySelector('.selected').dataset.value;   // 'regular' or 'mini'
-            const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value; // 'easy', 'normal', 'hard'
+            // 設定の読み取り (Ver 5.2.2: Nullガードの追加)
+            const modeEl = this.playerSelect ? this.playerSelect.querySelector('.selected') : null;
+            const sizeEl = this.sizeSelect ? this.sizeSelect.querySelector('.selected') : null;
+            const aiLevelEl = this.aiLevelSelect ? this.aiLevelSelect.querySelector('.selected') : null;
+
+            const mode = modeEl ? modeEl.dataset.value : 'pvc';
+            const size = sizeEl ? sizeEl.dataset.value : 'regular';
+            const aiLevel = aiLevelEl ? aiLevelEl.dataset.value : 'normal';
 
             this.sound.startBgm('game');
             this.gameMode = mode;
@@ -331,8 +353,35 @@
             const totalCores = (initialCoreCounts[1] || 0) + (initialCoreCounts[2] || 0);
             this.sound.updateContextData(initialCoreCounts[1], initialCoreCounts[2], totalCores);
 
+            // --- 先行決定演出の開始 (Ver 5.4.0: エネルギーバースト) ---
+            this.coinToss.result = Math.random() < 0.5 ? 1 : 2;
+            this.coinToss.active = true;
+            this.coinToss.phase = 'gathering';
+            this.coinToss.timer = 0;
+            this.coinToss.pulse = 0;
+            this.coinToss.ripple = 0;
+            this.coinToss.ballSize = 0;
+            this.coinToss.showArrow = false;
 
-            this.currentPlayer = 1;
+            // 粒子の生成
+            const count = 80;
+            this.coinToss.totalParticles = count;
+            this.coinToss.arrivedParticlesCount = 0;
+            this.coinToss.particles = [];
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const dist = 600 + Math.random() * 400; // 画面外から
+                this.coinToss.particles.push({
+                    x: Math.cos(angle) * dist,
+                    y: Math.sin(angle) * dist,
+                    speed: 0.3 + Math.random() * 0.4,
+                    player: Math.random() < 0.5 ? 1 : 2,
+                    size: 2 + Math.random() * 3,
+                    active: true
+                });
+            }
+
+            this.currentPlayer = 0; // まだ手番ではない
             this.gameOver = false;
             this.isProcessingMove = false;
             this.pendingRewards = [];
@@ -340,11 +389,14 @@
             this.effects = [];
 
             this.resetTurnStats(); // ターン開始時の統計リセット
-            this.dropEffects = [];
-            this.effects = [];
 
-            this.closeOverlay();
-            // ゲーム開始
+            // コイントス中はオーバーレイを完全に隠し、ブラーの影響（backdrop-filter）を排除する
+            if (this.overlay) {
+                this.overlay.classList.add('hidden'); // Ver 5.2.4: 即座に隠す
+                this.modeSelection.classList.add('hidden');
+                this.gameOverContent.classList.add('hidden');
+                this.peekBoardBtn.classList.add('hidden');
+            }
 
             this.render(); // 初回描画
         }
@@ -386,10 +438,14 @@
         }
 
         saveSettings() {
+            const modeEl = this.playerSelect ? this.playerSelect.querySelector('.selected') : null;
+            const sizeEl = this.sizeSelect ? this.sizeSelect.querySelector('.selected') : null;
+            const aiLevelEl = this.aiLevelSelect ? this.aiLevelSelect.querySelector('.selected') : null;
+
             const settings = {
-                mode: this.playerSelect.querySelector('.selected').dataset.value,
-                size: this.sizeSelect.querySelector('.selected').dataset.value,
-                aiLevel: this.aiLevelSelect.querySelector('.selected').dataset.value,
+                mode: modeEl ? modeEl.dataset.value : 'pvc',
+                size: sizeEl ? sizeEl.dataset.value : 'regular',
+                aiLevel: aiLevelEl ? aiLevelEl.dataset.value : 'normal',
                 volume: this.volumeSlider ? this.volumeSlider.value : 50
             };
             localStorage.setItem('burst-cascade-settings', JSON.stringify(settings));
@@ -408,15 +464,19 @@
                             this.volumeSlider.value = settings.volume;
                             if (this.volumeValue) this.volumeValue.innerText = `${settings.volume}%`;
                         }
-                        this.sound.masterVolume = settings.volume / 100;
-                        this.sound.updateVolume();
+                        if (this.sound) {
+                            this.sound.masterVolume = settings.volume / 100;
+                            this.sound.updateVolume();
+                        }
                     }
 
                     // AIレベルグループの表示制御
-                    if (settings.mode === 'pvc') {
-                        this.aiLevelGroup.classList.remove('hidden');
-                    } else {
-                        this.aiLevelGroup.classList.add('hidden');
+                    if (this.aiLevelGroup) {
+                        if (settings.mode === 'pvc') {
+                            this.aiLevelGroup.classList.remove('hidden');
+                        } else {
+                            this.aiLevelGroup.classList.add('hidden');
+                        }
                     }
                 } catch (e) {
                     console.error("Failed to load settings:", e);
@@ -670,20 +730,20 @@
 
 
         closeOverlay() {
-            this.helpContent.classList.add('hidden');
+            if (this.helpContent) this.helpContent.classList.add('hidden');
 
             if (this.gameOver) {
                 // ゲーム終了時は結果表示画面を表示したままにする
-                this.overlay.classList.remove('hidden');
-                this.gameOverContent.classList.remove('hidden');
-                this.peekBoardBtn.classList.remove('hidden');
+                if (this.overlay) this.overlay.classList.remove('hidden');
+                if (this.gameOverContent) this.gameOverContent.classList.remove('hidden');
+                if (this.peekBoardBtn) this.peekBoardBtn.classList.remove('hidden');
             } else {
                 // ゲーム中でなければオーバーレイごと隠す
-                this.overlay.classList.add('hidden');
-                this.gameOverContent.classList.add('hidden');
-                this.peekBoardBtn.classList.add('hidden');
+                if (this.overlay) this.overlay.classList.add('hidden');
+                if (this.gameOverContent) this.gameOverContent.classList.add('hidden');
+                if (this.peekBoardBtn) this.peekBoardBtn.classList.add('hidden');
             }
-            this.modeSelection.classList.add('hidden');
+            if (this.modeSelection) this.modeSelection.classList.add('hidden');
         }
 
         checkGameOverStatus() {
@@ -715,11 +775,22 @@
         }
 
         animate(time) {
+            if (!this.lastTime) this.lastTime = time;
+            const dt = time - this.lastTime;
+            this.lastTime = time;
+
             // Ver 4.7.9: Permanent Animation Engine
             // Always request next frame even if map is null to keep pulseValue and UI alive.
             requestAnimationFrame((t) => this.animate(t));
 
             this.pulseValue = (Math.sin(time / 500) + 1) / 2; // 0 to 1
+
+            // --- コイントス演出の更新 (Ver 5.2.0) ---
+            if (this.coinToss.active) {
+                this.updateCoinToss(dt);
+                this.render();
+                return;
+            }
 
             // Guard for map-dependent logic
             if (!this.map) {
@@ -1630,16 +1701,30 @@
         resize() {
             // 親要素（main）のサイズに合わせる
             const parent = this.canvas.parentElement;
-            if (parent) {
-                this.canvas.width = parent.clientWidth;
-                this.canvas.height = parent.clientHeight;
-            }
+            if (!parent) return;
+
+            // Ver 5.2.2: High-DPI (Retina) 対応
+            const dpr = window.devicePixelRatio || 1;
+            const displayWidth = parent.clientWidth;
+            const displayHeight = parent.clientHeight;
+
+            // 内部解像度を物理ピクセルに合わせる
+            this.canvas.width = Math.floor(displayWidth * dpr);
+            this.canvas.height = Math.floor(displayHeight * dpr);
+
+            // 表示サイズはCSSピクセルで固定
+            this.canvas.style.width = `${displayWidth}px`;
+            this.canvas.style.height = `${displayHeight}px`;
+
+            // 描画コンテキストをスケーリング
+            this.ctx.setTransform(1, 0, 0, 1, 0, 0); // 念のためリセット
+            this.ctx.scale(dpr, dpr);
 
             if (!this.map) {
                 this.render(); // マップがなくても背景などは描画する
                 return;
             }
-            const origin = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
+            const origin = { x: displayWidth / 2, y: displayHeight / 2 };
 
             const tempLayout = new Layout(1, { x: 0, y: 0 });
             let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
@@ -1659,8 +1744,8 @@
             const contentHeight = maxY - minY;
             const padding = 1.3; // ラベルのために少し広げる
 
-            const tileSizeW = this.canvas.width / (contentWidth * padding);
-            const tileSizeH = this.canvas.height / (contentHeight * padding);
+            const tileSizeW = displayWidth / (contentWidth * padding);
+            const tileSizeH = displayHeight / (contentHeight * padding);
             const tileSize = Math.min(tileSizeW, tileSizeH);
 
             this.layout = new Layout(tileSize, origin);
@@ -1739,8 +1824,8 @@
 
             const g1 = mainHexes.filter(h => h.owner === 1).length;
             const g2 = mainHexes.filter(h => h.owner === 2).length;
-            const c1 = mainHexes.filter(h => h.owner === 1 && h.isCore).length;
-            const c2 = mainHexes.filter(h => h.owner === 2 && h.isCore).length;
+            const c1 = mainHexes.filter(h => h.owner === 1 && h.hasFlag).length; // hasFlag に修正
+            const c2 = mainHexes.filter(h => h.owner === 2 && h.hasFlag).length; // hasFlag に修正
 
             const s1 = this.achievementManager.stats[1];
             const s2 = this.achievementManager.stats[2];
@@ -1761,8 +1846,138 @@
             s1.maxCellEnergy.update(maxEnergy);
             s2.maxCellEnergy.update(maxEnergy);
         }
+
+        // --- 先行決定演出ロジック「エネルギーバースト」 (Ver 5.4.0) ---
+        updateCoinToss(dt) {
+            if (!this.coinToss.active) return;
+            this.coinToss.timer += dt;
+
+            // 音響効果の再生
+            this.sound.playResonanceSync(this.coinToss.phase, this.coinToss.timer);
+
+            if (this.coinToss.phase === 'gathering') {
+                // 中心へ向かって粒子が収束
+                this.coinToss.particles.forEach(p => {
+                    if (!p.active) return;
+                    const dist = Math.sqrt(p.x * p.x + p.y * p.y);
+                    if (dist > 5) {
+                        const speed = p.speed * 2.5;
+                        p.x -= (p.x / dist) * speed * dt;
+                        p.y -= (p.y / dist) * speed * dt;
+                    } else {
+                        p.active = false;
+                        this.coinToss.arrivedParticlesCount++;
+                    }
+                });
+
+                // 到達数に基づくボールの成長 (ベースサイズ 0 -> 80)
+                const targetBaseSize = (this.coinToss.arrivedParticlesCount / this.coinToss.totalParticles) * 80;
+                this.coinToss.ballSize = Math.min(80, Math.max(this.coinToss.ballSize, targetBaseSize));
+
+                // 遷移条件：9割以上が到達したか、一定時間(1.2s)が経過したら即座に次へ
+                if (this.coinToss.arrivedParticlesCount >= this.coinToss.totalParticles * 0.9 || this.coinToss.timer > 1200) {
+                    this.coinToss.phase = 'fusion';
+                    this.coinToss.timer = 0;
+                }
+            } else if (this.coinToss.phase === 'fusion') {
+                // 短い「溜め」フェーズ
+                const t = this.coinToss.timer / 200;
+                this.coinToss.ballSize = 80 + t * 40;
+                this.coinToss.pulse = 1.0 + Math.sin(this.coinToss.timer * 0.05) * 0.4;
+
+                if (this.coinToss.timer > 200) {
+                    this.coinToss.phase = 'burst';
+                    this.coinToss.timer = 0;
+                    this.sound.playBurst();
+
+                    // 爆発粒子の生成（本編の addParticles(..., isBig=true) と全く同じ初速設定）
+                    this.coinToss.particles = [];
+                    const speed = 18; // isBig=true 時の基本速度
+                    for (let i = 0; i < 50; i++) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const spd = (0.5 + Math.random() * 0.5) * speed;
+                        this.coinToss.particles.push({
+                            x: 0, y: 0,
+                            vx: Math.cos(angle) * spd,
+                            vy: Math.sin(angle) * spd - 6, // 実機の跳ね上がり
+                            player: this.coinToss.result,
+                            life: 1.0,
+                            active: true,
+                            size: (2 + Math.random() * 3) * 1.5
+                        });
+                    }
+                }
+            } else if (this.coinToss.phase === 'burst') {
+                // 飛散ロジック：本編の animate:effects ループと完全にロジックを同期させます
+                const targetZone = `hand-p${this.coinToss.result}`;
+                const center = this.map.centers[targetZone];
+                const targetPos = this.layout.hexToPixel(center);
+
+                // ラベル（文字）の正確な位置を算出 (renderer.js の drawLabel と同期)
+                const marginX = this.layout.size * 2.5;
+                const align = (this.coinToss.result === 1 ? 'left' : 'right');
+                const textX = targetPos.x + (align === 'left' ? marginX : -marginX);
+                const textY = targetPos.y;
+
+                const dpr = window.devicePixelRatio || 1;
+                const relTargetX = textX - (this.canvas.width / dpr) / 2;
+                const relTargetY = textY - (this.canvas.height / dpr) / 2;
+
+                const speedFactor = dt / 16.6; // フレームレート補正
+                let allArrived = true;
+
+                this.coinToss.particles.forEach(p => {
+                    if (p.life <= 0) return;
+
+                    // 実機の誘導ロジック
+                    const startHomingLife = 0.8;
+                    const strength = Math.max(0, (startHomingLife - p.life) * 3.0);
+                    const dx = relTargetX - p.x;
+                    const dy = relTargetY - p.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+
+                    if (dist < 25) { // 到着判定
+                        p.life = 0;
+                    } else {
+                        if (p.life < startHomingLife) {
+                            // 誘導中
+                            p.vx += (dx / dist) * strength * speedFactor;
+                            p.vy += (dy / dist) * strength * speedFactor;
+                            p.vx *= Math.pow(0.94, speedFactor);
+                            p.vy *= Math.pow(0.94, speedFactor);
+                        } else {
+                            // 跳ね上がり中
+                            p.vy += 0.15 * speedFactor; // 重力
+                            p.vx *= Math.pow(0.94, speedFactor);
+                            p.vy *= Math.pow(0.94, speedFactor);
+                        }
+
+                        p.x += p.vx * speedFactor;
+                        p.y += p.vy * speedFactor;
+                        p.life -= 0.012 * speedFactor; // 寿命減衰
+                        allArrived = false;
+                    }
+                });
+
+                if (allArrived || this.coinToss.timer > 3000) { // 3秒で強制終了（安全策）
+                    this.coinToss.phase = 'stabilized';
+                    this.coinToss.timer = 0;
+                    this.coinToss.showArrow = true;
+                    this.sound.playTurnChange();
+                }
+            } else if (this.coinToss.phase === 'stabilized') {
+                this.coinToss.ripple = Math.min(1, this.coinToss.timer / 600);
+                if (this.coinToss.timer > 1000) {
+                    this.coinToss.active = false;
+                    this.currentPlayer = this.coinToss.result;
+                    this.closeOverlay();
+                    if (this.gameMode === 'pvc' && this.currentPlayer === 2) {
+                        this.handleCPUTurn();
+                    }
+                }
+            }
+        }
     }
 
     window.BurstCascade.Game = Game;
-    window.game = new Game();
 })();

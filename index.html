@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
-    <link rel="stylesheet" href="burst_cascade/style.css?v=5.0.0">
-    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=5.0.0">
+    <link rel="stylesheet" href="burst_cascade/style.css?v=5.2.4">
+    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=5.2.4">
 </head>
 
 <body>
@@ -29,7 +29,7 @@
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
                     <h1 class="title-logo">BURST CASCADE</h1>
-                    <div class="version-badge">Ver 5.0.0</div>
+                    <div class="version-badge">Ver 5.2.4</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
                     <div class="menu-scroll-container">
                         <div class="menu-options">
@@ -104,6 +104,7 @@
                         <div style="clear: both;"></div>
                         <section class="help-section">
                             <h3>システム・ルール</h3>
+                            <p>ゲーム開始時に<strong>先攻プレイヤーがランダムに抽選</strong>されます。</p>
                             <p>このゲームは、<strong>「ターン」</strong>という単位で進行します。1つのターンは以下のフェーズのサイクルで構成されます。</p>
                             <ul class="help-list" style="margin-bottom: 20px;">
                                 <li><strong>エネルギー注入フェーズ</strong>: エネルギー注入のアクションを行う段階です。</li>
@@ -253,15 +254,23 @@
             </div>
         </footer>
     </div>
-    <script src="burst_cascade/constants.js?v=5.0.0"></script>
-    <script src="burst_cascade/utils.js?v=5.0.0"></script>
-    <script src="burst_cascade/map.js?v=5.0.0"></script>
-    <script src="burst_cascade/achievements.js?v=5.0.0"></script>
-    <script src="burst_cascade/sound.js?v=5.0.0"></script>
-    <script src="burst_cascade/renderer.js?v=5.0.0"></script>
-    <script src="burst_cascade/ai.js?v=5.0.0"></script>
-    <script src="burst_cascade/main.js?v=5.0.0"></script>
-    <script src="burst_cascade/tutorial.js?v=5.0.0"></script>
+    <script src="burst_cascade/constants.js?v=5.2.4"></script>
+    <script src="burst_cascade/utils.js?v=5.2.4"></script>
+    <script src="burst_cascade/map.js?v=5.2.4"></script>
+    <script src="burst_cascade/achievements.js?v=5.2.4"></script>
+    <script src="burst_cascade/sound.js?v=5.2.4"></script>
+    <script src="burst_cascade/renderer.js?v=5.2.4"></script>
+    <script src="burst_cascade/ai.js?v=5.2.4"></script>
+    <script src="burst_cascade/main.js?v=5.2.4"></script>
+    <script src="burst_cascade/tutorial.js?v=5.2.4"></script>
+    <script>
+        // Ver 5.2.1: Manual instantiation to prevent interference in test environments
+        window.addEventListener('load', () => {
+            if (window.BurstCascade && window.BurstCascade.Game) {
+                window.game = new window.BurstCascade.Game();
+            }
+        });
+    </script>
 </body>
 
 </html>

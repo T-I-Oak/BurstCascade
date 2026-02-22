@@ -272,6 +272,13 @@ main {
     /* ヘッダーと重ならないように多めにパディング */
 }
 
+/* Ver 5.2.4: コイントス中はブラーを無効化して背後の演出をクッキリ見せる */
+#overlay.coin-toss-active {
+    backdrop-filter: none;
+    background: rgba(15, 23, 42, 0.4);
+    /* 背景を少し明るくして見やすく */
+}
+
 /* タイトルコンテンツの中央配置と、はみ出し時のスクロール対応 */
 #overlay>.modal-content {
     margin: auto;

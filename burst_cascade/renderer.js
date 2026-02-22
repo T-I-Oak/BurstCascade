@@ -12,7 +12,16 @@
             const game = this.game;
             if (!game.map || !game.layout) return;
 
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            // Ver 5.2.4: 描画状態のリセットと DPR スケーリングの再適用
+            const dpr = window.devicePixelRatio || 1;
+            this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // 変形行列をリセットして dpr スケーリングを強制
+
+            this.ctx.shadowBlur = 0;
+            this.ctx.shadowOffsetX = 0;
+            this.ctx.shadowOffsetY = 0;
+            this.ctx.globalAlpha = 1.0;
+
+            this.ctx.clearRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
 
             const sortedHexes = [...game.map.hexes].sort((a, b) => {
                 const zA = a.q + a.r;
@@ -108,6 +117,11 @@
                 this.ctx.stroke();
                 this.ctx.restore();
             }
+
+            // --- コイントス演出の描画 (Ver 5.2.0) ---
+            if (game.coinToss.active) {
+                this.drawCoinToss();
+            }
         }
 
         _updateUIBars() {
@@ -142,6 +156,7 @@
 
             if (hex.isHidden) return;
 
+            ctx.save(); // Ver 5.2.3: save/restore を追加 (テスト要件 & 安全性)
             const vertices = layout.getPolygonVertices(hex);
 
             if (hex.isDisabled) {
@@ -154,6 +169,7 @@
                 ctx.strokeStyle = '#1e293b';
                 ctx.lineWidth = 1;
                 ctx.stroke();
+                ctx.restore();
                 return;
             }
 
@@ -186,6 +202,73 @@
             if (hex.visualFlagScale > 0.01) {
                 this.drawCore(hex, h, ctx, layout);
             }
+
+            ctx.restore();
+        }
+
+        drawCoinToss() {
+            const game = this.game;
+            const ctx = this.ctx;
+            const dpr = window.devicePixelRatio || 1;
+            const centerX = (this.canvas.width / dpr) / 2;
+            const centerY = (this.canvas.height / dpr) / 2;
+            const ct = game.coinToss;
+
+            ctx.save();
+
+            // 1. 背景の暗転 (シームレス化：完全に廃止)
+            // 背景は一切暗転させない
+
+            // 2. 粒子の描画 (gathering & burst)
+            ct.particles.forEach(p => {
+                if (p.life <= 0) return;
+                const color = Constants.PARTICLE_COLORS[p.player];
+                ctx.fillStyle = color;
+                ctx.globalAlpha = p.active === false ? 0 : (p.life || 0.8);
+                ctx.beginPath();
+                ctx.arc(centerX + p.x, centerY + p.y, p.size || 3, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+
+            // 3. 中心エネルギーボールの描画 (gathering ～ fusion フェーズ)
+            if (ct.phase === 'gathering' || ct.phase === 'fusion' || (ct.phase === 'burst' && ct.timer < 150)) {
+                const size = ct.ballSize * (ct.pulse || 1);
+                if (size > 2) {
+                    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size);
+                    gradient.addColorStop(0, 'white');
+                    gradient.addColorStop(0.2, '#fef3c7'); // Amber 100
+                    gradient.addColorStop(0.5, '#fbbf24'); // Amber 400 (再構築ドットと同系色)
+                    gradient.addColorStop(1, 'transparent');
+
+                    ctx.save();
+                    ctx.globalAlpha = 1.0;
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // 外側の二次グロー（ふんわりとした広がり）
+                    ctx.globalAlpha = 0.4 * (ct.pulse || 1);
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, size * 1.8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // 4. 爆発時のフラッシュ
+            if (ct.phase === 'burst' && ct.timer < 250) {
+                const flashAlpha = 1.0 - (ct.timer / 250);
+                // 盤面が見えるように白フラッシュのアルファも調整 (1.0 -> 0.6)
+                ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.6})`;
+                ctx.fillRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
+            }
+
+            // 5. 通知テキスト (シームレス化：削除)
+            // "PLAYER X READY" などの表示は不要
+
+            ctx.restore();
         }
 
         drawHexBase(hex, vertices, h, color, overrideCtx = null) {
@@ -251,11 +334,14 @@
         drawHexNumber(tx, ty, h, color, value, overrideCtx = null, overrideLayout = null) {
             const ctx = overrideCtx || this.ctx;
             const layout = overrideLayout || this.game.layout;
+            const dpr = window.devicePixelRatio || 1; // Ver 5.2.4: dpr 補正
             ctx.save();
             const { angle, tilt, scaleY } = layout.projection;
             const cosA = Math.cos(angle), sinA = Math.sin(angle);
             const a = cosA, b = (sinA - cosA * tilt) * scaleY, c = -sinA, d = (cosA + sinA * tilt) * scaleY;
-            ctx.setTransform(a, b, c, d, tx, ty);
+
+            // setTransform は行列を上書きするため、dpr を反映させる必要がある
+            ctx.setTransform(a * dpr, b * dpr, c * dpr, d * dpr, tx * dpr, ty * dpr);
             const fontSize = layout.size * 1.5;
             ctx.font = `bold ${fontSize}px Outfit, sans-serif`;
             ctx.textAlign = 'center';
@@ -399,17 +485,55 @@
             const marginX = game.layout.size * 2.5;
             const textX = pos.x + (align === 'left' ? marginX : -marginX);
 
-            if (isActive && !game.gameOver) {
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 10 + game.pulseValue * 10;
+            let finalText = text;
+            const isTossing = game.coinToss.active;
+            const isWinnerLabel = (isTossing && game.coinToss.phase === 'stabilized' && game.coinToss.result === playerNum);
+
+            // 矢印の表示制御
+            const showArrow = isTossing ? game.coinToss.showArrow : true;
+
+            if (playerNum === 1) {
+                finalText = text + (isActive && showArrow ? ' ◀' : ' 　');
+            } else {
+                finalText = (isActive && showArrow ? '▶ ' : '　 ') + text;
             }
 
-            let finalText = text;
-            if (playerNum === 1) {
-                finalText = text + (isActive ? ' ◀' : ' 　');
-            } else {
-                finalText = (isActive ? '▶ ' : '　 ') + text;
+            // 通常時の手番表示（発光） (Ver 5.4.1)
+            if (isActive && !isTossing && !game.gameOver) {
+                ctx.shadowColor = color;
+                ctx.shadowBlur = 15 + Math.sin(game.pulseValue * Math.PI) * 5;
             }
+
+            // 確定時の強烈な発光効果 (Ver 5.4.2: シームレスな色彩遷移)
+            if (isWinnerLabel) {
+                const energyColorHex = '#fbbf24'; // エネルギーボールと同じ琥珀色
+                const pColorHex = Constants.PARTICLE_COLORS[playerNum];
+
+                const t = Math.min(1, game.coinToss.timer / 1000);
+                // 0.0s: PlayerColor -> 0.2s: EnergyYellow -> 1.0s: PlayerColor のカーブ
+                let colorFactor = 0;
+                if (t < 0.2) {
+                    colorFactor = t / 0.2; // 上昇
+                } else {
+                    colorFactor = Math.max(0, 1 - (t - 0.2) / 0.8); // 下落
+                }
+
+                const rgbP = Utils.hexToRgb(pColorHex);
+                const rgbE = Utils.hexToRgb(energyColorHex);
+
+                const r = Math.round(rgbP.r + (rgbE.r - rgbP.r) * colorFactor);
+                const g = Math.round(rgbP.g + (rgbE.g - rgbP.g) * colorFactor);
+                const b = Math.round(rgbP.b + (rgbE.b - rgbP.b) * colorFactor);
+
+                const interpolatedColor = `rgb(${r},${g},${b})`;
+                ctx.shadowColor = interpolatedColor;
+                ctx.fillStyle = interpolatedColor;
+
+                // 輝度に合わせてブラーも最大化
+                ctx.shadowBlur = 40 + colorFactor * 30; // 40 -> 70 -> 40
+                ctx.globalAlpha = 1.0;
+            }
+
             ctx.fillText(finalText, textX, pos.y);
 
             // チェーン・ドット

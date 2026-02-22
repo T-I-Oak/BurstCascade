@@ -177,6 +177,48 @@
             osc.stop(this.ctx.currentTime + 0.05);
         }
 
+        // --- 先行決定演出用音響「エネルギーバースト」 (Ver 5.4.0) ---
+        playResonanceSync(phase, timer) {
+            if (!this.ctx || this.ctx.state === 'suspended') return;
+            const now = this.ctx.currentTime;
+
+            if (phase === 'gathering') {
+                // 粒子の収束音（微細なグリッチ音）
+                if (Math.random() < 0.2) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440 + Math.random() * 880, now);
+                    gain.gain.setValueAtTime(0.003, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    osc.stop(now + 0.05);
+                }
+            } else if (phase === 'fusion') {
+                // エネルギー膨張音：高密度の共鳴音
+                // 周期を短くし、ピッチをより急激に上げることで「限界まで溜まっている感」を出す
+                const interval = 80;
+                if (Math.floor(timer / interval) !== Math.floor((timer - 16) / interval)) {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    const freqBase = 120 + (timer / 300) * 440; // 0.3s で急激に上昇
+                    osc.frequency.setValueAtTime(freqBase, now);
+                    osc.frequency.exponentialRampToValueAtTime(freqBase * 1.2, now + 0.08);
+
+                    gain.gain.setValueAtTime(0.015, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    osc.start();
+                    osc.stop(now + 0.08);
+                }
+            }
+        }
+
         // --- BGM Engine ---
         startBgm(type) {
             if (this.currentPattern === type && this.isPlaying && this.schedulerId) return;
