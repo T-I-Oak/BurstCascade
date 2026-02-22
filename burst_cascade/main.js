@@ -570,7 +570,7 @@
                             btns.forEach(b => b.classList.remove('selected'));
                             btn.classList.add('selected');
                             this.sound.playPlace(); // クリック音
-                            this.saveSettings(); // Ver 4.7.32: Always save on change
+                            this.saveSettings(); // Ver 4.7.34: Always save on change
                         });
                     });
                 };
@@ -741,7 +741,7 @@
 
         // Ver 4.7.7: Fundamental State Reset
         resetToTitle() {
-            // Ver 4.7.32: Clear achievement notification
+            // Ver 4.7.34: Clear achievement notification
             const oldNotify = document.getElementById('achievement-notification');
             if (oldNotify) oldNotify.remove();
 
@@ -2117,11 +2117,17 @@
         }
 
         resize() {
-            if (!this.map) return;
             // 親要素（main）のサイズに合わせる
             const parent = this.canvas.parentElement;
-            this.canvas.width = parent.clientWidth;
-            this.canvas.height = parent.clientHeight;
+            if (parent) {
+                this.canvas.width = parent.clientWidth;
+                this.canvas.height = parent.clientHeight;
+            }
+
+            if (!this.map) {
+                this.render(); // マップがなくても背景などは描画する
+                return;
+            }
             const origin = { x: this.canvas.width / 2, y: this.canvas.height / 2 };
 
             const tempLayout = new Layout(1, { x: 0, y: 0 });

@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
-    <link rel="stylesheet" href="burst_cascade/style.css?v=4.7.32">
-    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=4.7.32">
+    <link rel="stylesheet" href="burst_cascade/style.css?v=4.7.34">
+    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=4.7.34">
 </head>
 
 <body>
@@ -29,47 +29,49 @@
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
                     <h1 class="title-logo">BURST CASCADE</h1>
-                    <div class="version-badge">Ver 4.7.32</div>
+                    <div class="version-badge">Ver 4.7.34</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
-                    <div class="menu-options">
-                        <div class="settings-container">
-                            <div class="setting-group" id="player-group">
-                                <label>PLAYERS</label>
-                                <div class="toggle-options" id="player-select">
-                                    <button class="toggle-btn selected" data-value="pvc">1P <span class="sub">vs
-                                            CPU</span></button>
-                                    <button class="toggle-btn" data-value="pvp">2P <span
-                                            class="sub">LOCAL</span></button>
+                    <div class="menu-scroll-container">
+                        <div class="menu-options">
+                            <div class="settings-container">
+                                <div class="setting-group" id="player-group">
+                                    <label>PLAYERS</label>
+                                    <div class="toggle-options" id="player-select">
+                                        <button class="toggle-btn selected" data-value="pvc">1P <span class="sub">vs
+                                                CPU</span></button>
+                                        <button class="toggle-btn" data-value="pvp">2P <span
+                                                class="sub">LOCAL</span></button>
+                                    </div>
+                                </div>
+                                <div class="setting-group" id="ai-level-group">
+                                    <label>AI LEVEL</label>
+                                    <div class="toggle-options" id="ai-level-select">
+                                        <button class="toggle-btn" data-value="easy">EASY</button>
+                                        <button class="toggle-btn selected" data-value="normal">NORMAL</button>
+                                        <button class="toggle-btn" data-value="hard">HARD</button>
+                                    </div>
+                                </div>
+                                <div class="setting-group" id="size-group">
+                                    <label>MAP SIZE</label>
+                                    <div class="toggle-options" id="size-select">
+                                        <button class="toggle-btn" data-value="mini">MINI</button>
+                                        <button class="toggle-btn selected" data-value="regular">REGULAR</button>
+                                    </div>
+                                </div>
+                                <div class="setting-group" id="sound-group">
+                                    <label>SOUND / BGM</label>
+                                    <div class="toggle-options" id="bgm-select">
+                                        <button class="toggle-btn selected" data-value="on">ON</button>
+                                        <button class="toggle-btn" data-value="off">OFF</button>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="setting-group" id="ai-level-group">
-                                <label>AI LEVEL</label>
-                                <div class="toggle-options" id="ai-level-select">
-                                    <button class="toggle-btn" data-value="easy">EASY</button>
-                                    <button class="toggle-btn selected" data-value="normal">NORMAL</button>
-                                    <button class="toggle-btn" data-value="hard">HARD</button>
-                                </div>
-                            </div>
-                            <div class="setting-group" id="size-group">
-                                <label>MAP SIZE</label>
-                                <div class="toggle-options" id="size-select">
-                                    <button class="toggle-btn" data-value="mini">MINI</button>
-                                    <button class="toggle-btn selected" data-value="regular">REGULAR</button>
-                                </div>
-                            </div>
-                            <div class="setting-group" id="sound-group">
-                                <label>SOUND / BGM</label>
-                                <div class="toggle-options" id="bgm-select">
-                                    <button class="toggle-btn selected" data-value="on">ON</button>
-                                    <button class="toggle-btn" data-value="off">OFF</button>
-                                </div>
-                            </div>
+                            <button id="game-start-btn" class="menu-btn primary large">GAME START</button>
+                            <button id="achievements-btn" class="menu-btn secondary">ACHIEVEMENTS</button>
                         </div>
-                        <button id="game-start-btn" class="menu-btn primary large">GAME START</button>
-                        <button id="achievements-btn" class="menu-btn secondary">ACHIEVEMENTS</button>
-                    </div>
-                    <div class="menu-footer">
-                        <span id="start-help-btn" class="footer-link">HOW TO PLAY</span>
+                        <div class="menu-footer">
+                            <span id="start-help-btn" class="footer-link">HOW TO PLAY</span>
+                        </div>
                     </div>
                 </div>
 
@@ -116,8 +118,14 @@
                                     <p class="tutorial-caption">エネルギー注入</p>
                                 </div>
                                 <h4>1. エネルギー注入フェーズ</h4>
-                                <p>自勢力のグリッドを選択してエネルギーを注入する<strong>アクション</strong>を行います。この結果により、爆発（Burst）や共鳴（Resonance）が発生します。
-                                </p>
+                                <p>自勢力のグリッドを選択してエネルギーを注入する<strong>アクション</strong>を行います。</p>
+                                <ul class="help-list">
+                                    <li>選択したグリッドを中心に、周囲を含む7つのグリッドに<strong>供給エネルギー</strong>が注入されます。</li>
+                                    <li>供給エネルギー（どの位置にどれだけエネルギーが注入されるか）はマップの左上（Player 1）または右下（Player 2）に表示されます。</li>
+                                    <li>エネルギーと同じ勢力のグリッドにエネルギーを注入した場合、その合計値がグリッドの新しいエネルギー値となります。</li>
+                                    <li>エネルギーと異なる勢力のグリッドにエネルギーを注入した場合、その差分がグリッドの新しいエネルギー値となります。</li>
+                                    <li>エネルギーを注入した結果により、爆発（Burst）や共鳴（Resonance）が発生します。</li>
+                                </ul>
                             </div>
 
                             <div class="rule-item">
@@ -139,10 +147,10 @@
                                 <p>爆発（Burst）の発生回数に応じて発動する効果です。</p>
                                 <ul class="help-list">
                                     <li><strong>供給エネルギー強化</strong>:
-                                        1ターンの間に自勢力の爆発（Burst）が4回発生すると、供給エネルギーがランダムに1エネルギー強化されます。このとき、自動的に<strong>ターン終了</strong>となります。
+                                        1ターンの間に自勢力の爆発（Burst）を4回発生させると、供給エネルギーがランダムに1エネルギー強化されます。このとき、自動的に<strong>ターン終了</strong>となります。
                                     </li>
                                     <li><strong>共鳴中枢（Core）追加</strong>:
-                                        相手勢力の爆発（Burst）を通算2回発生させるたびに、共鳴中枢（Core）がランダムに1つ増えます。</li>
+                                        相手勢力の爆発（Burst）を通算2回発生させるたびに、共鳴中枢（Core）がランダムに1つ増えます。（1ターン内で2回発生させる必要はありません）</li>
                                 </ul>
                             </div>
 
@@ -245,11 +253,11 @@
             </div>
         </footer>
     </div>
-    <script src="burst_cascade/map.js?v=4.7.32"></script>
-    <script src="burst_cascade/achievements.js?v=4.7.32"></script>
-    <script src="burst_cascade/ai.js?v=4.7.32"></script>
-    <script src="burst_cascade/main.js?v=4.7.32"></script>
-    <script src="burst_cascade/tutorial.js?v=4.7.32"></script>
+    <script src="burst_cascade/map.js?v=4.7.34"></script>
+    <script src="burst_cascade/achievements.js?v=4.7.34"></script>
+    <script src="burst_cascade/ai.js?v=4.7.34"></script>
+    <script src="burst_cascade/main.js?v=4.7.34"></script>
+    <script src="burst_cascade/tutorial.js?v=4.7.34"></script>
 </body>
 
 </html>

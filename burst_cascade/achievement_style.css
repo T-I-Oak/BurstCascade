@@ -53,8 +53,9 @@
 }
 
 .achievements-scroll-container {
+    flex: 1;
+    min-height: 0;
     overflow-y: auto;
-    max-height: 50vh;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 0.5rem;
     background: rgba(0, 0, 0, 0.2);
@@ -176,4 +177,56 @@
 .debug-btn:hover {
     background: rgba(239, 68, 68, 0.1);
     opacity: 1 !important;
+}
+
+@media (max-height: 500px) {
+    #achievements-content {
+        padding: 0.5rem;
+        border-radius: 0.8rem;
+    }
+
+    #achievements-content h2 {
+        font-size: 1.2rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .tabs {
+        gap: 0.3rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .tab-btn {
+        padding: 0.3rem 0.6rem;
+        font-size: 0.7rem;
+        border-radius: 0.3rem;
+    }
+
+    #achievements-table {
+        font-size: 0.75rem;
+    }
+
+    #achievements-table th {
+        padding: 0.4rem;
+    }
+
+    #achievements-table td {
+        padding: 0.3rem 0.4rem;
+    }
+
+    .ach-name {
+        font-size: 0.8rem;
+    }
+
+    .ach-desc {
+        font-size: 0.65rem;
+    }
+
+    .medal-cell {
+        width: 40px;
+        font-size: 1rem;
+    }
+
+    .ach-title-cell {
+        padding-left: 0.5rem !important;
+    }
 }
