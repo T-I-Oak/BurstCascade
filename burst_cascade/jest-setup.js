@@ -18,6 +18,10 @@ document.body.innerHTML = `
     <div id="size-select"></div>
     <div id="ai-level-select"></div>
     <div id="ai-level-group"></div>
+    <div id="volume-slider-container">
+        <input type="range" id="volume-slider" min="0" max="100" value="50">
+        <span id="volume-value">50%</span>
+    </div>
     <div id="bgm-select"></div>
     <div id="game-start-btn"></div>
     <div id="restart-btn"></div>
@@ -66,8 +70,12 @@ jest.spyOn(Storage.prototype, 'clear');
 
 // Load source files in order
 const sourceFiles = [
+    'constants.js',
+    'utils.js',
     'map.js',
     'achievements.js',
+    'sound.js',
+    'renderer.js',
     'ai.js',
     'main.js',
     'tutorial.js'

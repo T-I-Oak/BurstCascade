@@ -253,7 +253,7 @@
             const depth = this.searchDepth;
 
             const handPattern = this.getHandPattern(map, this.player);
-            console.log(`[AI] Thinking for player ${this.player}, candidates: ${candidates.length}, depth: ${depth}, difficulty: ${this.difficulty}`);
+
 
             candidates.forEach(hex => {
                 const nextMap = map.clone();
@@ -292,7 +292,7 @@
                 selectedMove = moves[idx];
             }
 
-            console.log(`[AI] Decision: q:${selectedMove?.q}, r:${selectedMove?.r}, score: ${selectedMove?.val} (Rank: ${moves.indexOf(selectedMove) + 1})`);
+
             return selectedMove;
         }
     }

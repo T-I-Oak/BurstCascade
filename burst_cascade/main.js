@@ -1,490 +1,5 @@
 (function () {
-    const { HexMap, Layout, AchievementManager, AI } = window.BurstCascade;
-
-    class SoundManager {
-        constructor() {
-            this.ctx = null;
-            this.bgmGain = null;
-            this.isPlaying = false;
-            this.bpm = 120;
-            this.nextNoteTime = 0;
-            this.tick = 0;
-            this.schedulerId = null;
-            this.currentPattern = null;
-            this.targetBpm = 120;
-            this.masterVolume = 0.4; // Initial setting value (0.0 to 1.0) - Slider 50% = 0.4
-            this.masterGain = null;
-            // Dynamic Rhythmic Intensities
-            this.p1Intensity = 0;
-            this.p2Intensity = 0;
-            this.maxCores = 5; // Default normalized ceiling
-            this.patternStartTick = 0; // Ver 4.7.20: Track pattern change time
-        }
-
-        updateContextData(cores1, cores2, totalCores = 0) {
-            if (totalCores > 0) this.maxCores = totalCores;
-            const max = this.maxCores;
-            // Ver 4.7.11: Corrected Intensity Mapping (P1=cores1, P2=cores2)
-            // Morphing intensity (Higher is more aggressive)
-            this.p1Intensity = Math.max(0, 1.0 - cores1 / max);
-            this.p2Intensity = Math.max(0, 1.0 - cores2 / max);
-        }
-
-        init() {
-            if (this.ctx) return;
-            const AudioContext = window.AudioContext || window.webkitAudioContext;
-            this.ctx = new AudioContext();
-
-            // --- High-end FX Chain ---
-            this.masterCompressor = this.ctx.createDynamicsCompressor();
-            this.masterCompressor.threshold.setValueAtTime(-24, this.ctx.currentTime);
-            this.masterCompressor.knee.setValueAtTime(40, this.ctx.currentTime);
-            this.masterCompressor.ratio.setValueAtTime(12, this.ctx.currentTime);
-            this.masterCompressor.attack.setValueAtTime(0, this.ctx.currentTime);
-            this.masterCompressor.release.setValueAtTime(0.25, this.ctx.currentTime);
-
-            this.bgmGain = this.ctx.createGain();
-
-            // Reverb (Simple Impulse Response hack using noise)
-            this.reverbNode = this.ctx.createConvolver();
-            const revDur = 2.5;
-            const revRate = this.ctx.sampleRate;
-            const revLen = revRate * revDur;
-            const revBuffer = this.ctx.createBuffer(2, revLen, revRate);
-            for (let c = 0; c < 2; c++) {
-                const data = revBuffer.getChannelData(c);
-                for (let i = 0; i < revLen; i++) {
-                    data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / revLen, 2);
-                }
-            }
-            this.reverbNode.buffer = revBuffer;
-            this.reverbGain = this.ctx.createGain();
-            this.reverbGain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-
-            // Delay FX
-            this.delayNode = this.ctx.createDelay(1.0);
-            this.delayNode.delayTime.setValueAtTime(0.375, this.ctx.currentTime); // Dotted 8th at 120BPM
-            this.delayFeedback = this.ctx.createGain();
-            this.delayFeedback.gain.setValueAtTime(0.3, this.ctx.currentTime);
-            this.delayGain = this.ctx.createGain();
-            this.delayGain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-
-            this.masterGain = this.ctx.createGain();
-            this.masterGain.connect(this.ctx.destination);
-
-            // Routing
-            this.bgmGain.connect(this.masterCompressor);
-            this.bgmGain.connect(this.delayNode);
-            this.delayNode.connect(this.delayFeedback);
-            this.delayFeedback.connect(this.delayNode);
-            this.delayNode.connect(this.delayGain);
-            this.delayGain.connect(this.masterCompressor);
-
-            this.masterCompressor.connect(this.reverbNode);
-            this.reverbNode.connect(this.reverbGain);
-            this.reverbGain.connect(this.masterGain);
-            this.masterCompressor.connect(this.masterGain);
-
-            this.updateVolume();
-            console.log("High-end BGM Engine initialized.");
-        }
-
-        resume() {
-            if (this.ctx && this.ctx.state === 'suspended') {
-                return this.ctx.resume().catch(e => {
-                    // Suppress warning if called without gesture
-                });
-            }
-            return Promise.resolve();
-        }
-
-        updateVolume() {
-            if (!this.bgmGain || !this.masterGain) return;
-            // masterGain handles global volume (v / 50 * 0.4 -> 100% = 0.8 gain)
-            // masterVolume is already 0.0 to 1.0 (from slider 0-100)
-            const gainValue = this.masterVolume * 0.8;
-            this.masterGain.gain.setTargetAtTime(gainValue, this.ctx.currentTime, 0.1);
-            // bgmGain handles the internal BGM balance if needed, but here we just keep it at 1.0
-            this.bgmGain.gain.setTargetAtTime(1.0, this.ctx.currentTime, 0.1);
-        }
-
-        // --- SFX ---
-        playPlace() {
-            if (!this.ctx || this.ctx.state === 'suspended') return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(440, this.ctx.currentTime + 0.1);
-            gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
-            osc.connect(gain);
-            gain.connect(this.masterGain);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.1);
-        }
-
-        playBurst() {
-            if (!this.ctx || this.ctx.state === 'suspended') return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(100, this.ctx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.2);
-            gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.2);
-            osc.connect(gain);
-            gain.connect(this.masterGain);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.2);
-        }
-
-        playReward() {
-            if (!this.ctx || this.ctx.state === 'suspended') return;
-            const now = this.ctx.currentTime;
-            [1320, 1760, 2640].forEach((freq, i) => {
-                const osc = this.ctx.createOscillator();
-                const gain = this.ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(freq, now + i * 0.05);
-                gain.gain.setValueAtTime(0.05, now + i * 0.05);
-                gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.05 + 0.2);
-                osc.connect(gain);
-                gain.connect(this.masterGain);
-                osc.start(now + i * 0.05);
-                osc.stop(now + i * 0.05 + 0.2);
-            });
-        }
-
-        playTurnChange() {
-            if (!this.ctx || this.ctx.state === 'suspended') return;
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(220, this.ctx.currentTime);
-            gain.gain.setValueAtTime(0.02, this.ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0, this.ctx.currentTime + 0.05);
-            osc.connect(gain);
-            gain.connect(this.masterGain);
-            osc.start();
-            osc.stop(this.ctx.currentTime + 0.05);
-        }
-
-        // --- BGM Engine ---
-
-        startBgm(type) {
-            // Guard: If already playing AND scheduler is running, return.
-            if (this.currentPattern === type && this.isPlaying && this.schedulerId) return;
-
-            // PvP Victory Safeguard
-            if (this.currentPattern === 'victory' && this.isPlaying) return;
-
-            const prevPattern = this.currentPattern;
-            this.currentPattern = type;
-            this.isPlaying = true;
-
-            // Ensure context exists
-            if (!this.ctx) this.init();
-
-            // --- DEFERRED START ---
-            // If context is suspended, it will be resumed by Game's gesture listener.
-            if (this.ctx.state === 'suspended') {
-                return;
-            }
-
-            const shouldResetTick = (type === 'title' || prevPattern === 'title');
-            if (shouldResetTick || !this.schedulerId) {
-                this.tick = 0;
-            }
-            this.patternStartTick = this.tick; // Ver 4.7.20: Anchor for seamless transitions
-
-            // Dynamic BPM setup
-            if (type === 'title') this.targetBpm = 80;
-            else if (type === 'game') this.targetBpm = 120;
-            else if (type === 'pinch') this.targetBpm = 155;
-            else if (type === 'victory' || type === 'defeat') {
-                // Ver 4.7.21: Inherit current BPM (Normal or Pinch) for seamlessness
-                this.targetBpm = this.bpm;
-            }
-
-            if (this.schedulerId) return; // Prevent double scheduler
-
-            this.bpm = this.targetBpm;
-            this.nextNoteTime = this.ctx.currentTime + 0.1;
-            this.scheduler();
-        }
-
-        stopBgm() {
-            this.isPlaying = false;
-            if (this.schedulerId) {
-                clearTimeout(this.schedulerId);
-                this.schedulerId = null;
-            }
-        }
-
-        scheduler() {
-            if (!this.isPlaying) return;
-            while (this.nextNoteTime < this.ctx.currentTime + 0.1) {
-                // If tick is stuck at 511 (end of one-shot), don't re-schedule the same note repeatedly
-                if (this.tick < 511 || (this.currentPattern !== 'victory' && this.currentPattern !== 'defeat')) {
-                    this.scheduleNote(this.tick, this.nextNoteTime);
-                }
-                this.advanceNote();
-            }
-            this.schedulerId = setTimeout(() => this.scheduler(), 25);
-        }
-
-        advanceNote() {
-            const secondsPerBeat = 60.0 / this.bpm;
-            this.nextNoteTime += 0.25 * secondsPerBeat;
-
-            // Ver 4.7.20: Stop relative to pattern start to ensure full 6-bar sequence
-            if (this.currentPattern === 'victory' || this.currentPattern === 'defeat') {
-                const elapsed = (this.tick - this.patternStartTick + 512) % 512;
-                if (elapsed < 96) {
-                    this.tick++;
-                } else {
-                    this.stopBgm();
-                }
-            } else {
-                this.tick = (this.tick + 1) % 512;
-            }
-
-            if (Math.abs(this.bpm - this.targetBpm) > 0.1) {
-                this.bpm += (this.targetBpm - this.bpm) * 0.05;
-                if (this.delayNode) {
-                    this.delayNode.delayTime.setTargetAtTime(0.375 * (120 / this.bpm), this.ctx.currentTime, 0.1);
-                }
-            } else {
-                this.bpm = this.targetBpm;
-            }
-        }
-
-        // --- Synth Helpers ---
-
-        playTone(freq, time, duration, vol, type = 'sine', filterType = 'none', filterFreq = 1000, res = 1, modulation = 0) {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = type;
-            osc.frequency.setValueAtTime(freq, time);
-
-            let node = osc;
-
-            // --- FM Synthesis (Advanced Sound Color) ---
-            if (modulation > 0) {
-                const modOsc = this.ctx.createOscillator();
-                const modGain = this.ctx.createGain();
-                modOsc.frequency.setValueAtTime(freq * 1.5, time); // Harmonics
-                modGain.gain.setValueAtTime(modulation * freq, time);
-                modGain.gain.exponentialRampToValueAtTime(0.01, time + duration);
-                modOsc.connect(modGain);
-                modGain.connect(osc.frequency);
-                modOsc.start(time);
-                modOsc.stop(time + duration);
-            }
-
-            if (filterType !== 'none') {
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = filterType;
-                filter.frequency.setValueAtTime(filterFreq, time);
-                filter.Q.setValueAtTime(res, time);
-                filter.frequency.exponentialRampToValueAtTime(filterFreq * 0.1, time + duration);
-                osc.connect(filter);
-                node = filter;
-            }
-
-            gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(vol, time + 0.01);
-            gain.gain.exponentialRampToValueAtTime(0.001, time + duration);
-            node.connect(gain);
-            // gain.connect(this.bgmGain); // DELETE Ver 4.7.11: Double routing bug fix
-
-            // Stereopanner (random width for spatial richness)
-            const panner = this.ctx.createStereoPanner();
-            panner.pan.setValueAtTime((Math.random() * 2 - 1) * 0.5, time);
-            gain.connect(panner);
-            panner.connect(this.bgmGain);
-
-            osc.start(time);
-            osc.stop(time + duration);
-        }
-
-        playDrum(type, time, vol) {
-            const gain = this.ctx.createGain();
-            if (type === 'kick') {
-                const osc = this.ctx.createOscillator();
-                osc.frequency.setValueAtTime(180, time);
-                osc.frequency.exponentialRampToValueAtTime(40, time + 0.2);
-                gain.gain.setValueAtTime(vol * 2.5, time);
-                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-                osc.connect(gain);
-                osc.start(time);
-                osc.stop(time + 0.2);
-            } else if (type === 'snare') {
-                const bufSize = this.ctx.sampleRate * 0.2;
-                const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
-                const noise = this.ctx.createBufferSource();
-                noise.buffer = buffer;
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'bandpass';
-                filter.frequency.value = 1800;
-                gain.gain.setValueAtTime(vol * 1.5, time);
-                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.2);
-                noise.connect(filter);
-                filter.connect(gain);
-                noise.start(time);
-                noise.stop(time + 0.2);
-            } else if (type === 'hat') {
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'highpass';
-                filter.frequency.value = 10000;
-                const bufSize = this.ctx.sampleRate * 0.05;
-                const noise = this.ctx.createBufferSource();
-                const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
-                noise.buffer = buffer;
-                gain.gain.setValueAtTime(vol * 0.5, time);
-                gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
-                noise.connect(filter);
-                filter.connect(gain);
-                noise.start(time);
-                noise.stop(time + 0.05);
-            }
-            gain.connect(this.bgmGain);
-        }
-
-        // --- Patterns ---
-
-        scheduleNote(tick, time) {
-            if (this.currentPattern === 'title') {
-                this.playTitle(tick, time);
-            } else if (this.currentPattern === 'victory') {
-                this.playVictory(tick, time);
-            } else if (this.currentPattern === 'defeat') {
-                this.playDefeat(tick, time);
-            } else {
-                this.playGame(tick, time, this.currentPattern === 'pinch');
-            }
-        }
-
-        playTitle(tick, time) {
-            // Ver 4.7.3: Use same basic rhythm as game but at 80BPM
-            const rhythm = tick % 16;
-
-            // Core Rhythms (Kick, Snare, Hat)
-            if (rhythm === 0) this.playDrum('kick', time, 0.12);
-            if (rhythm === 8) this.playDrum('snare', time, 0.08);
-            if (rhythm % 4 === 2) this.playDrum('hat', time, 0.02);
-
-            // Thin background ambience
-            if (tick % 64 === 0) {
-                this.playTone(55, time, 4.0, 0.04, 'sine', 'lowpass', 100, 1, 0);
-            }
-        }
-
-        playGame(tick, time, isPinch) {
-            const rhythm = tick % 16;
-
-            // --- Base Grooves (Kick/Snare/Hat) ---
-            if (rhythm === 0) this.playDrum('kick', time, 0.18);
-            if (rhythm === 8) this.playDrum('snare', time, 0.1);
-            if (rhythm % 4 === 2) this.playDrum('hat', time, 0.03);
-
-            // --- Dynamic Rhythmic Channels ---
-            // Ver 4.7.2: Sine/Triangle based soft sounds with pitch scaling
-
-            // P1 Channel: Xylophone (Ver 4.7.15: Balanced Dominance 0.15)
-            const p1Intensity = Math.pow(this.p1Intensity, 1.2);
-            const p1Prob = 0.25; // Fixed frequency
-            if (tick % 4 === 1 && (Math.random() < p1Prob)) {
-                // High presence fixed volume
-                const vol = 0.08;
-                const freq = 523.25 * (1 + p1Intensity); // C5 base
-                this.playTone(freq, time, 0.08, vol, 'triangle', 'lowpass', 1500, 1, 0);
-            }
-
-            // P2 Channel: Clarity Bell (Ver 4.7.15: Minimal Support 0.005)
-            const p2Intensity = Math.pow(this.p2Intensity, 1.2);
-            const p2Prob = 0.25; // Fixed frequency
-            if (tick % 4 === 3 && (Math.random() < p2Prob)) {
-                // Discrete support level (Sine wave is very piercing)
-                const vol = 0.010;
-                const freq = 880 * (1 + p2Intensity * 1.5);
-                this.playTone(freq, time, 0.1, vol, 'sine', 'none', 1000, 1, 0.5);
-            }
-
-            // --- Global Drone (Soft contrast) ---
-            if (tick % 64 === 0) {
-                const droneFreq = isPinch ? 41.2 : 55;
-                this.playTone(droneFreq, time, 8.0, 0.06, 'sine', 'lowpass', 150, 1, 0.2);
-            }
-        }
-
-        playVictory(tick, time) {
-            // Ver 4.7.19: Rhythmic Buildup & Finale (Shared Logic)
-            this.playSharedFinale(tick, time);
-        }
-
-        playDefeat(tick, time) {
-            // Ver 4.7.19: Rhythmic Buildup & Finale (Shared Logic)
-            this.playSharedFinale(tick, time);
-        }
-
-        playSharedFinale(tick, time) {
-            // Ver 4.7.20: Seamless Rhythmic Progression
-            // Calculate tick relative to the moment the pattern switched
-            const relTick = (tick - this.patternStartTick + 512) % 512;
-            const rhythm = tick % 16; // Standard 8-beat alignment
-
-            // Bars 1-3: Base Groove ("Tu-tu, Turn" - Sync with existing tick)
-            if (relTick < 48) {
-                if (rhythm === 0 || rhythm === 4) this.playDrum('kick', time, 0.18);
-                if (rhythm === 8) this.playDrum('snare', time, 0.1);
-                if (rhythm % 4 === 2) this.playDrum('hat', time, 0.03);
-                return;
-            }
-
-            // Bar 4 (relTick 48-63): "Tu-tu, Tu-tarn-tarn-tarn!" Buildup
-            // 48, 50: Tu-tu (Kick), 52, 56, 60: Tu-tarn (Kick+Snare)
-            if (relTick === 48 || relTick === 50) {
-                this.playDrum('kick', time, 0.3);
-            }
-            if (relTick === 52 || relTick === 56 || relTick === 60) {
-                this.playDrum('kick', time, 0.4);
-                this.playDrum('snare', time, 0.35);
-            }
-
-            // Bar 5 Beat 1 (relTick 64): "TAAAARN!" Final Explosion
-            if (relTick === 64) {
-                this.playDrum('kick', time, 0.6);
-                this.playDrum('snare', time, 0.5);
-
-                // Crash Cymbal synthesis
-                const bufSize = this.ctx.sampleRate * 3.5;
-                const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
-                const data = buffer.getChannelData(0);
-                for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
-                const noise = this.ctx.createBufferSource();
-                noise.buffer = buffer;
-                const filter = this.ctx.createBiquadFilter();
-                filter.type = 'highpass';
-                filter.frequency.value = 4000;
-                const qGain = this.ctx.createGain();
-                qGain.gain.setValueAtTime(0.5, time);
-                qGain.gain.exponentialRampToValueAtTime(0.001, time + 3.0);
-                noise.connect(filter);
-                filter.connect(qGain);
-                qGain.connect(this.bgmGain);
-                noise.start(time);
-
-                // Low impact thud (Boom)
-                this.playTone(35, time, 3.0, 0.6, 'sine', 'lowpass', 80, 1, 0);
-            }
-        }
-    }
+    const { HexMap, Layout, AchievementManager, AI, Constants, Utils, SoundManager, Renderer } = window.BurstCascade;
 
     class Game {
         constructor() {
@@ -493,6 +8,7 @@
             this.map = new HexMap(4);
             this.layout = null;
             this.sound = new SoundManager();
+            this.renderer = new Renderer(this);
             this.achievementManager = new AchievementManager();
 
             // ゲーム状態
@@ -792,7 +308,7 @@
             this.map = new HexMap(4, size); // マップ再生成
             if (mode === 'pvc') {
                 this.ai = new BurstCascade.AI(2, aiLevel);
-                console.log(`AI initialized with difficulty: ${aiLevel}`);
+
             }
             this.resize(); // レイアウト再計算
 
@@ -829,7 +345,7 @@
 
             this.closeOverlay();
             // ゲーム開始
-            console.log(`Game started in ${mode} mode with ${size} map.`);
+
             this.render(); // 初回描画
         }
 
@@ -1076,7 +592,7 @@
         }
 
         showGameOver(winner) {
-            console.log(`[Game Over] Game finished in ${this.turnCount} turns. Winner: Player ${winner}`);
+
             this.winner = winner; // Ver 4.7.1: 実績判定用に勝者を記録
             this.updateHistoryStats(); // ゲーム終了直前の状態を統計に反映
             this.gameOver = true;
@@ -1257,13 +773,13 @@
                     // 土地をエフェクトから除去（連鎖計算に影響を与えないため）
                     this.dropEffects = this.dropEffects.filter(de => de.type !== 'land');
                     this.isWaitingForDrop = false; // 土地待ちフェーズ終了
-                    console.log("[Sequence] All lands landed. Starting chain reaction.");
+
                     this.processChainReaction();
                 }
 
                 // 2. マーカーの着弾待ち（マーカーが存在し、落下指示後に着弾した場合）
                 if (marker && marker.landed) {
-                    console.log(`[Sequence] Marker landed. Finalizing turn (burst: ${this.turnHadBurst}).`);
+
                     this.lastMoveHex = marker.targetHex;
                     this.dropEffects = []; // エフェクトクリア
                     this.finalizeTurn(this.turnHadBurst);
@@ -1416,7 +932,7 @@
                                 ef.reward.arrivedCount = (ef.reward.arrivedCount || 0) + 1;
                                 // Ver 4.4.10: 閾値を 15 から 5 に引き下げ
                                 if (ef.reward.arrivedCount === 5) {
-                                    console.log(`[Reward Log] Threshold reached (5). Applying effect for P${ef.reward.player}`);
+
                                     this.applyRewardEffect(ef.reward);
                                 }
                             }
@@ -1544,7 +1060,7 @@
 
                 // 【修正】自勢力のグリッドではない場所へのエネルギー注入を禁止
                 if (hex.owner !== this.currentPlayer) {
-                    console.log(`[Validation] Invalid target. Owner: ${hex.owner}, Current: ${this.currentPlayer}`);
+
                     return;
                 }
 
@@ -1568,7 +1084,7 @@
                 }
 
                 this.sound.playPlace();
-                console.log(`[Turn] Player ${this.currentPlayer} triggers drop sequence at q:${hex.q},r:${hex.r}`);
+
 
                 // Atomic Stats: Action Count
                 this.achievementManager.stats[this.currentPlayer].actions.add(1);
@@ -1579,7 +1095,7 @@
 
         // Ver 4.4.3: 落下演出の開始（ホバーフェーズ含む）
         triggerDropSequence(targetHex) {
-            console.log(`[Turn Log] --- Player ${this.currentPlayer} Move Start ---`);
+
 
             // Ver 4.4.19: 確定操作時にハイライトを消去 (iPadでのハイライト残留バグ修正)
             this.hoveredHex = null;
@@ -1754,7 +1270,7 @@
                 if (marker) {
                     marker.state = 'falling';
                     marker.hoverTimer = 0;
-                    console.log("[Sequence] No chain. Triggering marker fall.");
+
                 } else {
                     this.finalizeTurn(false);
                 }
@@ -1762,7 +1278,7 @@
             }
 
             // 非同期にバーストを発生させる
-            console.log(`[Turn Log] Burst(s) detected. Count: ${overflowedHexes.length}`);
+
 
             // High Voltage Check & Burst Tracking
             overflowedHexes.forEach(h => {
@@ -1805,7 +1321,7 @@
                     if (marker) {
                         marker.state = 'falling';
                         marker.hoverTimer = 0;
-                        console.log("[Sequence] Chain finished. Triggering marker fall.");
+
                     } else {
                         this.finalizeTurn(true);
                     }
@@ -1859,7 +1375,7 @@
         }
 
         finalizeTurn(overflowOccurred) {
-            console.log(`[Turn Log] finalizeTurn called. burst:${overflowOccurred}, reward:${this.turnHadReward}`);
+
             const handZoneId = `hand-p${this.currentPlayer}`;
             const pattern = overflowOccurred ? 'diffuse' : 'focus';
 
@@ -1879,15 +1395,13 @@
 
             if (shouldContinue) {
                 if (stillBursting) {
-                    console.log(`[Turn Log] Still bursting... waiting.`);
-                } else {
-                    console.log(`[Turn Log] Continue Turn for P${this.currentPlayer} (Burst:${overflowOccurred}, NoSelfReward)`);
+
                     // isProcessingMove はここでは解放しない。checkTurnTransition が解放する。
                 }
             } else {
                 this.turnEndRequested = true;
                 const reason = this.turnHadSelfReward ? 'SelfReward' : (overflowOccurred ? 'BurstButEnd?' : 'Normal');
-                console.log(`[Turn Log] Turn End Requested for P${this.currentPlayer} (Reason: ${reason})`);
+
             }
         }
 
@@ -1930,7 +1444,7 @@
         // Helper to track core damage/gain
         queueReward(player, type) { // Method restored
             this.sound.playReward();
-            console.log(`[Reward] queueReward: player=${player}, type=${type}`);
+
             let color = player === 1 ? '#4ade80' : '#f87171';
             const reward = {
                 player, type, targetHex: null, color, status: 'pending',
@@ -1959,7 +1473,7 @@
             if (this.effects.length > 0 || this.pendingRewards.length > 0 || this.dropEffects.length > 0 || this.isWaitingForDrop) {
                 // 内部状態を1秒ごとにログ出力 (デバッグ用)
                 if (Date.now() % 1000 < 20) {
-                    console.log(`[Turn Log] Busy... Effects:${this.effects.length}, Rewards:${this.pendingRewards.length}, Drops:${this.dropEffects.length}, WaitingDrop:${this.isWaitingForDrop}`);
+
                 }
                 return;
             }
@@ -1967,7 +1481,7 @@
             if (this.gameOver) return;
 
             if (this.turnEndRequested) {
-                console.log(`[Turn Log] --- Executing Swap: P${this.currentPlayer} -> P${this.currentPlayer === 1 ? 2 : 1} ---`);
+
                 this.turnEndRequested = false;
 
                 // Range Stats 更新 (Ver 5.1.0)
@@ -1993,7 +1507,7 @@
                     setTimeout(() => this.handleCPUTurn(), 400); // 余裕を持って開始
                 }
             } else if (this.isProcessingMove) {
-                console.log(`[Turn Log] --- Executing Unlock (Continue Turn) for P${this.currentPlayer} ---`);
+
                 this.isProcessingMove = false;
 
                 if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
@@ -2010,7 +1524,7 @@
         }
 
         triggerRewardFlow(reward, dotPos) {
-            console.log(`[Reward] triggerRewardFlow START: type=${reward.type}, status=${reward.status}`);
+
             if (reward && reward.status === 'pending') {
                 reward.status = 'flowing';
                 if (reward.type === 'self') {
@@ -2026,15 +1540,15 @@
                     const candidateHexes = this.map.hexes.filter(h =>
                         h.zone === 'main' && h.owner === reward.player && !h.hasFlag
                     );
-                    console.log(`[Reward] flag candidates count: ${candidateHexes.length}`);
+
                     if (candidateHexes.length > 0) {
                         reward.targetHex = candidateHexes[Math.floor(Math.random() * candidateHexes.length)];
                         const pixel = this.layout.hexToPixel(reward.targetHex);
-                        console.log(`[Reward] target pixel: x:${Math.floor(pixel.x)}, y:${Math.floor(pixel.y)}`);
+
                     }
                 }
 
-                console.log(`[Reward] target selected: ${reward.targetHex ? 'FOUND' : 'NOT FOUND'}`);
+
 
                 if (!reward.targetHex) {
                     this.pendingRewards = this.pendingRewards.filter(r => r !== reward);
@@ -2051,12 +1565,12 @@
         }
 
         applyRewardEffect(reward) {
-            console.log(`[Reward] applyRewardEffect: type=${reward.type}, status=${reward.status}`);
+
             if (!reward || reward.status !== 'flowing') return;
             reward.status = 'applied';
 
             if (reward.type === 'self') {
-                console.log(`[Reward] applying self reward (height update)`);
+
                 reward.targetHex.height += (reward.player === 1 ? 1 : -1);
                 reward.targetHex.height = Math.max(-5, Math.min(5, reward.targetHex.height));
                 reward.targetHex.updateOwner(); // オーナー更新
@@ -2070,7 +1584,7 @@
                 this.addParticles(center.x, center.y, reward.color, true);
                 this.flashAlpha = 0.4;
             } else {
-                console.log(`[Reward] applying enemy reward (flag creation) at q:${reward.targetHex.q}, r:${reward.targetHex.r}`);
+
                 reward.targetHex.hasFlag = true;
                 reward.targetHex.flagOwner = reward.player;
                 const center = this.layout.hexToPixel(reward.targetHex);
@@ -2085,19 +1599,6 @@
             // このメソッドは、handleClickではなく、applyRewardEffect経由でのデータ変更を主に担うか、
             // もしくは即時発動が必要な場合にのみ使用するようにリファクタリングする
             // 現在はhandleClickでqueueRewardを呼ぶようにしたので、ここでの直接実行は基本行わない
-        }
-
-        // ポイントがポリゴン内に含まれるか判定 (Ray-casting algorithm)
-        isPointInPolygon(px, py, vertices) {
-            let inside = false;
-            for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-                const xi = vertices[i].x, yi = vertices[i].y;
-                const xj = vertices[j].x, yj = vertices[j].y;
-                const intersect = ((yi > py) !== (yj > py)) &&
-                    (px < (xj - xi) * (py - yi) / (yj - yi) + xi);
-                if (intersect) inside = !inside;
-            }
-            return inside;
         }
 
         findHexAt(mx, my) {
@@ -2116,7 +1617,7 @@
                 const vertices = this.layout.getPolygonVertices(hex);
                 const topVertices = vertices.map(v => ({ x: v.x, y: v.y - h }));
 
-                if (this.isPointInPolygon(mx, my, topVertices)) {
+                if (Utils.isPointInPolygon(mx, my, topVertices)) {
                     // Disabledなマスは選択もホバーもできないようにする
                     if (hex.isDisabled) return null;
                     return hex;
@@ -2124,6 +1625,7 @@
             }
             return null;
         }
+
 
         resize() {
             // 親要素（main）のサイズに合わせる
@@ -2165,485 +1667,10 @@
             this.render();
         }
 
-        // Ver 4.4.14: 描画ロジックの共通化 (形状とスタイリング)
-        drawHexBase(ctx, hex, vertices, h, color) {
-            // 1. 側面
-            if (h > 0) {
-                const ccwIndices = [0, 5, 4, 3, 2, 1];
-                for (let j = 0; j < 6; j++) {
-                    const idxA = ccwIndices[j], idxB = ccwIndices[(j + 1) % 6];
-                    const vA = vertices[idxA], vB = vertices[idxB];
-                    if (vB.x > vA.x) {
-                        ctx.beginPath();
-                        ctx.moveTo(vA.x, vA.y);
-                        ctx.lineTo(vB.x, vB.y);
-                        ctx.lineTo(vB.x, vB.y - h);
-                        ctx.lineTo(vA.x, vA.y - h);
-                        ctx.closePath();
-                        const grad = ctx.createLinearGradient(vA.x, vA.y - h, vA.x, vA.y);
-                        grad.addColorStop(0, color.side);
-                        grad.addColorStop(1, this.adjustColor(color.side, -20));
-                        ctx.fillStyle = grad;
-                        ctx.fill();
-                        ctx.strokeStyle = color.border;
-                        ctx.lineWidth = 1;
-                        ctx.stroke();
-                    }
-                }
-            }
-
-            // 2. 上面
-            const topVertices = vertices.map(v => ({ x: v.x, y: v.y - h }));
-            ctx.beginPath();
-            ctx.moveTo(topVertices[0].x, topVertices[0].y);
-            for (let i = 1; i < 6; i++) ctx.lineTo(topVertices[i].x, topVertices[i].y);
-            ctx.closePath();
-            ctx.fillStyle = color.top;
-            ctx.fill();
-            ctx.strokeStyle = color.highlight;
-            ctx.lineWidth = 2;
-            ctx.lineJoin = 'round';
-            ctx.stroke();
-
-            // ハイライト線
-            ctx.beginPath();
-            const edgeIndices = [0, 5, 4, 3, 2, 1];
-            for (let j = 0; j < 6; j++) {
-                const idxA = edgeIndices[j], idxB = edgeIndices[(j + 1) % 6];
-                const vA = topVertices[idxA], vB = topVertices[idxB];
-                if (vB.x > vA.x) {
-                    ctx.moveTo(vA.x, vA.y);
-                    ctx.lineTo(vB.x, vB.y);
-                }
-            }
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-            ctx.lineWidth = 1.5;
-            ctx.stroke();
-
-            ctx.strokeStyle = color.border;
-            ctx.lineWidth = 1;
-            ctx.stroke();
-
-            return topVertices;
-        }
-
-        // Ver 4.4.14: 描画ロジックの共通化 (数値エンボス)
-        drawHexNumber(ctx, tx, ty, h, color, value, layout = this.layout) {
-            ctx.save();
-            const { angle, tilt, scaleY } = layout.projection;
-            const cosA = Math.cos(angle), sinA = Math.sin(angle);
-            const a = cosA, b = (sinA - cosA * tilt) * scaleY, c = -sinA, d = (cosA + sinA * tilt) * scaleY;
-            ctx.setTransform(a, b, c, d, tx, ty);
-            const fontSize = layout.size * 1.5; // 少し大きく
-            ctx.font = `bold ${fontSize}px Outfit, sans-serif`; // Outfit に変更
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            const shadowColor = 'rgba(0,0,0,0.6)';
-            const highlightColor = 'rgba(255,255,255,0.8)';
-            const textColor = this.adjustColor(color.top, -100); // コントラスト確保
-
-            const roundedH = Math.abs(Math.round(value));
-
-            ctx.fillStyle = highlightColor;
-            ctx.fillText(roundedH, 1, 1);
-            ctx.fillStyle = shadowColor;
-            ctx.fillText(roundedH, -1.5, -1.5);
-            ctx.fillStyle = textColor;
-            ctx.fillText(roundedH, 0, 0);
-
-            // layout.size を使用するために引数渡しが必要だったが、
-            // フォントサイズは layout.size * 1.5 で計算済みなのでここでは不要かもだが
-            // ctx.font 設定時に this.layout を参照しているので、
-            // 呼び出し元で ctx.font を設定するか、ここでも layout を使う必要がある。
-            // 上記コードでは this.layout.size を参照している箇所があるため修正が必要。
-
-            ctx.restore();
-        }
-
-        drawHex(hex, ctx = this.ctx, layout = this.layout) {
-            if (hex.isHidden) return;
-
-            const vertices = layout.getPolygonVertices(hex);
-            // ctx is now provided via argument or defaults to this.ctx
-
-            if (hex.isDisabled) {
-                ctx.beginPath();
-                ctx.moveTo(vertices[0].x, vertices[0].y);
-                for (let i = 1; i < 6; i++) ctx.lineTo(vertices[i].x, vertices[i].y);
-                ctx.closePath();
-                ctx.fillStyle = '#111827';
-                ctx.fill();
-                ctx.strokeStyle = '#1e293b';
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                return;
-            }
-
-            const unitThickness = layout.size * 0.12;
-            const absH = Math.abs(hex.visualHeight);
-            const h = absH * unitThickness;
-
-            let owner = 0;
-            if (hex.height > 0) owner = 1;
-            else if (hex.height < 0) owner = 2;
-            else if (hex.owner !== 0) owner = hex.owner;
-
-            const colors = {
-                0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
-                1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
-                2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
-            };
-            const color = { ...colors[owner] };
-
-            if (this.hoveredHex === hex) {
-                color.top = this.adjustColor(color.top, 50);
-            } else if (this.hoveredNeighbors.includes(hex)) {
-                color.top = this.adjustColor(color.top, 25);
-            }
-
-            const topVertices = this.drawHexBase(ctx, hex, vertices, h, color);
-
-            // 3. 数値表示
-            if (absH > 0) {
-                const center = layout.hexToPixel(hex);
-                this.drawHexNumber(ctx, center.x, center.y - h, h, color, hex.visualHeight, layout);
-            }
-
-            // 4. 共鳴中枢（コア）の描画
-            if (hex.visualFlagScale > 0.01) {
-                const center = layout.hexToPixel(hex);
-                const tx = center.x, ty = center.y - h;
-                const coreSize = layout.size * 0.4 * hex.visualFlagScale;
-                const playerColor = hex.flagOwner === 1 ? '#4ade80' : '#f87171';
-                const floatY = Math.sin(this.pulseValue * Math.PI) * 4 * hex.visualFlagScale;
-
-                ctx.save();
-                ctx.translate(tx, ty);
-                ctx.beginPath();
-                ctx.ellipse(0, 0, coreSize * 1.2, coreSize * 0.6, 0, 0, Math.PI * 2);
-                ctx.strokeStyle = playerColor;
-                ctx.lineWidth = 2 * (0.5 + this.pulseValue * 0.5) * hex.visualFlagScale;
-                ctx.globalAlpha = (0.3 + this.pulseValue * 0.4) * hex.visualFlagScale;
-                ctx.stroke();
-
-                ctx.translate(0, -coreSize * 2.2 + floatY);
-                ctx.globalAlpha = 1.0 * hex.visualFlagScale;
-                ctx.shadowColor = playerColor;
-                ctx.shadowBlur = (10 + this.pulseValue * 15) * hex.visualFlagScale;
-
-                const drawCrystalFace = (points, fillColor, strokeColor) => {
-                    ctx.beginPath();
-                    ctx.moveTo(points[0].x, points[0].y);
-                    for (let i = 1; i < points.length; i++) ctx.lineTo(points[i].x, points[i].y);
-                    ctx.closePath();
-                    ctx.fillStyle = fillColor;
-                    ctx.fill();
-                    ctx.strokeStyle = strokeColor;
-                    ctx.lineWidth = 1;
-                    ctx.stroke();
-                };
-
-                const halfW = coreSize * 0.8, halfH = coreSize * 1.3;
-                drawCrystalFace([{ x: 0, y: -halfH }, { x: -halfW, y: 0 }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, -20), playerColor);
-                drawCrystalFace([{ x: 0, y: -halfH }, { x: halfW, y: 0 }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, 20), playerColor);
-                drawCrystalFace([{ x: -halfW, y: 0 }, { x: 0, y: halfH }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, -40), playerColor);
-                drawCrystalFace([{ x: halfW, y: 0 }, { x: 0, y: halfH }, { x: 0, y: halfW * 0.5 }], this.adjustColor(playerColor, 0), playerColor);
-
-                ctx.beginPath();
-                ctx.moveTo(-halfW, 0);
-                ctx.lineTo(halfW, 0);
-                ctx.strokeStyle = 'white';
-                ctx.globalAlpha = 0.5 * hex.visualFlagScale;
-                ctx.lineWidth = 1;
-                ctx.stroke();
-                ctx.restore();
-            }
-        }
-
-        adjustColor(hex, amt) {
-            let col = hex.replace('#', '');
-            let r = parseInt(col.substring(0, 2), 16) + amt;
-            let g = parseInt(col.substring(2, 4), 16) + amt;
-            let b = parseInt(col.substring(4, 6), 16) + amt;
-            r = Math.max(0, Math.min(255, r));
-            g = Math.max(0, Math.min(255, g));
-            b = Math.max(0, Math.min(255, b));
-            return `#${(r << 16 | g << 8 | b).toString(16).padStart(6, '0')}`;
-        }
-
-
-        drawLabel(text, zoneId, color, align) {
-            const center = this.map.centers[zoneId];
-            if (!center) return;
-            const pos = this.layout.hexToPixel({ q: center.q, r: center.r });
-            const ctx = this.ctx;
-            ctx.save();
-            const fontSize = Math.max(20, this.layout.size * 1.0);
-            ctx.font = `bold ${fontSize}px Inter, sans-serif`;
-            ctx.textAlign = align;
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = color;
-            ctx.shadowColor = 'rgba(0,0,0,0.8)';
-            ctx.shadowBlur = 4;
-            ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
-
-            const playerNum = (zoneId === 'hand-p1' ? 1 : 2);
-            const isActive = (this.currentPlayer === playerNum);
-
-            // プレイヤー名を表示 (位置固定)
-            const marginX = this.layout.size * 2.5;
-            const textX = pos.x + (align === 'left' ? marginX : -marginX);
-
-            // 光彩エフェクト
-            if (isActive && !this.gameOver) {
-                ctx.shadowColor = color;
-                ctx.shadowBlur = 10 + this.pulseValue * 10;
-            }
-
-            // テキスト描画 (P1は右側に◀、P2は左側に▶)
-            let finalText = text;
-            if (playerNum === 1) {
-                finalText = text + (isActive ? ' ◀' : ' 　');
-            } else {
-                finalText = (isActive ? '▶ ' : '　 ') + text;
-            }
-            ctx.fillText(finalText, textX, pos.y);
-
-            // チェーン（連鎖）のドット表示
-            const playerChains = this.chains[playerNum];
-            const dotY = pos.y + (playerNum === 1 ? fontSize * 0.9 : -fontSize * 0.9);
-            const dotRadius = 4;
-            const dotSpacing = 14;
-            const selfColor = playerNum === 1 ? '#4ade80' : '#f87171';
-            const enemyColor = playerNum === 1 ? '#f87171' : '#4ade80';
-
-            const drawDots = (count, color, offsetIdx, maxCount, animVal, type) => {
-                // 現在飛翔中の報酬があるか、またはこの演出のために維持すべき状態かをチェック
-                const isFlowing = this.pendingRewards.some(r => r.player === playerNum && r.type === type && (r.status === 'flowing' || r.status === 'pending'));
-                const filledCount = isFlowing ? maxCount : Math.min(count, maxCount);
-                for (let i = 0; i < maxCount; i++) {
-                    ctx.beginPath();
-                    const x = textX + (align === 'left' ? (i + offsetIdx) * dotSpacing : -(i + offsetIdx) * dotSpacing);
-
-                    // 個別のドット座標を保存 (パーティクル収束先)
-                    this.dotTargets[`${playerNum}-${type}-${i}`] = { x: x, y: dotY };
-
-                    // アニメーション中（最後に増えたドット）の強調
-                    const isLastDot = (i === filledCount - 1);
-                    // 丸が大きくなって小さくなるアニメーション (animValは1.0から0へ減衰)
-                    const sCurve = Math.sin(animVal * Math.PI); // 0 -> 1 -> 0
-                    const scale = isLastDot ? 1.0 + sCurve * 3.0 : 1.0;
-                    const brightness = isLastDot ? sCurve * 150 : 0;
-
-                    ctx.arc(x, dotY, dotRadius * scale, 0, Math.PI * 2);
-                    if (i < filledCount) {
-                        ctx.fillStyle = this.adjustColor(color, brightness);
-                        ctx.shadowColor = color;
-                        ctx.shadowBlur = 4 + sCurve * 40;
-                    } else {
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                        ctx.shadowBlur = 0;
-                    }
-                    ctx.fill();
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                    ctx.stroke();
-                }
-            };
-
-            const playerAnims = this.chainAnims[playerNum];
-
-            // 自陣連鎖（最大4ドット / 4で報酬・終了）
-            drawDots(playerChains.self, selfColor, 0, 4, playerAnims.self, 'self');
-            // 敵陣連鎖（最大2ドット / 2で報酬、少し隙間を空ける）
-            drawDots(playerChains.enemy, enemyColor, 5.2, 2, playerAnims.enemy, 'enemy');
-
-            ctx.restore();
-        }
-
         render() {
-            if (!this.map || !this.layout) return;
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-            const sortedHexes = [...this.map.hexes].sort((a, b) => {
-                const zA = a.q + a.r;
-                const zB = b.q + b.r;
-                if (zA !== zB) return zA - zB;
-                return a.r - b.r;
-            });
-            sortedHexes.forEach(hex => this.drawHex(hex));
-
-            // エフェクトの描画
-            this.effects.forEach(ef => {
-                this.ctx.save();
-                this.ctx.globalAlpha = ef.life;
-                this.ctx.fillStyle = ef.color;
-                this.ctx.beginPath();
-                this.ctx.arc(ef.x, ef.y, ef.size || 2, 0, Math.PI * 2);
-                this.ctx.fill();
-                this.ctx.restore();
-            });
-
-            // Ver 4.6.0: テキストエフェクトの描画
-            this.effects.filter(ef => ef.type === 'floating_text').forEach(ef => {
-                this.ctx.save();
-                this.ctx.globalAlpha = ef.life;
-                this.ctx.fillStyle = ef.color;
-                this.ctx.font = 'bold 32px sans-serif'; // Ver 4.6.1: サイズ倍増 (16px -> 32px)
-                this.ctx.shadowColor = 'rgba(0,0,0,0.8)';
-                this.ctx.shadowBlur = 4;
-                this.ctx.textAlign = 'center';
-                this.ctx.fillText(ef.text, ef.x, ef.y);
-                this.ctx.restore();
-            });
-
-            // Ver 4.4: 落下中の土地・マーカーの描画
-            this.dropEffects.forEach(de => {
-                if (de.landed || de.state === 'appearing' || de.state === 'hovering' || de.state === 'falling') {
-                    this.drawFallingHex(de);
-                }
-            });
-
-            // 戦況 (フラッグ数) を更新
-            const mainHexes = this.map.hexes.filter(h => h.zone === 'main');
-            const flags1 = mainHexes.filter(h => h.hasFlag && h.flagOwner === 1).length;
-            const flags2 = mainHexes.filter(h => h.hasFlag && h.flagOwner === 2).length;
-
-            const p1Bar = document.getElementById('p1-bar');
-            const p2Bar = document.getElementById('p2-bar');
-            const p1Score = document.getElementById('p1-score');
-            const p2Score = document.getElementById('p2-score');
-
-            if (p1Bar && p2Bar && p1Score && p2Score) {
-                // 片方が0本になった時もバーをゼロに近づけるため、1本以上の時の比率を計算
-                const total = flags1 + flags2;
-                const p1Ratio = total > 0 ? (flags1 / total) * 100 : 50;
-                const p2Ratio = total > 0 ? (flags2 / total) * 100 : 50;
-                p1Bar.style.width = `${p1Ratio}%`;
-                p2Bar.style.width = `${p2Ratio}%`;
-                p1Score.innerText = flags1;
-                p2Score.innerText = flags2;
-
-                // アクティブプレイヤーの強調（明滅）
-                p1Bar.classList.toggle('active', this.currentPlayer === 1 && !this.gameOver);
-                p2Bar.classList.toggle('active', this.currentPlayer === 2 && !this.gameOver);
-            }
-
-            this.drawLabel('Player 1', 'hand-p1', '#4ade80', 'left');
-            this.drawLabel('Player 2', 'hand-p2', '#f87171', 'right');
-
-            // 勝利判定は checkTurnTransition 等のロジック層で行うように統合
-
-            // 収束演出（フォーカス・エフェクト）の描画
-            this.focusEffects.forEach(fe => {
-                const hex = fe.targetHex;
-                const unitThickness = this.layout.size * 0.12;
-                const h = Math.abs(hex.visualHeight) * unitThickness;
-
-                const verts = this.layout.getPolygonVertices(hex, fe.scale);
-                this.ctx.save();
-                this.ctx.globalAlpha = fe.life;
-                this.ctx.strokeStyle = fe.color;
-                this.ctx.lineWidth = 4 * fe.life;
-                this.ctx.shadowColor = fe.color;
-                this.ctx.shadowBlur = 15 * fe.life;
-
-                this.ctx.beginPath();
-                // 全頂点を土地の高さ(h)だけ上にずらす
-                this.ctx.moveTo(verts[0].x, verts[0].y - h);
-                for (let i = 1; i < 6; i++) {
-                    this.ctx.lineTo(verts[i].x, verts[i].y - h);
-                }
-                this.ctx.closePath();
-                this.ctx.stroke();
-                this.ctx.restore();
-            });
-
-            // ラストムーブ・ハイライト (最前面に描画)
-            if (this.lastMoveHex) {
-                const hex = this.lastMoveHex;
-                const center = this.layout.hexToPixel(hex);
-                const unitThickness = this.layout.size * 0.12;
-                const h = Math.abs(hex.visualHeight) * unitThickness;
-                const tx = center.x, ty = center.y - h;
-
-                this.ctx.save();
-                this.ctx.translate(tx, ty);
-                const ringVertices = this.layout.getPolygonVertices(hex, 1.2);
-                this.ctx.beginPath();
-                this.ctx.moveTo(ringVertices[0].x - center.x, ringVertices[0].y - center.y);
-                for (let i = 1; i < 6; i++) {
-                    this.ctx.lineTo(ringVertices[i].x - center.x, ringVertices[i].y - center.y);
-                }
-                this.ctx.closePath();
-
-                this.ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                this.ctx.lineWidth = 2 + Math.sin(this.pulseValue * Math.PI) * 1.5;
-                this.ctx.shadowColor = 'white';
-                this.ctx.shadowBlur = 10;
-                this.ctx.stroke();
-                this.ctx.restore();
-            }
+            if (this.renderer) this.renderer.render();
         }
 
-        // Ver 4.4.3: 落下物の描画
-        drawFallingHex(de, ctx = this.ctx, layout = this.layout) {
-            const size = layout.size * 1.0;
-            const unitThickness = layout.size * 0.12;
-            ctx.save();
-            ctx.translate(de.x, de.y);
-            ctx.globalAlpha = de.alpha;
-
-            if (de.type === 'marker') {
-                // インジケータ（白いリング）
-                const hex = de.targetHex;
-                const ringVertices = layout.getPolygonVertices(hex, 1.2);
-                ctx.beginPath();
-                // 中心 (0,0) 相対で描画
-                const origin = layout.hexToPixel(hex);
-                ctx.moveTo(ringVertices[0].x - origin.x, ringVertices[0].y - origin.y);
-                for (let i = 1; i < 6; i++) {
-                    ctx.lineTo(ringVertices[i].x - origin.x, ringVertices[i].y - origin.y);
-                }
-                ctx.closePath();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-                ctx.lineWidth = 3;
-                ctx.shadowColor = 'white';
-                ctx.shadowBlur = 10;
-                ctx.stroke();
-            } else {
-                // 土地（3Dモデル）
-                const absH = Math.abs(de.sourceHeight || 1);
-                const h = absH * unitThickness;
-                const colors = {
-                    0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' },
-                    1: { top: '#16a34a', side: '#166534', border: '#064e3b', highlight: '#4ade80' },
-                    2: { top: '#dc2626', side: '#991b1b', border: '#7f1d1d', highlight: '#f87171' }
-                };
-                const color = colors[de.owner] || colors[0];
-
-                const hex = de.targetHex;
-                const baseVertices = layout.getPolygonVertices(hex);
-                const origin = layout.hexToPixel(hex);
-                const vertices = baseVertices.map(v => ({
-                    x: v.x - origin.x,
-                    y: v.y - origin.y
-                }));
-
-                // 共通描画ロジックの使用 (Ver 4.4.14)
-                this.drawHexBase(ctx, hex, vertices, h, color);
-
-                // 数値表示の追加 (Ver 4.4.15: 絶対座標 de.x, de.y を考慮)
-                if (absH > 0) {
-                    // drawHexNumber は絶対座標 (de.x, de.y) に描画するが、
-                    // ここでは translate(de.x, de.y) されているので、(0, -h) に描画すべき？
-                    // drawHexNumber の実装を見ると setTransform しているので translate の影響を受けない（絶対配置）。
-                    // なので、(de.x, de.y - h) を渡せばよい。
-                    this.drawHexNumber(ctx, de.x, de.y - h, h, color, de.sourceHeight, layout);
-                }
-            }
-
-            ctx.restore();
-        }
 
         // Ver 4.6.0: 再構築エフェクト（黄色/水色のドットと数値ポップ）
         triggerReconstructEffect(giver, receiver, updates, pattern) {

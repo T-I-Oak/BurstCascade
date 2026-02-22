@@ -447,6 +447,10 @@
             <button class="toggle-btn selected" data-value="normal"></button>
         </div>
         <div id="ai-level-group"></div>
+        <div id="volume-slider-container">
+            <input type="range" id="volume-slider" min="0" max="100" value="50">
+            <span id="volume-value">50%</span>
+        </div>
         <div id="game-start-btn"></div>
         <div id="restart-btn"></div>
         <div id="help-close-btn"></div>
@@ -541,8 +545,12 @@
     </script>
 
     <!-- Load dependencies -->
+    <script src="../constants.js"></script>
+    <script src="../utils.js"></script>
     <script src="../map.js"></script>
     <script src="../achievements.js"></script>
+    <script src="../sound.js"></script>
+    <script src="../renderer.js"></script>
     <script src="../ai.js"></script>
     <script src="../main.js"></script>
     <script src="jest-browser-shim.js"></script>
@@ -554,7 +562,8 @@
             { id: 'jest-rules', file: 'unit/rules.test.js', title: 'Jest: Game Rules' },
             { id: 'jest-stability', file: 'unit/stability.test.js', title: 'Jest: System Stability' },
             { id: 'jest-layout', file: 'unit/layout.test.js', title: 'Jest: Title Layout' },
-            { id: 'jest-injection', file: 'unit/injection_validation.test.js', title: 'Jest: Injection Logic' }
+            { id: 'jest-injection', file: 'unit/injection_validation.test.js', title: 'Jest: Injection Logic' },
+            { id: 'jest-refactoring', file: 'unit/refactoring_smoke.test.js', title: 'Jest: Refactoring Smoke' }
         ];
 
         const BROWSER_TESTS = [

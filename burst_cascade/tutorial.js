@@ -118,7 +118,7 @@
             drawList.forEach(item => {
                 const hex = new window.BurstCascade.Hex(item.data.q, item.data.r, item.data.val, 1, 'main');
                 hex.visualHeight = item.data.val;
-                this.game.drawHex(hex, ctx, layout);
+                this.game.renderer.drawHex(hex, ctx, layout);
             });
 
             // Draw Arrow / Particle between targets
@@ -257,7 +257,7 @@
                 const hex = new window.BurstCascade.Hex(hData.q, hData.r, currentH, owner, 'main');
                 hex.visualHeight = currentH;
 
-                this.game.drawHex(hex, ctx, layout);
+                this.game.renderer.drawHex(hex, ctx, layout);
             });
 
             // 5. Draw Falling Hexes
@@ -285,7 +285,7 @@
                         targetHex: hex
                     };
 
-                    this.game.drawFallingHex(de, ctx, layout);
+                    this.game.renderer.drawFallingHex(de, ctx, layout);
                 }
             });
 
@@ -353,7 +353,7 @@
                 ctx.translate(shake, shake);
             }
 
-            this.game.drawHex(hex, ctx, layout);
+            this.game.renderer.drawHex(hex, ctx, layout);
 
             // Fix: Show "0" momentarily during burst/reset
             // Frame 160 is burst. Let's show "0" for a short while (e.g. 20 frames)
@@ -363,7 +363,7 @@
                 const colors = {
                     0: { top: '#1e293b', side: '#0f172a', border: '#334155', highlight: '#475569' }
                 };
-                this.game.drawHexNumber(ctx, center.x, center.y, 0, colors[0], 0, layout);
+                this.game.renderer.drawHexNumber(center.x, center.y, 0, colors[0], 0, ctx, layout);
             }
 
             if (h >= 10) ctx.restore();
@@ -422,7 +422,7 @@
             coreHex.flagOwner = 1;
             coreHex.visualFlagScale = 1.0;
 
-            this.game.drawHex(coreHex, ctx, tempLayout);
+            this.game.renderer.drawHex(coreHex, ctx, tempLayout);
         }
     };
 
