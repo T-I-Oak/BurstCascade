@@ -14,6 +14,7 @@
             this.targetBpm = Constants.BPM.GAME;
             this.masterVolume = 0.4; // Initial setting value (0.0 to 1.0) - Slider 50% = 0.4
             this.masterGain = null;
+            this.isMuted = false;
             // Dynamic Rhythmic Intensities
             this.p1Intensity = 0;
             this.p2Intensity = 0;
@@ -99,9 +100,19 @@
 
         updateVolume() {
             if (!this.bgmGain || !this.masterGain) return;
-            const gainValue = this.masterVolume * 0.8;
+            const gainValue = this.isMuted ? 0 : this.masterVolume * 0.8;
             this.masterGain.gain.setTargetAtTime(gainValue, this.ctx.currentTime, 0.1);
             this.bgmGain.gain.setTargetAtTime(1.0, this.ctx.currentTime, 0.1);
+        }
+
+        setVolume(vol) {
+            this.masterVolume = Math.max(0, Math.min(1, vol));
+            if (this.ctx) this.updateVolume();
+        }
+
+        toggleMute() {
+            this.isMuted = !this.isMuted;
+            if (this.ctx) this.updateVolume();
         }
 
         // --- SFX ---

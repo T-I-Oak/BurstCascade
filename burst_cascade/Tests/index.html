@@ -557,13 +557,21 @@
 
     <script>
         const JEST_TESTS = [
-            { id: 'jest-achievements', file: 'unit/achievements.test.js', title: 'Jest: Achievement Manager' },
-            { id: 'jest-stats', file: 'unit/stats.test.js', title: 'Jest: Stat Items' },
-            { id: 'jest-rules', file: 'unit/rules.test.js', title: 'Jest: Game Rules' },
-            { id: 'jest-stability', file: 'unit/stability.test.js', title: 'Jest: System Stability' },
-            { id: 'jest-layout', file: 'unit/layout.test.js', title: 'Jest: Title Layout' },
-            { id: 'jest-injection', file: 'unit/injection_validation.test.js', title: 'Jest: Injection Logic' },
-            { id: 'jest-refactoring', file: 'unit/refactoring_smoke.test.js', title: 'Jest: Refactoring Smoke' }
+            // Core
+            { id: 'jest-game', file: 'unit/core/game.test.js', title: 'Core: Game Instance' },
+            { id: 'jest-map', file: 'unit/core/map.test.js', title: 'Core: Hex Map & Layout' },
+            { id: 'jest-rules', file: 'unit/core/rules.test.js', title: 'Core: Game Rules' },
+            // Logic
+            { id: 'jest-achievements', file: 'unit/logic/achievements.test.js', title: 'Logic: Achievement Manager' },
+            { id: 'jest-stats', file: 'unit/logic/stats.test.js', title: 'Logic: Stat Items' },
+            { id: 'jest-injection', file: 'unit/logic/injection.test.js', title: 'Logic: Injection Logic' },
+            // Modules
+            { id: 'jest-renderer', file: 'unit/modules/renderer.test.js', title: 'Module: Renderer' },
+            { id: 'jest-sound', file: 'unit/modules/sound.test.js', title: 'Module: SoundManager' },
+            { id: 'jest-utils', file: 'unit/modules/utils.test.js', title: 'Module: Utils' },
+            // System
+            { id: 'jest-stability', file: 'unit/system/stability.test.js', title: 'System: Stability' },
+            { id: 'jest-sync', file: 'unit/system/sync_check.test.js', title: 'System: Sync Check' }
         ];
 
         const BROWSER_TESTS = [

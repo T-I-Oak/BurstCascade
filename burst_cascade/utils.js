@@ -29,6 +29,18 @@
                 if (intersect) inside = !inside;
             }
             return inside;
+        },
+
+        /**
+         * HexカラーをRGBオブジェクトに変換する
+         */
+        hexToRgb(hex) {
+            let col = hex.replace('#', '');
+            return {
+                r: parseInt(col.substring(0, 2), 16),
+                g: parseInt(col.substring(2, 4), 16),
+                b: parseInt(col.substring(4, 6), 16)
+            };
         }
     };
 })();

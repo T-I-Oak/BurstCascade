@@ -202,6 +202,15 @@
             },
             toBeLessThanOrEqual: (expected) => {
                 if (!(actual <= expected)) throw new Error(`Expected ${actual} to be <= ${expected}`);
+            },
+            toThrow: () => {
+                if (typeof actual !== 'function') throw new Error('Actual is not a function');
+                try {
+                    actual();
+                } catch (e) {
+                    return; // Pass
+                }
+                throw new Error('Expected function to throw, but it did not.');
             }
         };
 
