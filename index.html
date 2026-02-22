@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
-    <link rel="stylesheet" href="burst_cascade/style.css?v=4.7.34">
-    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=4.7.34">
+    <link rel="stylesheet" href="burst_cascade/style.css?v=4.8.0">
+    <link rel="stylesheet" href="burst_cascade/achievement_style.css?v=4.8.0">
 </head>
 
 <body>
@@ -29,7 +29,7 @@
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
                     <h1 class="title-logo">BURST CASCADE</h1>
-                    <div class="version-badge">Ver 4.7.34</div>
+                    <div class="version-badge">Ver 4.8.0</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
                     <div class="menu-scroll-container">
                         <div class="menu-options">
@@ -60,9 +60,9 @@
                                 </div>
                                 <div class="setting-group" id="sound-group">
                                     <label>SOUND / BGM</label>
-                                    <div class="toggle-options" id="bgm-select">
-                                        <button class="toggle-btn selected" data-value="on">ON</button>
-                                        <button class="toggle-btn" data-value="off">OFF</button>
+                                    <div class="volume-container">
+                                        <input type="range" id="volume-slider" min="0" max="100" value="50">
+                                        <span id="volume-value">50%</span>
                                     </div>
                                 </div>
                             </div>
@@ -253,11 +253,11 @@
             </div>
         </footer>
     </div>
-    <script src="burst_cascade/map.js?v=4.7.34"></script>
-    <script src="burst_cascade/achievements.js?v=4.7.34"></script>
-    <script src="burst_cascade/ai.js?v=4.7.34"></script>
-    <script src="burst_cascade/main.js?v=4.7.34"></script>
-    <script src="burst_cascade/tutorial.js?v=4.7.34"></script>
+    <script src="burst_cascade/map.js?v=4.8.0"></script>
+    <script src="burst_cascade/achievements.js?v=4.8.0"></script>
+    <script src="burst_cascade/ai.js?v=4.8.0"></script>
+    <script src="burst_cascade/main.js?v=4.8.0"></script>
+    <script src="burst_cascade/tutorial.js?v=4.8.0"></script>
 </body>
 
 </html>

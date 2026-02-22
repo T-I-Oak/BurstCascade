@@ -12,8 +12,7 @@
             this.schedulerId = null;
             this.currentPattern = null;
             this.targetBpm = 120;
-            this.masterVolume = 0.4;
-            this.isMuted = false;
+            this.masterVolume = 0.4; // Initial setting value (0.0 to 1.0) - Slider 50% = 0.4
             this.masterGain = null;
             // Dynamic Rhythmic Intensities
             this.p1Intensity = 0;
@@ -101,10 +100,12 @@
 
         updateVolume() {
             if (!this.bgmGain || !this.masterGain) return;
-            // masterGain handles global mute
-            this.masterGain.gain.setTargetAtTime(this.isMuted ? 0 : 1.0, this.ctx.currentTime, 0.1);
-            // bgmGain handles the masterVolume of the BGM part
-            this.bgmGain.gain.setTargetAtTime(this.masterVolume, this.ctx.currentTime, 0.1);
+            // masterGain handles global volume (v / 50 * 0.4 -> 100% = 0.8 gain)
+            // masterVolume is already 0.0 to 1.0 (from slider 0-100)
+            const gainValue = this.masterVolume * 0.8;
+            this.masterGain.gain.setTargetAtTime(gainValue, this.ctx.currentTime, 0.1);
+            // bgmGain handles the internal BGM balance if needed, but here we just keep it at 1.0
+            this.bgmGain.gain.setTargetAtTime(1.0, this.ctx.currentTime, 0.1);
         }
 
         // --- SFX ---
@@ -534,7 +535,8 @@
             this.sizeSelect = getEl('size-select');
             this.aiLevelSelect = getEl('ai-level-select');
             this.aiLevelGroup = getEl('ai-level-group');
-            this.bgmSelect = getEl('bgm-select');
+            this.volumeSlider = getEl('volume-slider');
+            this.volumeValue = getEl('volume-value');
 
             this.gameStartBtn = getEl('game-start-btn');
             this.restartBtn = getEl('restart-btn');
@@ -577,16 +579,19 @@
                 setupToggleGroup(this.playerSelect);
                 setupToggleGroup(this.sizeSelect);
                 setupToggleGroup(this.aiLevelSelect);
-                setupToggleGroup(this.bgmSelect);
 
-                if (this.bgmSelect) {
-                    this.bgmSelect.querySelectorAll('.toggle-btn').forEach(btn => {
-                        btn.addEventListener('click', () => {
-                            this.sound.isMuted = (btn.dataset.value === 'off');
-                            this.sound.updateVolume();
-                        });
+                if (this.volumeSlider) {
+                    this.volumeSlider.addEventListener('input', (e) => {
+                        const val = e.target.value;
+                        if (this.volumeValue) this.volumeValue.innerText = `${val}%`;
+                        this.sound.masterVolume = val / 100;
+                        this.sound.updateVolume();
+                    });
+                    this.volumeSlider.addEventListener('change', () => {
+                        this.saveSettings();
                     });
                 }
+
 
                 if (this.playerSelect) {
                     this.playerSelect.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -741,7 +746,7 @@
 
         // Ver 4.7.7: Fundamental State Reset
         resetToTitle() {
-            // Ver 4.7.34: Clear achievement notification
+            // Ver 4.8.0: Clear achievement notification
             const oldNotify = document.getElementById('achievement-notification');
             if (oldNotify) oldNotify.remove();
 
@@ -869,7 +874,7 @@
                 mode: this.playerSelect.querySelector('.selected').dataset.value,
                 size: this.sizeSelect.querySelector('.selected').dataset.value,
                 aiLevel: this.aiLevelSelect.querySelector('.selected').dataset.value,
-                bgm: this.bgmSelect.querySelector('.selected').dataset.value
+                volume: this.volumeSlider ? this.volumeSlider.value : 50
             };
             localStorage.setItem('burst-cascade-settings', JSON.stringify(settings));
         }
@@ -882,9 +887,13 @@
                     if (settings.mode) this.applySetting('player-select', settings.mode);
                     if (settings.size) this.applySetting('size-select', settings.size);
                     if (settings.aiLevel) this.applySetting('ai-level-select', settings.aiLevel);
-                    if (settings.bgm) {
-                        this.applySetting('bgm-select', settings.bgm);
-                        this.sound.isMuted = (settings.bgm === 'off');
+                    if (settings.volume !== undefined) {
+                        if (this.volumeSlider) {
+                            this.volumeSlider.value = settings.volume;
+                            if (this.volumeValue) this.volumeValue.innerText = `${settings.volume}%`;
+                        }
+                        this.sound.masterVolume = settings.volume / 100;
+                        this.sound.updateVolume();
                     }
 
                     // AIレベルグループの表示制御
