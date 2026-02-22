@@ -18,11 +18,10 @@
         });
 
         describe('hexToRgb', () => {
-            test('should convert hex to rgb object', () => {
-                const rgb = Utils.hexToRgb('#ff0000');
-                expect(rgb.r).toBe(255);
-                expect(rgb.g).toBe(0);
-                expect(rgb.b).toBe(0);
+            test('hexToRgb should convert hex to rgb object', () => {
+                expect(Utils.hexToRgb('#ff0000')).toEqual({ r: 255, g: 0, b: 0 });
+                expect(Utils.hexToRgb('#00ff00')).toEqual({ r: 0, g: 255, b: 0 });
+                expect(Utils.hexToRgb('#0000ff')).toEqual({ r: 0, g: 0, b: 255 });
             });
         });
     });

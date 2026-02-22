@@ -123,10 +123,9 @@
         }
 
         .dashboard {
-            flex: 0 0 380px;
+            flex: 1;
             height: 100%;
             background: rgba(15, 23, 42, 0.3);
-            /* Subtle background to define the area */
             border-radius: var(--border-radius);
             padding: 24px;
             box-sizing: border-box;
@@ -136,17 +135,61 @@
             animation: fadeInUp 0.8s ease-out;
             min-height: 0;
             border: 1px solid rgba(255, 255, 255, 0.05);
+            max-width: 800px;
+            /* Reduced width to give more space for console if needed */
+        }
+
+        /* Summary Stats Panel */
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            opacity: 0.5;
+        }
+
+        .stat-total .stat-value {
+            color: var(--accent-color);
+        }
+
+        .stat-pass .stat-value {
+            color: var(--success-color);
+        }
+
+        .stat-fail .stat-value {
+            color: var(--error-color);
         }
 
         #dashboard {
             flex: 1;
             overflow-y: auto;
             display: grid;
-            grid-template-columns: 1fr;
-            gap: 16px;
+            grid-template-columns: 1fr 1fr;
+            /* 2 Column Grid */
+            gap: 12px;
             padding-right: 12px;
             margin-right: -12px;
-            /* Pull scrollbar to the edge */
             padding-bottom: 20px;
         }
 
@@ -175,10 +218,13 @@
         .test-card {
             background: var(--card-bg);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: var(--border-radius);
-            padding: 20px;
+            border-radius: 12px;
+            padding: 16px;
             position: relative;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         .test-card::before {
@@ -400,6 +446,22 @@
                 </div>
             </div>
 
+            <!-- Global Summary Panel -->
+            <div class="summary-stats">
+                <div class="stat-item stat-total">
+                    <div class="stat-value" id="total-count">0</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="stat-item stat-pass">
+                    <div class="stat-value" id="pass-count">0</div>
+                    <div class="stat-label">Pass</div>
+                </div>
+                <div class="stat-item stat-fail">
+                    <div class="stat-value" id="fail-count">0</div>
+                    <div class="stat-label">Fail</div>
+                </div>
+            </div>
+
             <div id="dashboard">
                 <!-- Cards will be generated here -->
             </div>
@@ -575,27 +637,39 @@
         ];
 
         const BROWSER_TESTS = [
-            { id: 'logic_v5', file: 'test_logic_v5.js', title: 'Achievement Logic v5', desc: '実績ロジック、セグメンテーション、統計リセットの検証。' },
-            { id: 'achievements_v5', file: 'test_achievements_v5_2.js', title: 'Achievements Integration', desc: '新実績（自殺勝利、連勝、総勝利数など）の永続化と解除条件。' },
-            { id: 'range_stats', file: 'test_range_stats_v5.js', title: 'Range Stats Integration', desc: 'グリッド数やコア数の変動（最小・最大値）の正確性。' },
-            { id: 'burst_extra', file: 'test_burst_extra_move.js', title: 'Burst Continuity', desc: '敵陣バースト時の手番継続確認。' },
-            { id: 'ai_diff', file: 'test_ai_difficulty.js', title: 'AI Difficulty', desc: 'AI探索深度と評価係数の適用確認。' },
-            { id: 'minimap', file: 'test_minimap.js', title: 'Minimap Logic', desc: 'MINIマップ特有の領域制限と処理。' }
+            { id: 'logic_v5', file: 'browser/test_logic_v5.js', title: 'Achievement Logic v5', desc: '実績ロジック、セグメンテーション、統計リセットの検証。' },
+            { id: 'achievements_v5', file: 'browser/test_achievements_v5_2.js', title: 'Achievements Integration', desc: '新実績（自殺勝利、連勝、総勝利数など）の永続化と解除条件。' },
+            { id: 'range_stats', file: 'browser/test_range_stats_v5.js', title: 'Range Stats Integration', desc: 'グリッド数やコア数の変動（最小・最大値）の正確性。' },
+            { id: 'burst_extra', file: 'browser/test_burst_extra_move.js', title: 'Burst Continuity', desc: '敵陣バースト時の手番継続確認。' },
+            { id: 'ai_diff', file: 'browser/test_ai_difficulty.js', title: 'AI Difficulty', desc: 'AI探索深度と評価係数の適用確認。' },
+            { id: 'minimap', file: 'browser/test_minimap.js', title: 'Minimap Logic', desc: 'MINIマップ特有の領域制限と処理。' }
         ];
 
         const consoleOutput = document.getElementById('console-output');
         const summaryText = document.getElementById('test-summary');
         const dashboard = document.getElementById('dashboard');
 
+        // Global counters
+        let globalTotal = 0;
+        let globalPass = 0;
+        let globalFail = 0;
+        let currentRunningTestId = null;
+
+        function updateGlobalSummary() {
+            document.getElementById('total-count').textContent = globalTotal;
+            document.getElementById('pass-count').textContent = globalPass;
+            document.getElementById('fail-count').textContent = globalFail;
+        }
+
         // Initialize Dashboard with Categories
         function initDashboard() {
             dashboard.innerHTML = '';
 
-            // Jest Category Header
+            // Core
             addCategoryHeader('Jest Tests (Core Logic)');
             JEST_TESTS.forEach(test => addTestCard(test, 'jest'));
 
-            // Browser Category Header
+            // Browser
             addCategoryHeader('Browser Specific Tests');
             BROWSER_TESTS.forEach(test => addTestCard(test, 'browser'));
         }
@@ -660,20 +734,46 @@
 
         console.log = (...args) => {
             const msg = processLogArgs(args);
-            if (msg.includes('[PASS]')) log(msg, 'success');
-            else if (msg.includes('✅')) log(msg, 'success');
-            else if (msg.includes('❌') || msg.includes('[FAIL]')) log(msg, 'error');
+            if (msg.includes('[PASS]') || msg.includes('✅')) {
+                log(msg, 'success');
+                // Only count successes from explicit test results
+                if (msg.includes('[PASS]')) {
+                    globalPass++;
+                    updateGlobalSummary();
+                }
+            }
+            else if (msg.includes('❌') || msg.includes('[FAIL]')) {
+                log(msg, 'error');
+                globalFail++;
+                updateGlobalSummary();
+
+                // Update the current card to failed status immediately
+                if (currentRunningTestId) {
+                    const card = document.getElementById(`card-${currentRunningTestId}`);
+                    const badge = document.getElementById(`badge-${currentRunningTestId}`);
+                    if (card) card.className = 'test-card status-fail';
+                    if (badge) badge.textContent = 'Failed';
+                }
+            }
             else log(msg, 'info');
             originalLog.apply(console, args);
-        };
-        console.error = (...args) => {
-            log(processLogArgs(args), 'error');
-            originalError.apply(console, args);
         };
 
         function clearLogs() {
             consoleOutput.innerHTML = '';
             summaryText.textContent = 'Ready';
+            globalTotal = 0;
+            globalPass = 0;
+            globalFail = 0;
+            updateGlobalSummary();
+
+            // Reset card statuses
+            document.querySelectorAll('.test-card').forEach(card => {
+                card.className = 'test-card';
+                const badgeId = card.id.replace('card-', 'badge-');
+                const badge = document.getElementById(badgeId);
+                if (badge) badge.textContent = 'Pending';
+            });
         }
 
         async function copyLogs() {
@@ -762,6 +862,10 @@
             badge.innerHTML = '<span style="display:flex; align-items:center; gap:5px;"><div class="spinner"></div> Running</span>';
             log(test.title.toUpperCase(), 'header');
 
+            globalTotal++;
+            currentRunningTestId = id;
+            updateGlobalSummary();
+
             try {
                 // Ensure BurstCascade namespace exists
                 window.BurstCascade = window.BurstCascade || {};
@@ -815,6 +919,8 @@
                 log(`Crash in ${test.file}: ${e.message}`, 'error');
                 card.className = 'test-card status-fail';
                 badge.textContent = 'Failed';
+            } finally {
+                currentRunningTestId = null;
             }
         }
 

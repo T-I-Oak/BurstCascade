@@ -13,63 +13,72 @@ describe('Test Synchronization Check', () => {
     const path = require('path');
 
     const unitDirPath = path.resolve(__dirname, '..');
+    const browserDirPath = path.resolve(__dirname, '../../../Tests/browser');
     const indexHtmlPath = path.resolve(__dirname, '../../../Tests/index.html');
 
     // 再帰的にファイルを探索するヘルパー
-    function getTestFiles(dir, allFiles = []) {
+    function getFiles(dir, allFiles = [], extension = '.test.js') {
+        if (!fs.existsSync(dir)) return allFiles;
         const files = fs.readdirSync(dir);
         files.forEach(file => {
             const name = path.join(dir, file);
             if (fs.statSync(name).isDirectory()) {
-                getTestFiles(name, allFiles);
-            } else if (file.endsWith('.test.js')) {
-                // 絶対パスから unit/ からの相対パスに変換
-                const relativePath = path.relative(unitDirPath, name).replace(/\\/g, '/');
+                getFiles(name, allFiles, extension);
+            } else if (file.endsWith(extension)) {
+                // 絶対パスから基準ディレクトリからの相対パスに変換
+                const relativePath = path.relative(dir === browserDirPath ? browserDirPath : unitDirPath, name).replace(/\\/g, '/');
                 allFiles.push(relativePath);
             }
         });
         return allFiles;
     }
 
-    test('All .test.js files in Tests/unit (including subdirectories) should be registered in Tests/index.html', () => {
-        // 1. Tests/unit 内のファイルを再帰的にリストアップ
-        const testFiles = getTestFiles(unitDirPath);
-
-        // 2. Tests/index.html を読み込む
+    test('All test files should be registered in Tests/index.html', () => {
+        // 1. Tests/index.html を読み込み、両方の配列を取得
         const indexHtml = fs.readFileSync(indexHtmlPath, 'utf8');
-
-        // 3. JEST_TESTS 配列の内容をパース（簡易的な文字列検索）
-        // 配列の開始 [ から 終わり ] までをターゲットにする
         const jestTestsMatch = indexHtml.match(/const JEST_TESTS = \[\s*([\s\S]*?)\s*\];/);
+        const browserTestsMatch = indexHtml.match(/const BROWSER_TESTS = \[\s*([\s\S]*?)\s*\];/);
 
-        if (!jestTestsMatch) {
-            throw new Error('Could not find JEST_TESTS array in index.html');
+        if (!jestTestsMatch || !browserTestsMatch) {
+            throw new Error('Could not find JEST_TESTS or BROWSER_TESTS array in index.html');
         }
 
-        const registeredContent = jestTestsMatch[1];
+        const jestRegistered = jestTestsMatch[1];
+        const browserRegistered = browserTestsMatch[1];
 
-        // 4. 各テストファイルが登録されているかチェック
-        const missingFiles = [];
-        testFiles.forEach(file => {
-            // unit/フォルダ/ファイル名 という形式で登録されているか確認
-            const expectedEntry = `file: 'unit/${file}'`;
-            if (!registeredContent.includes(expectedEntry)) {
-                missingFiles.push(file);
+        const missingJest = [];
+        const missingBrowser = [];
+
+        // 2. Unit Tests Check (unit/*.test.js -> JEST_TESTS)
+        const unitFiles = getFiles(unitDirPath, [], '.test.js');
+        unitFiles.forEach(file => {
+            if (!jestRegistered.includes(`file: 'unit/${file}'`)) {
+                missingJest.push(file);
             }
         });
 
-        // エラーメッセージの構築
-        if (missingFiles.length > 0) {
-            const message = `
-[Synchronization Error]
-The following test files exist in 'Tests/unit/' but are NOT registered in 'Tests/index.html':
-${missingFiles.map(f => `  - ${f}`).join('\n')}
+        // 3. Browser Tests Check (browser/*.js -> BROWSER_TESTS)
+        const browserFiles = getFiles(browserDirPath, [], '.js');
+        browserFiles.forEach(file => {
+            if (!browserRegistered.includes(`file: 'browser/${file}'`)) {
+                missingBrowser.push(file);
+            }
+        });
 
-Please add them to the 'JEST_TESTS' array in 'Tests/index.html' to ensure they run in the browser runner.
-            `;
+        // 4. エラーメッセージの構築
+        if (missingJest.length > 0 || missingBrowser.length > 0) {
+            let message = '\n[Synchronization Error]\n';
+            if (missingJest.length > 0) {
+                message += `Missing in JEST_TESTS (Tests/unit/):\n${missingJest.map(f => `  - unit/${f}`).join('\n')}\n`;
+            }
+            if (missingBrowser.length > 0) {
+                message += `Missing in BROWSER_TESTS (Tests/browser/):\n${missingBrowser.map(f => `  - browser/${f}`).join('\n')}\n`;
+            }
+            message += '\nPlease update JEST_TESTS or BROWSER_TESTS in Tests/index.html.';
             throw new Error(message);
         }
 
-        expect(missingFiles.length).toBe(0);
+        expect(missingJest.length).toBe(0);
+        expect(missingBrowser.length).toBe(0);
     });
 });

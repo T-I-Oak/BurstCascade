@@ -59,5 +59,38 @@
 
             expect(result.chainContinues).toBe(true);
         });
+
+        test('Destroy last enemy flag -> Game ends (Turn ends)', () => {
+            map.mainHexes.forEach(h => {
+                h.hasFlag = false;
+                h.flagOwner = 0;
+            });
+            const target = map.mainHexes.find(h => h.owner === 2);
+            target.hasFlag = true;
+            target.flagOwner = 2;
+            target.height = -9; // Burst will destroy this flag
+
+            map.handHexes['hand-p1'].forEach(h => h.height = -1);
+
+            const handPattern = ai.getHandPattern(map, 1);
+            const result = ai.simulateApplyHand(map.clone(), JSON.parse(JSON.stringify(chains)), target, 1, handPattern);
+
+            expect(result.chainContinues).toBe(false);
+        });
+
+        test('Simultaneous Self and Enemy reward + Burst -> Turn ends (Self priority)', () => {
+            // Both are one burst away from reward
+            chains[1].self = 3;
+            chains[1].enemy = 1;
+
+            const target = map.mainHexes.find(h => h.owner === 1);
+            target.height = 9;
+            map.handHexes['hand-p1'].forEach(h => h.height = 1);
+
+            const handPattern = ai.getHandPattern(map, 1);
+            const result = ai.simulateApplyHand(map.clone(), JSON.parse(JSON.stringify(chains)), target, 1, handPattern);
+
+            expect(result.chainContinues).toBe(false);
+        });
     });
 })();
