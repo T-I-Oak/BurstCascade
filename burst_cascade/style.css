@@ -252,8 +252,8 @@ main {
 }
 
 #overlay {
-    position: fixed;
-    /* 全画面固定に戻してリサイズ追従を安定化 */
+    position: absolute;
+    /* main領域内を基準とするための絶対配置 */
     top: 0;
     left: 0;
     width: 100%;
@@ -268,8 +268,8 @@ main {
     /* 画面が小さい場合にスクロールを許可 */
     z-index: 1000;
     animation: fade-in 0.3s ease-out;
-    padding: 4rem 1rem;
-    /* ヘッダーと重ならないように多めにパディング */
+    padding: 2rem 1rem;
+    /* ヘッダーは外部にあるためパディングを縮小 */
 }
 
 /* Ver 5.2.4: コイントス中はブラーを無効化して背後の演出をクッキリ見せる */

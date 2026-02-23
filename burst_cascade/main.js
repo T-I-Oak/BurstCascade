@@ -20,6 +20,7 @@
             this.isProcessingMove = false; // 現在移動・演出処理中か
 
             this.hoveredHex = null;
+            this.selectedHex = null; // Ver 5.2.8: 確定待ち状態のマスを管理
             this.hoveredNeighbors = [];
 
             this.pulseValue = 0;
@@ -233,27 +234,30 @@
                 requestAnimationFrame((t) => this.animate(t));
             }
 
-            // --- BGM Activation (Ver 4.6.8: Ultra-resilient activation) ---
-            const handleFirstGesture = () => {
+            // --- BGM Activation (Ver 5.2.8: Multi-gesture support) ---
+            const handleFirstGesture = (e) => {
                 if (this.audioActivated) return;
-                this.audioActivated = true;
 
-                this.sound.init();
-                this.sound.resume(); // 同期的に呼び出してジェスチャ判定を確実にする
-
-                // BGMの開始 (非同期を待たずに実行)
-                if (this.sound.isPlaying && this.sound.currentPattern) {
-                    this.sound.startBgm(this.sound.currentPattern);
-                } else if (!this.gameMode && !window.IS_TESTING) {
-                    this.sound.startBgm('title');
+                // 特定のイベントで確実にコンテキストを開始
+                if (this.sound) {
+                    this.sound.init();
+                    this.sound.resume();
+                    this.audioActivated = true;
                 }
 
-                // リスナーの解除 (Ver 4.7.35: 確実にジェスチャとして認められる click / touchend に限定)
-                ['click', 'touchend', 'keydown'].forEach(evt => {
+                // BGMの開始
+                if (this.sound && this.sound.isPlaying && this.sound.currentPattern) {
+                    this.sound.startBgm(this.sound.currentPattern);
+                } else if (!this.gameMode && !window.IS_TESTING) {
+                    if (this.sound) this.sound.startBgm('title');
+                }
+
+                // リスナーの解除
+                ['click', 'touchend', 'touchstart', 'keydown'].forEach(evt => {
                     document.removeEventListener(evt, handleFirstGesture);
                 });
             };
-            ['click', 'touchend', 'keydown'].forEach(evt => {
+            ['click', 'touchend', 'touchstart', 'keydown'].forEach(evt => {
                 document.addEventListener(evt, handleFirstGesture, { passive: true });
             });
         }
@@ -293,6 +297,8 @@
             this.gameMode = null;
             this.currentPlayer = 1;
             this.map = null;
+            this.hoveredHex = null;
+            this.selectedHex = null; // Ver 5.2.8: リセット時に選択状態もクリア
             this.effects = [];
             this.dropEffects = [];
             this.delayedBursts = [];
@@ -1139,13 +1145,15 @@
                     return;
                 }
 
-                // Ver 4.3: 2ステップ確定ロジック (タッチデバイスの誤操作防止)
-                // マウスホバーがない環境（タッチ）を考慮し、1回目で選択、2回目で確定とする。
-                // すでにハイライト（hoveredHex）されているマス以外をクリックした場合は、選択のみ行う。
-                if (!e.isSimulated && this.hoveredHex !== hex) {
-                    this.hoveredHex = hex;
+                // Ver 5.2.8: 2ステップ確定ロジックの適正化
+                // タッチ操作（pointerType === 'touch'）の場合のみ、誤操作防止のため 2 ステップ確定とする。
+                // マウス操作やシミュレーション（AIなど）の場合は、即時確定を許可して操作性を維持する。
+                const isTouch = e.pointerType === 'touch';
+                if (!e.isSimulated && isTouch && this.selectedHex !== hex) {
+                    this.selectedHex = hex;
+                    this.hoveredHex = hex; // 視覚的ハイライトも同期
                     this.hoveredNeighbors = [];
-                    // owner check is already done above, but keeping logic consistent
+
                     const directions = [
                         { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
                         { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
@@ -1159,6 +1167,7 @@
                 }
 
                 this.sound.playPlace();
+                this.selectedHex = null; // 確定したのでクリア
 
 
                 // Atomic Stats: Action Count
@@ -1174,6 +1183,7 @@
 
             // Ver 4.4.19: 確定操作時にハイライトを消去 (iPadでのハイライト残留バグ修正)
             this.hoveredHex = null;
+            this.selectedHex = null; // Ver 5.2.8: 確定したのでクリア
             this.hoveredNeighbors = [];
 
             this.isProcessingMove = true;
