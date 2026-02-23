@@ -197,8 +197,17 @@
 
             // タッチ操作対応
             this.isTouchDevice = false;
+            this.isTouchMoved = false; // Ver 5.3.5: スライド中かどうかのフラグ
+
+            // タッチ開始時にフラグをリセット
+            this.canvas.addEventListener('touchstart', (e) => {
+                this.isTouchDevice = true;
+                this.isTouchMoved = false;
+            }, { passive: true });
+
             const handleTouchMove = (e) => {
                 this.isTouchDevice = true;
+                this.isTouchMoved = true; // 移動したことを記録
                 // ブラウザのデフォルト挙動を物理的に止める (touch-action: none との二重化)
                 if (e.cancelable) e.preventDefault();
 
@@ -214,23 +223,16 @@
                 const nextHovered = this.findHexAt(x, y);
                 if (this.hoveredHex !== nextHovered) {
                     this.hoveredHex = nextHovered;
-                    // Ver 5.3.3: スライド中も選択状態を同期させ、指を離した瞬間に「選択済み」にする
-                    this.selectedHex = nextHovered;
+                    // Ver 5.3.5: スライド中は「下見」のみとし、selectedHex は pointerup (handleClick) 側で確定させる。
+                    // ここで selectedHex を同期させると、直後の pointerup で immediate confirm が発生してしまう。
                     this.hoveredNeighbors = [];
 
                     if (this.hoveredHex && this.hoveredHex.zone === 'main' && this.hoveredHex.owner === this.currentPlayer) {
-                        const directions = [
-                            { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
-                            { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
-                        ];
-                        directions.forEach(dir => {
-                            const neighbor = this.map.getHexAt(this.hoveredHex.q + dir.q, this.hoveredHex.r + dir.r, 'main');
-                            if (neighbor) this.hoveredNeighbors.push(neighbor);
-                        });
+                        this.updateHoveredNeighbors(this.hoveredHex);
                     }
                 }
             };
-            this.canvas.addEventListener('touchmove', handleTouchMove, { passive: true });
+            this.canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
 
             this.loadSettings(); // 設定の読み込み
             this.resize(); // Ver 5.2.3: Always resize to setup layout even in tests
@@ -1127,73 +1129,69 @@
 
                 // メインマップかつ自分のマスの時のみ、周囲のプレビューを表示
                 if (this.hoveredHex && this.hoveredHex.zone === 'main' && this.hoveredHex.owner === this.currentPlayer) {
-                    const directions = [
-                        { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
-                        { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
-                    ];
-                    directions.forEach(dir => {
-                        const neighbor = this.map.getHexAt(this.hoveredHex.q + dir.q, this.hoveredHex.r + dir.r, 'main');
-                        if (neighbor) this.hoveredNeighbors.push(neighbor);
-                    });
+                    this.updateHoveredNeighbors(this.hoveredHex);
                 }
             }
         }
 
-        handleClick(e) {
-            // this.sound.init(); // 最初のクリックでのオーディオ開始は handleFirstGesture に集約 (Ver 4.7.35)
-            if (this.gameOver || this.isAIThinking) return;
-            const rect = this.canvas.getBoundingClientRect();
-            let mouseX, mouseY, hex;
-
-            if (e.isSimulated) {
-                hex = e.simulatedHex;
-            } else {
-                mouseX = e.clientX - rect.left;
-                mouseY = e.clientY - rect.top;
-                hex = this.findHexAt(mouseX, mouseY);
+        // Ver 5.3.6: 周囲のハイライト（プレビュー）を更新する共通メソッド
+        updateHoveredNeighbors(hex) {
+            this.hoveredNeighbors = [];
+            if (hex && hex.zone === 'main' && hex.owner === this.currentPlayer) {
+                const directions = [
+                    { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
+                    { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
+                ];
+                directions.forEach(dir => {
+                    const neighbor = this.map.getHexAt(hex.q + dir.q, hex.r + dir.r, 'main');
+                    if (neighbor) this.hoveredNeighbors.push(neighbor);
+                });
             }
+        }
+
+        handleClick(e) {
+            if (this.gameOver || this.isProcessingMove || this.isAIThinking || this.coinToss.active) return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            // ClientX/Y を使用するように統一 (Ver 5.2.2)
+            const mouseX = (e.isSimulated ? e.clientX : (e.clientX || (e.touches && e.touches[0].clientX))) - rect.left;
+            const mouseY = (e.isSimulated ? e.clientY : (e.clientY || (e.touches && e.touches[0].clientY))) - rect.top;
+
+            const hex = e.isSimulated ? e.simulatedHex : this.findHexAt(mouseX, mouseY);
 
             if (hex && hex.zone === 'main') {
-                // Ver 4.0: 無効マスの操作防止
                 if (hex.isDisabled) return;
+                if (hex.owner !== this.currentPlayer) return;
 
-                // 入力ロックのチェック（演出中やAI思考中は無効）
-                if (this.isAIThinking || this.isProcessingMove || this.turnEndRequested) return;
+                // Ver 5.3.7: PC版 (mouse) は即時確定を許可し、タッチ操作のみ 2 ステップ確認とする。
+                // pointerType が 'mouse' の場合は isTouchDevice フラグが立っていてもマウス操作として優先する。
+                const isTouch = (e.pointerType === 'touch' || this.isTouchDevice) && e.pointerType !== 'mouse';
 
-                // 【修正】自勢力のグリッドではない場所へのエネルギー注入を禁止
-                if (hex.owner !== this.currentPlayer) {
+                // Ver 5.3.5: スライド操作中（isTouchMoved）の pointerup は「選択」としてのみ扱う。
+                if (!e.isSimulated && isTouch) {
+                    if (this.isTouchMoved) {
+                        this.isTouchMoved = false;
+                        this.selectedHex = hex;
+                        this.hoveredHex = hex;
+                        // Ver 5.3.6: 周囲のハイライトを更新
+                        this.updateHoveredNeighbors(hex);
+                        this.sound.playPlace();
+                        return;
+                    }
 
-                    return;
-                }
-
-                // Ver 5.2.8: 2ステップ確定ロジックの適正化
-                // タッチ操作（pointerType === 'touch'）の場合のみ、誤操作防止のため 2 ステップ確定とする。
-                // マウス操作やシミュレーション（AIなど）の場合は、即時確定を許可して操作性を維持する。
-                const isTouch = e.pointerType === 'touch';
-                if (!e.isSimulated && isTouch && this.selectedHex !== hex) {
-                    this.selectedHex = hex;
-                    this.hoveredHex = hex; // 視覚的ハイライトも同期
-                    this.hoveredNeighbors = [];
-
-                    const directions = [
-                        { q: 1, r: 0 }, { q: 1, r: -1 }, { q: 0, r: -1 },
-                        { q: -1, r: 0 }, { q: -1, r: +1 }, { q: 0, r: +1 }
-                    ];
-                    directions.forEach(dir => {
-                        const neighbor = this.map.getHexAt(hex.q + dir.q, hex.r + dir.r, 'main');
-                        if (neighbor) this.hoveredNeighbors.push(neighbor);
-                    });
-                    this.sound.playPlace(); // 選択音
-                    return;
+                    if (this.selectedHex !== hex) {
+                        this.selectedHex = hex;
+                        this.hoveredHex = hex;
+                        // Ver 5.3.6: 周囲のハイライトを更新
+                        this.updateHoveredNeighbors(hex);
+                        this.sound.playPlace();
+                        return;
+                    }
                 }
 
                 this.sound.playPlace();
-                this.selectedHex = null; // 確定したのでクリア
-
-
-                // Atomic Stats: Action Count
+                this.selectedHex = null;
                 this.achievementManager.stats[this.currentPlayer].actions.add(1);
-
                 this.triggerDropSequence(hex);
             }
         }
