@@ -89,17 +89,17 @@
 
         }
 
-        resume() {
-            if (!this.ctx) return Promise.resolve();
+        async resume() {
+            if (!this.ctx) return;
             if (this.ctx.state === 'suspended') {
-                return this.ctx.resume().then(() => {
+                try {
+                    await this.ctx.resume();
                     this.unlock();
-                }).catch(e => {
-                    // Ignore errors, will retry on next gesture
-                });
+                } catch (e) {
+                    // console.warn('AudioContext resume failed:', e);
+                }
             } else {
                 this.unlock();
-                return Promise.resolve();
             }
         }
 

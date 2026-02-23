@@ -235,8 +235,8 @@
                 requestAnimationFrame((t) => this.animate(t));
             }
 
-            // --- BGM Activation (Ver 5.2.8: Multi-gesture support) ---
-            const handleFirstGesture = (e) => {
+            // --- BGM Activation (Ver 5.3.0: Async-Resilience activation) ---
+            const handleFirstGesture = async (e) => {
                 // すでに起動済みの場合は何もしない
                 if (this.sound && this.sound.ctx && this.sound.ctx.state === 'running') {
                     return;
@@ -245,7 +245,7 @@
                 // 特定のイベントで確実にコンテキストを開始
                 if (this.sound) {
                     this.sound.init(); // AudioContext の作成
-                    this.sound.resume(); // レジューム試行
+                    await this.sound.resume(); // レジュームの完了を確実に待機 (Ver 5.3.0)
 
                     // 実際に Running になったらリスナーを解除する (Ver 5.2.9)
                     if (this.sound.ctx && this.sound.ctx.state === 'running') {
@@ -267,7 +267,7 @@
 
             };
             ['click', 'touchend', 'touchstart', 'keydown', 'pointerup'].forEach(evt => {
-                document.addEventListener(evt, handleFirstGesture, { passive: true });
+                document.addEventListener(evt, handleFirstGesture);
             });
         }
 
