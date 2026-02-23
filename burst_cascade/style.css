@@ -220,8 +220,8 @@ main {
     max-width: 100%;
     max-height: 100%;
     cursor: grab;
-    touch-action: manipulation;
-    /* ダブルタップズームの抑制 */
+    touch-action: none;
+    /* ブラウザのデフォルトジェスチャー（スクロール・ズーム）を完全に抑制 (Ver 5.3.3) */
 }
 
 #game-canvas:active {

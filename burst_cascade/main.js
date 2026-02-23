@@ -199,6 +199,9 @@
             this.isTouchDevice = false;
             const handleTouchMove = (e) => {
                 this.isTouchDevice = true;
+                // ブラウザのデフォルト挙動を物理的に止める (touch-action: none との二重化)
+                if (e.cancelable) e.preventDefault();
+
                 const rect = this.canvas.getBoundingClientRect();
                 const touch = e.touches[0];
 
@@ -211,6 +214,8 @@
                 const nextHovered = this.findHexAt(x, y);
                 if (this.hoveredHex !== nextHovered) {
                     this.hoveredHex = nextHovered;
+                    // Ver 5.3.3: スライド中も選択状態を同期させ、指を離した瞬間に「選択済み」にする
+                    this.selectedHex = nextHovered;
                     this.hoveredNeighbors = [];
 
                     if (this.hoveredHex && this.hoveredHex.zone === 'main' && this.hoveredHex.owner === this.currentPlayer) {
