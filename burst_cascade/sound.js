@@ -90,12 +90,17 @@
         }
 
         resume() {
-            if (this.ctx && this.ctx.state === 'suspended') {
-                this.ctx.resume().catch(e => {
-                    // console.warn('AudioContext resume failed:', e);
+            if (!this.ctx) return Promise.resolve();
+            if (this.ctx.state === 'suspended') {
+                return this.ctx.resume().then(() => {
+                    this.unlock();
+                }).catch(e => {
+                    // Ignore errors, will retry on next gesture
                 });
+            } else {
+                this.unlock();
+                return Promise.resolve();
             }
-            this.unlock(); // 常にアンロックを試みる
         }
 
         /**

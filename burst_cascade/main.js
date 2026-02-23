@@ -192,7 +192,8 @@
 
             window.addEventListener('resize', () => this.resize());
             this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-            this.canvas.addEventListener('click', (e) => this.handleClick(e));
+            this.canvas.addEventListener('pointerup', (e) => this.handleClick(e)); // Ver 5.2.9: click から pointerup に移行 (pointerType 取得のため)
+            // this.canvas.addEventListener('click', (e) => this.handleClick(e)); // 廃止
 
             // タッチ操作対応
             this.isTouchDevice = false;
@@ -236,28 +237,36 @@
 
             // --- BGM Activation (Ver 5.2.8: Multi-gesture support) ---
             const handleFirstGesture = (e) => {
-                if (this.audioActivated) return;
+                // すでに起動済みの場合は何もしない
+                if (this.sound && this.sound.ctx && this.sound.ctx.state === 'running') {
+                    return;
+                }
 
                 // 特定のイベントで確実にコンテキストを開始
                 if (this.sound) {
-                    this.sound.init();
-                    this.sound.resume();
-                    this.audioActivated = true;
+                    this.sound.init(); // AudioContext の作成
+                    this.sound.resume(); // レジューム試行
+
+                    // 実際に Running になったらリスナーを解除する (Ver 5.2.9)
+                    if (this.sound.ctx && this.sound.ctx.state === 'running') {
+                        ['click', 'touchend', 'touchstart', 'keydown', 'pointerup'].forEach(evt => {
+                            document.removeEventListener(evt, handleFirstGesture);
+                        });
+                        this.audioActivated = true;
+                    }
                 }
 
-                // BGMの開始
-                if (this.sound && this.sound.isPlaying && this.sound.currentPattern) {
-                    this.sound.startBgm(this.sound.currentPattern);
-                } else if (!this.gameMode && !window.IS_TESTING) {
-                    if (this.sound) this.sound.startBgm('title');
+                // BGMの開始 (成功時のみ)
+                if (this.sound && this.sound.ctx && this.sound.ctx.state === 'running') {
+                    if (this.sound.isPlaying && this.sound.currentPattern) {
+                        this.sound.startBgm(this.sound.currentPattern);
+                    } else if (!this.gameMode && !window.IS_TESTING) {
+                        this.sound.startBgm('title');
+                    }
                 }
 
-                // リスナーの解除
-                ['click', 'touchend', 'touchstart', 'keydown'].forEach(evt => {
-                    document.removeEventListener(evt, handleFirstGesture);
-                });
             };
-            ['click', 'touchend', 'touchstart', 'keydown'].forEach(evt => {
+            ['click', 'touchend', 'touchstart', 'keydown', 'pointerup'].forEach(evt => {
                 document.addEventListener(evt, handleFirstGesture, { passive: true });
             });
         }
