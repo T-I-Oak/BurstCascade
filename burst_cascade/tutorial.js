@@ -11,9 +11,10 @@
             this.reconstructState = { frame: 0 };
 
             // Wait for game to be ready (layout initialized)
-            while (!this.game || !this.game.layout) {
+            while (!window.game || !window.game.layout) {
                 await new Promise(r => setTimeout(r, 100));
             }
+            this.game = window.game;
             this.startAnimation();
         }
 

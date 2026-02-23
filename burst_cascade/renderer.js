@@ -334,7 +334,11 @@
         drawHexNumber(tx, ty, h, color, value, overrideCtx = null, overrideLayout = null) {
             const ctx = overrideCtx || this.ctx;
             const layout = overrideLayout || this.game.layout;
-            const dpr = window.devicePixelRatio || 1; // Ver 5.2.4: dpr 補正
+
+            // Ver 5.2.6: 描画対象のキャンバスがメインゲームのものではない場合、DPR補正を無効化する
+            const isMainCanvas = ctx.canvas === this.game.canvas;
+            const dpr = isMainCanvas ? (window.devicePixelRatio || 1) : 1;
+
             ctx.save();
             const { angle, tilt, scaleY } = layout.projection;
             const cosA = Math.cos(angle), sinA = Math.sin(angle);
@@ -371,6 +375,10 @@
             const tx = center.x, ty = center.y - h;
             const coreSize = layout.size * 0.4 * hex.visualFlagScale;
             const playerColor = hex.flagOwner === 1 ? '#4ade80' : '#f87171';
+
+            // Ver 5.2.6: dpr 補正の適用判断 (ctx.setTransform はここでは使わないが、座標計算に影響する場合に備える)
+            const isMainCanvas = ctx.canvas === game.canvas;
+            const dpr = isMainCanvas ? (window.devicePixelRatio || 1) : 1;
             const floatY = Math.sin(game.pulseValue * Math.PI) * 4 * hex.visualFlagScale;
 
             ctx.save();

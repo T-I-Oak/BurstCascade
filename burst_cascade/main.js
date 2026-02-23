@@ -200,11 +200,10 @@
                 const rect = this.canvas.getBoundingClientRect();
                 const touch = e.touches[0];
 
-                // 表示サイズと内部解像度の比率を考慮
-                const scaleX = this.canvas.width / rect.width;
-                const scaleY = this.canvas.height / rect.height;
-                const x = (touch.clientX - rect.left) * scaleX;
-                const y = (touch.clientY - rect.top) * scaleY;
+                // 表示サイズと内部解像度の比率は、ctx.scale(dpr, dpr) により吸収されているため、
+                // 当たり判定には論理座標（CSSピクセル）をそのまま使用する
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
 
                 // mousemove相当の処理（ハイライト更新）
                 const nextHovered = this.findHexAt(x, y);
@@ -235,22 +234,28 @@
             }
 
             // --- BGM Activation (Ver 4.6.8: Ultra-resilient activation) ---
-            const handleFirstGesture = async () => {
-                this.sound.init();
-                await this.sound.resume();
+            const handleFirstGesture = () => {
+                if (this.audioActivated) return;
+                this.audioActivated = true;
 
-                // If isPlaying is true, it means BGM was requested but deferred.
+                this.sound.init();
+                this.sound.resume(); // 同期的に呼び出してジェスチャ判定を確実にする
+
+                // BGMの開始 (非同期を待たずに実行)
                 if (this.sound.isPlaying && this.sound.currentPattern) {
                     this.sound.startBgm(this.sound.currentPattern);
                 } else if (!this.gameMode && !window.IS_TESTING) {
                     this.sound.startBgm('title');
                 }
 
-                document.removeEventListener('click', handleFirstGesture);
-                document.removeEventListener('touchstart', handleFirstGesture);
+                // リスナーの解除 (Ver 4.7.35: 確実にジェスチャとして認められる click / touchend に限定)
+                ['click', 'touchend', 'keydown'].forEach(evt => {
+                    document.removeEventListener(evt, handleFirstGesture);
+                });
             };
-            document.addEventListener('click', handleFirstGesture);
-            document.addEventListener('touchstart', handleFirstGesture);
+            ['click', 'touchend', 'keydown'].forEach(evt => {
+                document.addEventListener(evt, handleFirstGesture, { passive: true });
+            });
         }
 
         init() {
@@ -976,7 +981,10 @@
                     if (ef.targetDotKey && this.dotTargets[ef.targetDotKey]) {
                         target = this.dotTargets[ef.targetDotKey];
                     } else if (ef.targetHex) {
-                        target = this.layout.hexToPixel(ef.targetHex);
+                        const targetPos = this.layout.hexToPixel(ef.targetHex);
+                        const unitThickness = this.layout.size * 0.12;
+                        const h = Math.abs(ef.targetHex.visualHeight) * unitThickness;
+                        target = { x: targetPos.x, y: targetPos.y - h };
                     }
 
                     // let keep = true; (Removed: declared at loop start)
@@ -1082,10 +1090,8 @@
             if (this.isTouchDevice && e.pointerType !== 'mouse') return;
 
             const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width / rect.width;
-            const scaleY = this.canvas.height / rect.height;
-            const mouseX = (e.clientX - rect.left) * scaleX;
-            const mouseY = (e.clientY - rect.top) * scaleY;
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
 
             const nextHovered = this.findHexAt(mouseX, mouseY);
             if (this.hoveredHex !== nextHovered) {
@@ -1107,7 +1113,7 @@
         }
 
         handleClick(e) {
-            this.sound.init(); // 最初のクリックでオーディオ開始
+            // this.sound.init(); // 最初のクリックでのオーディオ開始は handleFirstGesture に集約 (Ver 4.7.35)
             if (this.gameOver || this.isAIThinking) return;
             const rect = this.canvas.getBoundingClientRect();
             let mouseX, mouseY, hex;
@@ -1115,10 +1121,8 @@
             if (e.isSimulated) {
                 hex = e.simulatedHex;
             } else {
-                const scaleX = this.canvas.width / rect.width;
-                const scaleY = this.canvas.height / rect.height;
-                mouseX = (e.clientX - rect.left) * scaleX;
-                mouseY = (e.clientY - rect.top) * scaleY;
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
                 hex = this.findHexAt(mouseX, mouseY);
             }
 
@@ -1312,18 +1316,22 @@
                     }
                 }
 
-                // 着弾時の小規模なパーティクル
-                const pos = this.layout.hexToPixel(hex);
-                const color = effect.owner === 1 ? '#4ade80' : '#f87171';
-                for (let i = 0; i < 5; i++) {
-                    this.effects.push({
-                        x: pos.x, y: pos.y,
-                        vx: (Math.random() - 0.5) * 4,
-                        vy: (Math.random() - 0.5) * 4,
-                        life: 0.5 + Math.random() * 0.5,
-                        color: color,
-                        size: 2 + Math.random() * 3
-                    });
+                // 着弾時の小規模なパーティクル (Ver 5.2.7: 高さ0の場合は抑止, 座標を天面に補正)
+                if (effect.sourceHeight > 0) {
+                    const pos = this.layout.hexToPixel(hex);
+                    const unitThickness = this.layout.size * 0.12;
+                    const h = Math.abs(hex.visualHeight) * unitThickness;
+                    const color = effect.owner === 1 ? '#4ade80' : '#f87171';
+                    for (let i = 0; i < 5; i++) {
+                        this.effects.push({
+                            x: pos.x, y: pos.y - h,
+                            vx: (Math.random() - 0.5) * 4,
+                            vy: (Math.random() - 0.5) * 4,
+                            life: 0.5 + Math.random() * 0.5,
+                            color: color,
+                            size: 2 + Math.random() * 3
+                        });
+                    }
                 }
             } else if (effect.type === 'marker') {
                 this.sound.playPlace(); // 着地音
@@ -1442,7 +1450,10 @@
             }
 
             this.sound.playBurst();
-            this.addParticles(center.x, center.y, color, isEnemyOverflow, targetDotKey, null, reward);
+            // Ver 5.2.7: 座標を天面に補正
+            const unitThickness = this.layout.size * 0.12;
+            const h = Math.abs(hex.visualHeight) * unitThickness;
+            this.addParticles(center.x, center.y - h, color, isEnemyOverflow, targetDotKey, null, reward);
         }
 
         finalizeTurn(overflowOccurred) {
@@ -1651,16 +1662,20 @@
                 reward.targetHex.visualHeight += bumpAmt;
 
                 const center = this.layout.hexToPixel(reward.targetHex);
+                const unitThickness = this.layout.size * 0.12;
+                const h = Math.abs(reward.targetHex.visualHeight) * unitThickness;
                 // 派手な演出（自陣でも旗と同等に）
-                this.addParticles(center.x, center.y, reward.color, true);
+                this.addParticles(center.x, center.y - h, reward.color, true);
                 this.flashAlpha = 0.4;
             } else {
 
                 reward.targetHex.hasFlag = true;
                 reward.targetHex.flagOwner = reward.player;
                 const center = this.layout.hexToPixel(reward.targetHex);
-                this.addParticles(center.x, center.y, '#ffffff', true);
-                this.addParticles(center.x, center.y, reward.color, true);
+                const unitThickness = this.layout.size * 0.12;
+                const h = Math.abs(reward.targetHex.visualHeight) * unitThickness;
+                this.addParticles(center.x, center.y - h, '#ffffff', true);
+                this.addParticles(center.x, center.y - h, reward.color, true);
                 this.flashAlpha = 0.5;
             }
             this.pendingRewards = this.pendingRewards.filter(r => r !== reward);
@@ -1919,9 +1934,10 @@
                 const textX = targetPos.x + (align === 'left' ? marginX : -marginX);
                 const textY = targetPos.y;
 
-                const dpr = window.devicePixelRatio || 1;
-                const relTargetX = textX - (this.canvas.width / dpr) / 2;
-                const relTargetY = textY - (this.canvas.height / dpr) / 2;
+                const displayWidth = this.canvas.clientWidth;
+                const displayHeight = this.canvas.clientHeight;
+                const relTargetX = textX - displayWidth / 2;
+                const relTargetY = textY - displayHeight / 2;
 
                 const speedFactor = dt / 16.6; // フレームレート補正
                 let allArrived = true;

@@ -91,11 +91,28 @@
 
         resume() {
             if (this.ctx && this.ctx.state === 'suspended') {
-                return this.ctx.resume().catch(e => {
-                    // Suppress warning if called without gesture
+                this.ctx.resume().catch(e => {
+                    // console.warn('AudioContext resume failed:', e);
                 });
             }
-            return Promise.resolve();
+            this.unlock(); // 常にアンロックを試みる
+        }
+
+        /**
+         * モバイルブラウザ等の Autoplay 制限を解除するためのサイレントバッファ再生
+         * (Ver 5.2.5: 正規品ジェスチャ下での実行を想定)
+         */
+        unlock() {
+            if (!this.ctx) return;
+            try {
+                const buffer = this.ctx.createBuffer(1, 1, 22050);
+                const source = this.ctx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(this.ctx.destination);
+                source.start(0);
+            } catch (e) {
+                // Ignore errors during silent unlock
+            }
         }
 
         updateVolume() {
