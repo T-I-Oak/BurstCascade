@@ -235,25 +235,31 @@
                 requestAnimationFrame((t) => this.animate(t));
             }
 
-            // --- BGM Activation (Ver 5.3.0: Async-Resilience activation) ---
+            // --- BGM Activation (Ver 5.3.2: Locked Async-Resilience activation) ---
+            let isActivating = false;
             const handleFirstGesture = async (e) => {
-                // すでに起動済みの場合は何もしない
-                if (this.sound && this.sound.ctx && this.sound.ctx.state === 'running') {
-                    return;
-                }
-
-                // 特定のイベントで確実にコンテキストを開始
-                if (this.sound) {
-                    this.sound.init(); // AudioContext の作成
-                    await this.sound.resume(); // レジュームの完了を確実に待機 (Ver 5.3.0)
-
-                    // 実際に Running になったらリスナーを解除する (Ver 5.2.9)
-                    if (this.sound.ctx && this.sound.ctx.state === 'running') {
-                        ['click', 'touchend', 'touchstart', 'keydown', 'pointerup'].forEach(evt => {
-                            document.removeEventListener(evt, handleFirstGesture);
-                        });
-                        this.audioActivated = true;
+                if (isActivating) return;
+                isActivating = true;
+                try {
+                    // すでに起動済みの場合は何もしない
+                    if (this.sound && this.sound.ctx && this.sound.ctx.state === 'running') {
+                        return;
                     }
+
+                    // 特定のイベントで確実にコンテキストを開始
+                    if (this.sound) {
+                        this.sound.init(); // AudioContext の作成
+                        await this.sound.resume(); // レジュームの完了を確実に待機 (Ver 5.3.0)
+
+                        if (this.sound.ctx && this.sound.ctx.state === 'running') {
+                            ['click', 'touchend', 'keydown', 'pointerup'].forEach(evt => {
+                                document.removeEventListener(evt, handleFirstGesture);
+                            });
+                            this.audioActivated = true;
+                        }
+                    }
+                } finally {
+                    isActivating = false;
                 }
 
                 // BGMの開始 (成功時のみ)
@@ -266,7 +272,8 @@
                 }
 
             };
-            ['click', 'touchend', 'touchstart', 'keydown', 'pointerup'].forEach(evt => {
+            // Ver 5.3.2: touchstart は一部環境で gesture と認められずエラーを吐くため、lift（up/end）系に限定
+            ['click', 'touchend', 'keydown', 'pointerup'].forEach(evt => {
                 document.addEventListener(evt, handleFirstGesture);
             });
         }
