@@ -322,9 +322,12 @@
             this.map = null;
             this.hoveredHex = null;
             this.selectedHex = null; // Ver 5.2.8: リセット時に選択状態もクリア
-            this.effects = [];
-            this.dropEffects = [];
+            this.hoveredNeighbors = [];
+            this.effects = [];       // Ver 5.3.8: エフェクトをクリア
+            this.dropEffects = [];   // Ver 5.3.8: 落下演出をクリア
             this.delayedBursts = [];
+            this.lastMoveHex = null; // Ver 5.3.8: ラストムーブハイライトをクリア
+            this.coinToss.active = false; // Ver 5.3.8: コイントスを強制終了
             this.isProcessingMove = false;
             this.isAIThinking = false;
             this.turnEndRequested = false;
@@ -424,6 +427,10 @@
             this.pendingRewards = [];
             this.dropEffects = [];
             this.effects = [];
+            this.lastMoveHex = null; // Ver 5.3.8: 前回のラストムーブハイライトをクリア
+            this.coinToss.active = false; // Ver 5.3.8: コイントス状態を確実にリセット（startGame後の演出開始に備える）
+
+            this.resetTurnStats(); // ターン開始時の統計リセット
 
             this.resetTurnStats(); // ターン開始時の統計リセット
 
