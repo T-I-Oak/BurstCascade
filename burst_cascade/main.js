@@ -428,9 +428,7 @@
             this.dropEffects = [];
             this.effects = [];
             this.lastMoveHex = null; // Ver 5.3.8: 前回のラストムーブハイライトをクリア
-            this.coinToss.active = false; // Ver 5.3.8: コイントス状態を確実にリセット（startGame後の演出開始に備える）
-
-            this.resetTurnStats(); // ターン開始時の統計リセット
+            this.coinToss.active = true; // Ver 5.4.0: ここで演出を有効化
 
             this.resetTurnStats(); // ターン開始時の統計リセット
 
@@ -1160,7 +1158,7 @@
         }
 
         handleClick(e) {
-            if (this.gameOver || this.isProcessingMove || this.isAIThinking || this.coinToss.active) return;
+            if (this.gameOver || this.isProcessingMove || this.isAIThinking || this.coinToss.active || this.currentPlayer === 0) return;
 
             const rect = this.canvas.getBoundingClientRect();
             // ClientX/Y を使用するように統一 (Ver 5.2.2)
