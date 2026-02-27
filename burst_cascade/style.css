@@ -703,7 +703,7 @@ main {
     position: fixed;
     bottom: 2rem;
     right: 2rem;
-    z-index: 200;
+    z-index: 2100;
     font-size: 0.9rem;
     font-weight: 800;
     color: var(--accent-color);

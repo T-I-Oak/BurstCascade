@@ -417,6 +417,9 @@
 
             this.currentPlayer = 0; // まだ手番ではない
             this.gameOver = false;
+            this.hoveredHex = null;   // Ver 5.3.8: 前回のホバー状態をクリア
+            this.selectedHex = null;  // Ver 5.3.8: 前回の選択状態をクリア
+            this.hoveredNeighbors = []; // Ver 5.3.8: ハイライト周辺マスもクリア
             this.isProcessingMove = false;
             this.pendingRewards = [];
             this.dropEffects = [];
