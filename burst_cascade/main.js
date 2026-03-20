@@ -87,6 +87,12 @@
             this.focusEffects = [];
             this.dropEffects = [];
 
+            // --- 開発者モードの初期化 ---
+            this.isDevMode = localStorage.getItem('burst-cascade-dev-mode') === 'true';
+            if (this.achievementResetBtn) {
+                this.achievementResetBtn.style.display = this.isDevMode ? 'block' : 'none';
+            }
+
             // --- UI初期化 (DOMが存在する場合のみ実行) ---
             if (this.overlay) {
                 // リスナー
@@ -146,19 +152,22 @@
 
                 if (this.achievementsBtn) this.achievementsBtn.addEventListener('click', () => this.showAchievements());
                 if (this.achievementsBackBtn) this.achievementsBackBtn.addEventListener('click', () => this.showModeSelection());
-                if (this.achievementResetBtn) this.achievementResetBtn.addEventListener('click', () => {
-                    if (confirm('Are you sure you want to reset all achievements?')) {
-                        this.achievementManager.resetData();
-                        this.updateAchievementsUI();
-                    }
-                });
+                if (this.achievementResetBtn) {
+                    this.achievementResetBtn.addEventListener('click', () => {
+                        if (confirm('Are you sure you want to reset all achievements?')) {
+                            this.achievementManager.resetData();
+                            this.updateAchievementsUI();
+                        }
+                    });
+                }
 
                 if (this.achievementTabs) {
                     this.achievementTabs.forEach(tab => {
                         tab.addEventListener('click', () => {
                             this.achievementTabs.forEach(t => t.classList.remove('active'));
                             tab.classList.add('active');
-                            this.updateAchievementsUI(tab.dataset.map);
+                            const mapType = tab.dataset.map;
+                            this.updateAchievementsUI(mapType);
                             this.sound.playPlace();
                         });
                     });
@@ -533,14 +542,24 @@
                 mapType = activeTab ? activeTab.dataset.map : 'regular';
             }
 
+            // ShowAchievements 時に最新の状態を反映
+            this.isDevMode = localStorage.getItem('burst-cascade-dev-mode') === 'true';
+            if (this.achievementResetBtn) {
+                this.achievementResetBtn.style.display = this.isDevMode ? 'block' : 'none';
+            }
+
             const data = this.achievementManager.getRevealedList(mapType);
             this.achievementsTableBody.innerHTML = '';
 
             let totalEarned = 0;
             let totalCount = 0;
 
-            const createMedal = (earned) => {
-                return earned ? '<span class="medal-earned">🏅</span>' : '<span class="medal-locked">●</span>';
+            const createMedalHtml = (earned, bestVal) => {
+                let html = earned ? '<span class="medal-earned">🏅</span>' : '<span class="medal-locked">●</span>';
+                if (this.isDevMode && bestVal !== undefined) {
+                    html += `<div class="dev-best">Best: ${bestVal}</div>`;
+                }
+                return html;
             };
 
             data.forEach(item => {
@@ -565,26 +584,24 @@
                 // Easy
                 const tdEasy = document.createElement('td');
                 tdEasy.className = 'medal-cell';
-                tdEasy.innerHTML = createMedal(item.earned.easy);
+                tdEasy.innerHTML = createMedalHtml(item.earned.easy, item.best.easy);
                 tr.appendChild(tdEasy);
 
                 // Normal
                 const tdNormal = document.createElement('td');
                 tdNormal.className = 'medal-cell';
-                tdNormal.innerHTML = createMedal(item.earned.normal);
+                tdNormal.innerHTML = createMedalHtml(item.earned.normal, item.best.normal);
                 tr.appendChild(tdNormal);
 
                 // Hard
                 const tdHard = document.createElement('td');
                 tdHard.className = 'medal-cell';
-                tdHard.innerHTML = createMedal(item.earned.hard);
+                tdHard.innerHTML = createMedalHtml(item.earned.hard, item.best.hard);
                 tr.appendChild(tdHard);
 
                 this.achievementsTableBody.appendChild(tr);
 
                 // Calculate progress for current map type (all diffs combined)
-                // Actually user requested "Difficulty x Map", so we track all.
-                // Let's just count total checkboxes for this map.
                 if (item.earned.easy) totalEarned++;
                 if (item.earned.normal) totalEarned++;
                 if (item.earned.hard) totalEarned++;

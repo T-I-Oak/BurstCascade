@@ -432,12 +432,18 @@
             </header>
 
             <div class="controls">
-                <button id="run-all-btn" class="btn btn-primary" onclick="runAllTests()">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                    Run All Tests
-                </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <button id="run-all-btn" class="btn btn-primary" onclick="runAllTests()" style="flex: 1;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                        </svg>
+                        Run All Tests
+                    </button>
+                    <div style="margin-left: 12px; display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 0.75rem; font-weight: 600; color: var(--accent-color);">DEV MODE</span>
+                        <input type="checkbox" id="dev-mode-toggle" style="width: 18px; height: 18px; cursor: pointer;">
+                    </div>
+                </div>
                 <div style="display: flex; gap: 8px;">
                     <button class="btn" style="flex: 1;" onclick="clearLogs()">Clear</button>
                     <button class="btn" style="flex: 1;" onclick="copyLogs()">Copy All</button>
@@ -946,6 +952,20 @@
 
             summaryText.textContent = 'All Tests Completed';
             log('Sequence Finished', 'header');
+        }
+
+        // Developer Mode Toggle Support
+        const devToggle = document.getElementById('dev-mode-toggle');
+        if (devToggle) {
+            devToggle.addEventListener('change', (e) => {
+                const isDev = e.target.checked;
+                localStorage.setItem('burst-cascade-dev-mode', isDev ? 'true' : 'false');
+                log(`Developer Mode is now ${isDev ? 'ENABLED' : 'DISABLED'}.`, isDev ? 'success' : 'warn');
+            });
+
+            // Initialize from localStorage
+            const isDevSaved = localStorage.getItem('burst-cascade-dev-mode') === 'true';
+            devToggle.checked = isDevSaved;
         }
 
         initDashboard();
