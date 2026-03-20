@@ -428,7 +428,7 @@
         <div class="dashboard" id="dashboard-column">
             <header>
                 <h1>BURST CASCADE</h1>
-                <div class="subtitle">Test Suite Console</div>
+                <div class="subtitle">Test Suite Console (Ver 5.4.0)</div>
             </header>
 
             <div class="controls">
@@ -614,14 +614,14 @@
     </script>
 
     <!-- Load dependencies -->
-    <script src="../constants.js?v=5.2.4"></script>
-    <script src="../utils.js?v=5.2.4"></script>
-    <script src="../map.js?v=5.2.4"></script>
-    <script src="../achievements.js?v=5.2.4"></script>
-    <script src="../sound.js?v=5.2.4"></script>
-    <script src="../renderer.js?v=5.2.4"></script>
-    <script src="../ai.js?v=5.2.4"></script>
-    <script src="../main.js?v=5.2.4"></script>
+    <script src="../constants.js?v=5.4.0"></script>
+    <script src="../utils.js?v=5.4.0"></script>
+    <script src="../map.js?v=5.4.0"></script>
+    <script src="../achievements.js?v=5.4.0"></script>
+    <script src="../sound.js?v=5.4.0"></script>
+    <script src="../renderer.js?v=5.4.0"></script>
+    <script src="../ai.js?v=5.4.0"></script>
+    <script src="../main.js?v=5.4.0"></script>
     <script src="jest-browser-shim.js"></script>
 
     <script>
@@ -956,15 +956,16 @@
 
         // Developer Mode Toggle Support
         const devToggle = document.getElementById('dev-mode-toggle');
+        const storage = window.realLocalStorage || window.localStorage;
         if (devToggle) {
             devToggle.addEventListener('change', (e) => {
                 const isDev = e.target.checked;
-                localStorage.setItem('burst-cascade-dev-mode', isDev ? 'true' : 'false');
+                storage.setItem('burst-cascade-dev-mode', isDev ? 'true' : 'false');
                 log(`Developer Mode is now ${isDev ? 'ENABLED' : 'DISABLED'}.`, isDev ? 'success' : 'warn');
             });
 
-            // Initialize from localStorage
-            const isDevSaved = localStorage.getItem('burst-cascade-dev-mode') === 'true';
+            // Initialize from storage
+            const isDevSaved = storage.getItem('burst-cascade-dev-mode') === 'true';
             devToggle.checked = isDevSaved;
         }
 

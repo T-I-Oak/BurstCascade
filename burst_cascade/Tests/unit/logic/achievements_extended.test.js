@@ -10,8 +10,8 @@
             am = new AchievementManager();
         });
 
-        test('should track best records (min/max)', () => {
-            // "speed_run" uses metric: game.turnCount, metricType: 'min'
+        test('should track best records (min/max) with victory condition', () => {
+            // "speed_run" uses metric: game.turnCount, metricType: 'min', metricCondition: win
             const game1 = { winner: 1, turnCount: 20 };
             am.checkAchievements(game1, 'regular', 'normal');
             expect(am.data.progress.regular.normal.best.speed_run).toBe(20);
@@ -20,12 +20,59 @@
             am.checkAchievements(game2, 'regular', 'normal');
             expect(am.data.progress.regular.normal.best.speed_run).toBe(15);
 
-            const game3 = { winner: 1, turnCount: 25 };
+            const game3 = { winner: 2, turnCount: 5 }; // Loss with fewer turns
             am.checkAchievements(game3, 'regular', 'normal');
-            expect(am.data.progress.regular.normal.best.speed_run).toBe(15); // Should remain 15 (min)
+            expect(am.data.progress.regular.normal.best.speed_run).toBe(15); // Should stay 15 because it's a loss
+        });
 
-            // "win" uses metric: context.totalWins, metricType: 'max'
-            expect(am.data.progress.regular.normal.best.win).toBe(3);
+        test('should track cumulative total for suicide_victory', () => {
+            // 1st suicide victory
+            const game1 = { winner: 1, currentPlayer: 2, turnCount: 15 }; // currentPlayer 2 is the one who lost (suicided)
+            am.checkAchievements(game1, 'regular', 'normal');
+            
+            let context = am.data.progress.regular.normal;
+            expect(context.totalSuicideWins).toBe(1);
+            expect(context.best.suicide_victory).toBe(1); // Assuming 'best' for suicide_victory tracks the count
+
+            // 2nd suicide victory
+            const game2 = { winner: 1, currentPlayer: 2, turnCount: 20 };
+            am.checkAchievements(game2, 'regular', 'normal');
+            
+            context = am.data.progress.regular.normal;
+            expect(context.totalSuicideWins).toBe(2);
+            expect(context.best.suicide_victory).toBe(2);
+        });
+
+        test('should track minimum cores for Last Stand', () => {
+            // "last_stand" now tracks min cores on win
+            am.stats[1].coreCount.current = 3;
+            am.checkAchievements({ winner: 1 }, 'regular', 'normal');
+            expect(am.data.progress.regular.normal.best.last_stand).toBe(3);
+
+            am.stats[1].coreCount.current = 1;
+            am.checkAchievements({ winner: 1 }, 'regular', 'normal');
+            expect(am.data.progress.regular.normal.best.last_stand).toBe(1);
+
+            am.stats[1].coreCount.current = 2;
+            am.checkAchievements({ winner: 1 }, 'regular', 'normal');
+            expect(am.data.progress.regular.normal.best.last_stand).toBe(1); // Min should stay 1
+        });
+
+        test('should track Marathon (win) and Hard-fought (loss) separately', () => {
+            // Marathon (endurance_win) tracks max turns on win
+            am.checkAchievements({ winner: 1, turnCount: 70 }, 'regular', 'normal');
+            expect(am.data.progress.regular.normal.best.endurance_win).toBe(70);
+            expect(am.data.progress.regular.normal.best.honorable_defeat).toBeUndefined();
+
+            // Hard-fought (honorable_defeat) tracks max turns on loss
+            am.checkAchievements({ winner: 2, turnCount: 80 }, 'regular', 'normal');
+            expect(am.data.progress.regular.normal.best.honorable_defeat).toBe(80);
+            expect(am.data.progress.regular.normal.best.endurance_win).toBe(70); // Should stay 70
+
+            // Loss with 100 turns shouldn't update Marathon
+            am.checkAchievements({ winner: 2, turnCount: 100 }, 'regular', 'normal');
+            expect(am.data.progress.regular.normal.best.endurance_win).toBe(70);
+            expect(am.data.progress.regular.normal.best.honorable_defeat).toBe(100);
         });
 
         test('should track total losses and draws', () => {

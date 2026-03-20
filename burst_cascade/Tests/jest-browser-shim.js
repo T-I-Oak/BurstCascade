@@ -7,6 +7,9 @@
     // Shim global for browser environment compatibility
     window.global = window;
 
+    // 保存用に実体の localStorage を退避 (Tests/index.html 等から利用可能にする)
+    window.realLocalStorage = window.localStorage;
+
     // Stateful mock localStorage for tests
     const mockStorage = {};
     const lsMock = {

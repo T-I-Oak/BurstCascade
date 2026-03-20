@@ -1188,7 +1188,7 @@
                 if (hex.isDisabled) return;
                 if (hex.owner !== this.currentPlayer) return;
 
-                // Ver 5.3.7: PC版 (mouse) は即時確定を許可し、タッチ操作のみ 2 ステップ確認とする。
+                // Ver 5.4.0: PC版 (mouse) は即時確定を許可し、タッチ操作のみ 2 ステップ確認とする。
                 // pointerType が 'mouse' の場合は isTouchDevice フラグが立っていてもマウス操作として優先する。
                 const isTouch = (e.pointerType === 'touch' || this.isTouchDevice) && e.pointerType !== 'mouse';
 
