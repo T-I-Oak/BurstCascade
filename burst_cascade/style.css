@@ -537,6 +537,14 @@ main {
     color: var(--accent-color);
 }
 
+.copyright {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.05rem;
+}
+
 /* AI思考中：回路アニメーション */
 #ai-thinking-overlay {
     position: absolute;
