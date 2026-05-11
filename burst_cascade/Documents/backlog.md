@@ -50,4 +50,29 @@
     - 出力アセットの整理 (rollupOptions.output で `assets/` フォルダに統一)
 4. **テスト環境の整備 (Vitest)**
     - `vite.config.js` 内に `test` セクションを追加
-    - `environment: 'jsdom'` を設定
+    - `environment: 'jsdom'` を設定
+
+## 【共通バックログ】将来の共通基盤化を見据えた DataManager 標準規約
+- [ ] 将来の共通基盤化を見据えた DataManager の標準インターフェースを実装する
+    1. **コア・アクセス・メソッド (Generic Accessors)**
+        将来のライブラリ化において「共通エンジン」となる部分。
+        - `getSavedData(key: string, migrationMap: MigrationMap): object`
+            - データ不在時: `migrationMap.init()` を実行し、生成されたデータを返す。
+            - データ存在時: `data.dataVersion` とアプリのメジャーバージョンを比較し、必要に応じて `_migrate` を実行。
+            - 後処理: 返却前に `dataVersion` フィールドを除去し、利用側を「純粋なデータ」のみにする。
+        - `setSavedData(key: string, data: object): void`
+            - 保存直前に、現在のメジャーバージョンを `dataVersion` として付加して永続化する。
+    2. **MigrationMap 型の厳密な定義 (Contract)**
+        以下の構造をプロジェクト間で共通化する。
+        ```typescript
+        {
+          init: () => object,                // (必須) 初期データ生成ロジック
+          [version: number]: (data: object) => object // (任意) 各メジャーバージョンでの変換ロジック
+        }
+        ```
+    3. **内部マイグレーション・エンジン (_migrate)**
+        保存されている `dataVersion` より大きく、現在のアプリのメジャーバージョン以下のキーに対応する変換関数を順次適用する共通アルゴリズム。
+    4. **カプセル化と隠蔽 (Encapsulation)**
+        `init()` や 各バージョン変換関数の戻り値には `dataVersion` を含める必要はない（`setSavedData` が自動で付与するため）。
+        利用側（外部）がこのマイグレーションの仕組み（`dataVersion` の存在など）を一切意識せずに済むように実装する。
+
