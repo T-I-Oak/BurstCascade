@@ -1,0 +1,13 @@
+<svg viewBox="0 0 180 20" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@800');
+            text { font-family: 'Inter', sans-serif; font-weight: 800; }
+        </style>
+        <linearGradient id="header-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#38bdf8" />
+            <stop offset="100%" stop-color="#818cf8" />
+        </linearGradient>
+    </defs>
+    <text x="0" y="16" font-size="20" fill="url(#header-grad)" letter-spacing="0.5">BURST CASCADE</text>
+</svg>
