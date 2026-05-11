@@ -5,3 +5,4 @@ tmp_*
 dev_*
 local_*
 *.log
+.vite

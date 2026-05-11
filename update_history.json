@@ -1,15 +1,1 @@
-[
-  {
-    "version": "0.1.0",
-    "date": "2026-05-11",
-    "title": "プロジェクト基盤の刷新",
-    "description": "開発効率と保守性向上のため、ビルド環境を Vite に移行し、ESM (ES Modules) 化を実施しました。",
-    "changes": [
-      "Vite による高速な開発サーバーとビルドプロセスの導入",
-      "グローバル変数依存から ES Modules (import/export) への移行",
-      "テストフレームワークを Jest から Vitest へ刷新",
-      "package.json によるバージョン管理の一本化",
-      "update_history.json による更新履歴の構造化"
-    ]
-  }
-]
+[]

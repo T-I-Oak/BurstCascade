@@ -5,6 +5,7 @@ import { Constants } from './constants.js';
 import { Utils } from './utils.js';
 import { SoundManager } from './sound.js';
 import { Renderer } from './renderer.js';
+import { DataManager } from './dataManager.js';
 
 export class Game {
     constructor() {
@@ -508,39 +509,44 @@ export class Game {
             aiLevel: aiLevelEl ? aiLevelEl.dataset.value : 'normal',
             volume: this.volumeSlider ? this.volumeSlider.value : 50
         };
-        localStorage.setItem('burst-cascade-settings', JSON.stringify(settings));
+        DataManager.setSavedData('burst-cascade-settings', settings);
     }
 
     loadSettings() {
-        const saved = localStorage.getItem('burst-cascade-settings');
-        if (saved) {
-            try {
-                const settings = JSON.parse(saved);
-                if (settings.mode) this.applySetting('player-select', settings.mode);
-                if (settings.size) this.applySetting('size-select', settings.size);
-                if (settings.aiLevel) this.applySetting('ai-level-select', settings.aiLevel);
-                if (settings.volume !== undefined) {
-                    if (this.volumeSlider) {
-                        this.volumeSlider.value = settings.volume;
-                        if (this.volumeValue) this.volumeValue.innerText = `${settings.volume}%`;
-                    }
-                    if (this.sound) {
-                        this.sound.masterVolume = settings.volume / 100;
-                        this.sound.updateVolume();
-                    }
-                }
+        const migrationMap = {
+            init: () => ({
+                mode: 'pvc',
+                size: 'regular',
+                aiLevel: 'normal',
+                volume: 50
+            })
+        };
+        const settings = DataManager.getSavedData('burst-cascade-settings', migrationMap);
+        
+        try {
+            this.applySetting('player-select', settings.mode);
+            this.applySetting('size-select', settings.size);
+            this.applySetting('ai-level-select', settings.aiLevel);
 
-                // AIレベルグループの表示制御
-                if (this.aiLevelGroup) {
-                    if (settings.mode === 'pvc') {
-                        this.aiLevelGroup.classList.remove('hidden');
-                    } else {
-                        this.aiLevelGroup.classList.add('hidden');
-                    }
-                }
-            } catch (e) {
-                console.error("Failed to load settings:", e);
+            if (this.volumeSlider) {
+                this.volumeSlider.value = settings.volume;
+                if (this.volumeValue) this.volumeValue.innerText = `${settings.volume}%`;
             }
+            if (this.sound) {
+                this.sound.masterVolume = settings.volume / 100;
+                this.sound.updateVolume();
+            }
+
+            // AIレベルグループの表示制御
+            if (this.aiLevelGroup) {
+                if (settings.mode === 'pvc') {
+                    this.aiLevelGroup.classList.remove('hidden');
+                } else {
+                    this.aiLevelGroup.classList.add('hidden');
+                }
+            }
+        } catch (e) {
+            console.error("Failed to apply settings:", e);
         }
     }
 

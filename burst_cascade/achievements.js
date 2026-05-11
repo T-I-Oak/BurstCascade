@@ -116,6 +116,8 @@ export class PlayerStats {
     }
 }
 
+import { DataManager } from './dataManager.js';
+
 export class AchievementManager {
     constructor() {
         this.STORAGE_KEY = 'burst_cascade_achievements';
@@ -417,7 +419,6 @@ export class AchievementManager {
 
     // データ読み込み
     loadData() {
-        const json = localStorage.getItem(this.STORAGE_KEY);
         const defaults = {
             progress: {
                 // [mapType]: { [diff]: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 } }
@@ -426,32 +427,19 @@ export class AchievementManager {
             }
         };
 
-        if (json) {
-            try {
-                const data = JSON.parse(json);
-                const mergedProgress = JSON.parse(JSON.stringify(defaults.progress));
-                if (data.progress) {
-                    for (const map in data.progress) {
-                        for (const diff in data.progress[map]) {
-                            if (mergedProgress[map] && mergedProgress[map][diff]) {
-                                const oldData = data.progress[map][diff];
-                                // 旧データからの移行を考慮
-                                mergedProgress[map][diff] = { ...mergedProgress[map][diff], ...oldData };
-                                if (!mergedProgress[map][diff].best) mergedProgress[map][diff].best = {};
-                                if (mergedProgress[map][diff].totalLosses === undefined) mergedProgress[map][diff].totalLosses = 0;
-                                if (mergedProgress[map][diff].totalDraws === undefined) mergedProgress[map][diff].totalDraws = 0;
-                                if (mergedProgress[map][diff].totalSuicideWins === undefined) mergedProgress[map][diff].totalSuicideWins = 0;
-                            }
-                        }
-                    }
-                }
-                return { progress: mergedProgress };
-            } catch (e) {
-                console.error('Achievement load error:', e);
-                return defaults;
-            }
+        const migrationMap = {
+            init: () => JSON.parse(JSON.stringify(defaults))
+        };
+
+        try {
+            const data = DataManager.getSavedData(this.STORAGE_KEY, migrationMap);
+            // DataManager から返却された構造をそのまま信頼する。
+            // 構造変更が必要な場合は migrationMap で定義すべき。
+            return data;
+        } catch (e) {
+            console.error('Achievement load error:', e);
+            return defaults;
         }
-        return defaults;
     }
 
     // ゲーム終了時のチェック
@@ -597,7 +585,7 @@ export class AchievementManager {
             ...this.data,
             lifeStats: {} // For now, we might skip detailed StatItem.life persistence if not critical for current achievements
         };
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(saveData));
+        DataManager.setSavedData(this.STORAGE_KEY, saveData);
     }
 
     // リセット

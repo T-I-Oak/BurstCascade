@@ -18,6 +18,7 @@ BurstCascade/
 │   ├── renderer.js         # 描画エンジン
 │   ├── sound.js            # サウンド管理
 │   ├── constants.js        # 定数定義
+│   ├── dataManager.js      # ストレージ・マイグレーション管理
 │   ├── utils.js            # ユーティリティ関数
 │   └── tests/              # テストディレクトリ
 │       ├── vitest.setup.js # Vitest 初期設定
@@ -29,6 +30,7 @@ BurstCascade/
 - **ゲームインスタンス**: `app.js` で `Game` クラスがインスタンス化され、`window.addEventListener('load', ...)` 内で初期化されます。
 - **描画**: Canvas 2D API を使用。`Renderer` クラスが描画を、`main.js` がゲームループを管理します。
 - **サウンド**: Web Audio API を使用。`SoundManager` クラスが管理します。
+- **データ管理**: `DataManager` クラスが LocalStorage の読み書きと、アプリのメジャーバージョン（`__APP_VERSION__`）に応じた自動マイグレーション処理を一元管理します。
 
 ## ビルド・開発環境
 - **Vite**: 開発サーバーおよびプロダクションビルドに使用。
