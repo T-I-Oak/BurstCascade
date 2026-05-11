@@ -1,4 +1,4 @@
-class StatItem {
+export class StatItem {
     constructor() {
         this.action = 0;   // Count in current action
         this.turn = 0;     // Sum in current turn
@@ -42,7 +42,7 @@ class StatItem {
 }
 
 // 最小値・最大値を追跡するクラス (Ver 5.1.0)
-class RangeStatItem {
+export class RangeStatItem {
     constructor() {
         this.current = 0;
         this.min = 0;
@@ -63,7 +63,7 @@ class RangeStatItem {
 }
 
 // プレイヤーごとの統計セット
-class PlayerStats {
+export class PlayerStats {
     constructor() {
         this.actions = new StatItem();        // 注入回数
         this.neutralized = {
@@ -116,7 +116,7 @@ class PlayerStats {
     }
 }
 
-class AchievementManager {
+export class AchievementManager {
     constructor() {
         this.STORAGE_KEY = 'burst_cascade_achievements';
 
@@ -612,7 +612,7 @@ class AchievementManager {
                 mini: {
                     easy: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 },
                     normal: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 },
-                    hard: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 }
+                    hard: { achievements: {}, best: {}, winStreak: 0, x: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 }
                 }
             }
         };
@@ -660,9 +660,3 @@ class AchievementManager {
         }
     }
 }
-
-window.BurstCascade = window.BurstCascade || {};
-window.BurstCascade.AchievementManager = AchievementManager;
-window.BurstCascade.StatItem = StatItem;
-window.BurstCascade.RangeStatItem = RangeStatItem;
-window.BurstCascade.PlayerStats = PlayerStats;
