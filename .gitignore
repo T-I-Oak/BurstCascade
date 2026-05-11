@@ -1,2 +1,5 @@
 node_modules/
-__*
+local_*
+dev_*
+tmp_*
+_agent/

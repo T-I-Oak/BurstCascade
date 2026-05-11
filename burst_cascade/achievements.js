@@ -211,7 +211,7 @@ class AchievementManager {
                 title: 'コア収集家',
                 description: '自分のコアを5個以上所持して勝利する',
                 condition: (game) => this.stats[1].coreCount.current >= 5,
-                metric: (game) => this.stats[1].coreCount.max,
+                metric: (game) => this.stats[1].coreCount.current,
                 metricType: 'max',
                 metricCondition: (game) => game.winner === 1
             },
@@ -245,8 +245,8 @@ class AchievementManager {
             {
                 id: 'speed_run',
                 title: 'スピード決着',
-                description: '12ターン以内に勝利する',
-                condition: (game) => game.turnCount <= 12,
+                description: '30ターン以内に勝利する',
+                condition: (game) => game.turnCount <= 30,
                 metric: (game) => game.turnCount,
                 metricType: 'min',
                 metricCondition: (game) => game.winner === 1

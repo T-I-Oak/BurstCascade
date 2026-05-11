@@ -613,6 +613,7 @@
         }
 
         getVictoryType(winner) {
+            if (winner === 0) return 'DRAW';
             // 自滅判定: 勝者が手番プレイヤーでない場合（自分が操作して相手が勝った＝自滅）
             if (winner !== this.currentPlayer) {
                 return 'SUICIDE';
@@ -811,7 +812,10 @@
             const cores1 = mainHexes.filter(h => h.owner === 1 && (h.isCore || h.hasFlag)).length;
             const cores2 = mainHexes.filter(h => h.owner === 2 && (h.isCore || h.hasFlag)).length;
 
-            if (cores1 === 0) {
+            if (cores1 === 0 && cores2 === 0) {
+                this.showGameOver(0);
+                return;
+            } else if (cores1 === 0) {
                 // this.sound.stopBgm(); // DELETE Ver 4.7.16: Seamless transition
                 this.showGameOver(2);
                 return;
@@ -1413,21 +1417,11 @@
             // 非同期にバーストを発生させる
 
 
-            // High Voltage Check & Burst Tracking
+            // High Voltage Check
             overflowedHexes.forEach(h => {
                 const energy = Math.abs(h.height);
                 const stats = this.achievementManager.stats[this.currentPlayer];
                 stats.maxCellEnergy.update(energy);
-
-                // Tracking bursts in stats
-                stats.burstGrid.both.add(1);
-
-                // Atomic Stats: Neutralize & BurstCore (Core only)
-                if (h.hasFlag) {
-                    stats.neutralized[h.flagOwner].add(1);
-                    stats.neutralized.both.add(1);
-                    stats.burstCore.both.add(1);
-                }
             });
 
             overflowedHexes.forEach((hex, i) => {
@@ -1479,6 +1473,8 @@
             }
 
             // 内部データの更新
+            const hadFlag = hex.hasFlag;
+            const flagOwner = hex.flagOwner;
             hex.height = 0;
             hex.updateOwner();
             // フラッグ消失チェック (Ver 4.4.14)
@@ -1495,9 +1491,12 @@
 
             // Atomic Stats: Burst Count (v5 Px Array)
             const stats = this.achievementManager.stats[this.currentPlayer];
-            if (hex.hasFlag) {
+            if (hadFlag) {
                 stats.burstCore[originalOwner].add(1);
                 stats.burstCore.both.add(1);
+                // 爆発による無力化も記録
+                stats.neutralized[flagOwner].add(1);
+                stats.neutralized.both.add(1);
             } else {
                 stats.burstGrid[originalOwner].add(1);
                 stats.burstGrid.both.add(1);
