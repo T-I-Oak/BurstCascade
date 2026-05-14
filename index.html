@@ -12,8 +12,8 @@
 <body>
     <div id="app">
         <header>
-            <h1 style="margin:0; padding:0; display:flex; align-items:center;">
-                <img src="burst_cascade/logo-header.svg" alt="BURST CASCADE" style="height: 1.25rem; width: auto; flex-shrink: 0; display: block;">
+            <h1 class="header-title">
+                <img src="burst_cascade/logo.svg" alt="BURST CASCADE" class="logo-header">
             </h1>
             <span id="help-btn">HOW TO PLAY</span>
             <div id="status-container">
@@ -30,10 +30,10 @@
             <div id="overlay">
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
-                    <h1 style="margin:0 auto; display:flex; justify-content:center; padding:0;">
-                        <img src="burst_cascade/logo-main.svg" alt="BURST CASCADE" style="height: 2.8rem; width: auto; max-width: 100%; display: block; filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));">
+                    <h1 class="main-title">
+                        <img src="burst_cascade/logo.svg" alt="BURST CASCADE" class="logo-main">
                     </h1>
-                    <div id="version-display" class="version-badge"></div>
+                    <div id="version-display" class="version-badge">Ver ---</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
                     <div class="menu-scroll-container">
                         <div class="menu-options">
@@ -74,8 +74,10 @@
                             <button id="achievements-btn" class="menu-btn secondary">ACHIEVEMENTS</button>
                         </div>
                         <div class="menu-footer">
-                            <span id="start-help-btn" class="footer-link">HOW TO PLAY</span>
-                            <div class="copyright">© T.I.OAK 2026</div>
+                            <button id="start-help-btn" class="footer-btn">HOW TO PLAY</button>
+                            <a href="https://t-i-oak.github.io/GameWorksOAK/" target="_blank" rel="noopener noreferrer" class="copyright-link">
+                                <div class="copyright">© T.I.OAK 2026</div>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -223,8 +225,8 @@
                         </table>
                     </div>
 
-                    <div style="margin-top: 15px; display: flex; justify-content: space-between;">
-                        <button id="achievement-reset-btn" class="debug-btn" style="opacity: 0.5;">DEBUG RESET</button>
+                    <div class="modal-actions">
+                        <button id="achievement-reset-btn" class="debug-btn">DEBUG RESET</button>
                         <button id="achievements-back-btn" class="close-btn">RETURN TO TITLE</button>
                     </div>
                 </div>
