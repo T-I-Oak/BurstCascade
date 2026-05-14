@@ -17,5 +17,11 @@ export const Constants = {
     UI: {
         GLASS_BG: 'rgba(30, 41, 59, 0.7)',
         ACCENT: '#38bdf8'
+    },
+    COPYRIGHT: {
+        HOLDER: "T.I.OAK",
+        YEAR: "2026",
+        PORTAL: "GameWorks OAK",
+        PORTAL_URL: "https://t-i-oak.github.io/GameWorksOAK/"
     }
 };

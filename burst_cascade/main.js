@@ -6,6 +6,7 @@ import { Utils } from './utils.js';
 import { SoundManager } from './sound.js';
 import { Renderer } from './renderer.js';
 import { DataManager } from './dataManager.js';
+import { shareResult } from './share.js';
 
 export class Game {
     constructor() {
@@ -161,6 +162,14 @@ export class Game {
 
             if (this.achievementsBtn) this.achievementsBtn.addEventListener('click', () => this.showAchievements());
             if (this.achievementsBackBtn) this.achievementsBackBtn.addEventListener('click', () => this.showModeSelection());
+
+            const shareBtn = getEl('share-btn');
+            if (shareBtn) {
+                shareBtn.addEventListener('click', () => {
+                    shareResult(this);
+                });
+            }
+
             if (this.achievementResetBtn) {
                 this.achievementResetBtn.addEventListener('click', () => {
                     if (confirm('Are you sure you want to reset all achievements?')) {
@@ -180,6 +189,17 @@ export class Game {
                         this.sound.playPlace();
                     });
                 });
+            }
+
+            // --- コピーライトの動的生成 (Ver 6.6.10) ---
+            const copyrightContainer = document.getElementById('copyright-container');
+            if (copyrightContainer) {
+                const { HOLDER, YEAR, PORTAL, PORTAL_URL } = Constants.COPYRIGHT;
+                copyrightContainer.innerHTML = `
+                    <span class="copyright-text">© ${HOLDER} ${YEAR}</span>
+                    <span class="copyright-divider"> | </span>
+                    <a href="${PORTAL_URL}" target="_blank" rel="noopener noreferrer" class="copyright-link">${PORTAL}</a>
+                `;
             }
         }
 
@@ -718,31 +738,43 @@ export class Game {
 
         const victoryType = this.getVictoryType(winner);
         const message = this.getVictoryMessage(victoryType, winner);
+        this.lastVictoryMessage = message; // シェア用に保存 (Ver 6.6.6)
 
         winnerText.textContent = message.title;
         if (victoryMsg) victoryMsg.innerHTML = message.subtitle;
 
-        // Set background based on winner
+        // 勝利タイトルのスタイルをシェア画像と統一 (Ver 6.6.7)
         if (winner === 0) {
-            winnerText.style.background = 'linear-gradient(135deg, #cbd5e1, #94a3b8)';
+            winnerText.style.background = 'linear-gradient(180deg, #fff, #94a3b8)';
+        } else if (winner === 1) {
+            winnerText.style.background = 'linear-gradient(180deg, #fff, #4ade80)';
         } else {
-            winnerText.style.background = winner === 1 ?
-                'linear-gradient(135deg, #4ade80, #16a34a)' :
-                'linear-gradient(135deg, #f87171, #dc2626)';
+            winnerText.style.background = 'linear-gradient(180deg, #fff, #f87171)';
         }
         winnerText.style.webkitBackgroundClip = 'text';
         winnerText.style.webkitTextFillColor = 'transparent';
+        winnerText.style.backgroundClip = 'text';
+        winnerText.style.textFillColor = 'transparent';
+        winnerText.style.fontWeight = '900';
+        winnerText.style.textShadow = '0 0 20px rgba(0,0,0,0.5)';
 
         // --- 設定ラベルの反映 (Ver 6.6.1: 表記の完全統一) ---
         const mapSizeLabel = document.getElementById('res-map-size');
         const aiLevelLabel = document.getElementById('res-ai-level');
-        if (mapSizeLabel) mapSizeLabel.innerText = (this.map.mapType || 'REGULAR').toUpperCase();
+        if (mapSizeLabel) {
+            const text = (this.map.mapType || 'REGULAR').toUpperCase();
+            mapSizeLabel.innerText = text;
+            this.lastMapSize = text; // シェア用に保存
+        }
         if (aiLevelLabel) {
             if (this.gameMode === 'pvc') {
-                aiLevelLabel.innerText = (this.ai.difficulty || 'NORMAL').toUpperCase();
+                const text = (this.ai.difficulty || 'NORMAL').toUpperCase();
+                aiLevelLabel.innerText = text;
+                this.lastAILevel = text; // シェア用に保存
                 aiLevelLabel.classList.remove('hidden');
             } else {
                 aiLevelLabel.classList.add('hidden');
+                this.lastAILevel = 'LOCAL PvP';
             }
         }
 
@@ -803,6 +835,7 @@ export class Game {
         const achContainer = document.getElementById('result-achievements');
         const achList = document.getElementById('achievements-list');
         if (achList) achList.innerHTML = '';
+        this.lastAchievements = []; // シェア用に初期化 (Ver 6.6.6)
         
         if (this.gameMode === 'pvc') {
             const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value;
@@ -810,6 +843,7 @@ export class Game {
 
             const newUnlocks = this.achievementManager.checkAchievements(this, mapType, aiLevel);
             const sessionAchs = this.achievementManager.getSessionAchievements(this, mapType, aiLevel, newUnlocks);
+            this.lastAchievements = sessionAchs; // シェア用に保存
 
             if (sessionAchs.length > 0) {
                 achContainer.classList.remove('hidden');
