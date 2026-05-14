@@ -1319,9 +1319,9 @@ main {
     to { box-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
 }
 
-@media (min-width: 900px) {
+@media (min-width: 1000px) {
     #game-over-content {
-        max-width: 1000px;
+        max-width: 1100px;
     }
     #result-body {
         flex-direction: row;
@@ -1330,7 +1330,9 @@ main {
         gap: 2rem;
     }
     #final-board-container {
-        flex: 0 0 400px;
+        flex: 1 1 300px;
+        max-width: 400px;
+        min-width: 0;
     }
     #result-achievements {
         flex: 1;

@@ -597,7 +597,9 @@ export class Renderer {
 
     renderToCanvas(targetCanvas, map, layout) {
         const ctx = targetCanvas.getContext('2d');
-        ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+        const dpr = window.devicePixelRatio || 1;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, targetCanvas.width / dpr, targetCanvas.height / dpr);
 
         const sortedHexes = [...map.hexes]
             .filter(hex => hex.zone === 'main') // メインマップのみを描画 (Ver 6.0.1)

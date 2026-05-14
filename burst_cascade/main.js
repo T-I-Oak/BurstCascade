@@ -784,8 +784,9 @@ export class Game {
             requestAnimationFrame(() => {
                 const container = document.getElementById('final-board-container');
                 const size = container.clientWidth || 400;
-                resultCanvas.width = size;
-                resultCanvas.height = size;
+                const dpr = window.devicePixelRatio || 1;
+                resultCanvas.width = size * dpr;
+                resultCanvas.height = size * dpr;
 
                 import('./map.js').then(({ Layout }) => {
                     const canvasSize = size;
@@ -846,7 +847,7 @@ export class Game {
             this.lastAchievements = sessionAchs; // シェア用に保存
 
             if (sessionAchs.length > 0) {
-                achContainer.classList.remove('hidden');
+                if (achContainer) achContainer.classList.remove('hidden');
                 sessionAchs.forEach(ach => {
                     const item = document.createElement('div');
                     item.className = 'achievement-item' + (ach.isNew ? ' new-unlock' : '');
@@ -858,10 +859,10 @@ export class Game {
                     achList.appendChild(item);
                 });
             } else {
-                achContainer.classList.add('hidden');
+                if (achContainer) achContainer.classList.add('hidden');
             }
         } else {
-            achContainer.classList.add('hidden');
+            if (achContainer) achContainer.classList.add('hidden');
         }
 
         // BGM 制御
