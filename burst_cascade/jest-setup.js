@@ -12,7 +12,10 @@ document.body.innerHTML = `
     <div id="start-help-btn"></div>
     <div id="help-content"></div>
     <div id="mode-selection-content"></div>
-    <div id="game-over-content"></div>
+    <div id="game-over-content">
+        <h2 id="winner-text"></h2>
+        <p></p>
+    </div>
     <div id="ai-thinking-overlay"></div>
     <div id="player-select"></div>
     <div id="size-select"></div>

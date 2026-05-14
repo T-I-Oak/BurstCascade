@@ -1,4 +1,4 @@
-/* BURST CASCADE - Ver 5.4.0 */
+/* BURST CASCADE - Ver ESM/Vite */
 * {
     box-sizing: border-box;
 }
@@ -60,11 +60,35 @@ h1 {
     font-size: 1.25rem;
     font-weight: 800;
     letter-spacing: 0.05rem;
-    background: linear-gradient(135deg, #38bdf8, #818cf8);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+}
+
+.header-title {
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+}
+
+.logo-header {
+    height: 1.25rem;
+    width: auto;
     flex-shrink: 0;
+    display: block;
+}
+
+.main-title {
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    padding: 0;
+}
+
+.logo-main {
+    height: 2.8rem;
+    width: auto;
+    max-width: 100%;
+    display: block;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
 }
 
 #status-container {
@@ -229,7 +253,8 @@ main {
 }
 
 /* UI Overlays */
-#help-btn {
+#help-btn,
+.footer-btn {
     font-size: 0.75rem;
     font-weight: 800;
     color: var(--accent-color);
@@ -238,14 +263,16 @@ main {
     cursor: pointer;
     vertical-align: middle;
     opacity: 0.8;
-    transition: opacity 0.2s, transform 0.2s;
+    transition: all 0.2s;
     background: rgba(255, 255, 255, 0.05);
     padding: 3px 10px;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+    font-family: inherit;
 }
 
-#help-btn:hover {
+#help-btn:hover,
+.footer-btn:hover {
     opacity: 1;
     background: rgba(255, 255, 255, 0.1);
     transform: translateY(-1px);
@@ -477,6 +504,29 @@ main {
     margin: 0 auto;
 }
 
+.modal-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debug-btn {
+    opacity: 0.5;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+.debug-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .menu-btn {
     position: relative;
     background: rgba(255, 255, 255, 0.03);
@@ -521,7 +571,11 @@ main {
 }
 
 .menu-footer {
-    margin-top: 3rem;
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
 
 .footer-link {
@@ -543,6 +597,24 @@ main {
     margin-top: 0.8rem;
     font-weight: 500;
     letter-spacing: 0.05rem;
+}
+
+.copyright-link {
+    text-decoration: none;
+    display: inline-block;
+}
+
+.copyright {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    letter-spacing: 0.05rem;
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+
+.copyright:hover {
+    color: var(--accent-color);
 }
 
 /* AI思考中：回路アニメーション */

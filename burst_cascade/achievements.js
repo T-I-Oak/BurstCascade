@@ -1,4 +1,4 @@
-class StatItem {
+export class StatItem {
     constructor() {
         this.action = 0;   // Count in current action
         this.turn = 0;     // Sum in current turn
@@ -42,7 +42,7 @@ class StatItem {
 }
 
 // 最小値・最大値を追跡するクラス (Ver 5.1.0)
-class RangeStatItem {
+export class RangeStatItem {
     constructor() {
         this.current = 0;
         this.min = 0;
@@ -63,7 +63,7 @@ class RangeStatItem {
 }
 
 // プレイヤーごとの統計セット
-class PlayerStats {
+export class PlayerStats {
     constructor() {
         this.actions = new StatItem();        // 注入回数
         this.neutralized = {
@@ -116,7 +116,9 @@ class PlayerStats {
     }
 }
 
-class AchievementManager {
+import { DataManager } from './dataManager.js';
+
+export class AchievementManager {
     constructor() {
         this.STORAGE_KEY = 'burst_cascade_achievements';
 
@@ -211,7 +213,7 @@ class AchievementManager {
                 title: 'コア収集家',
                 description: '自分のコアを5個以上所持して勝利する',
                 condition: (game) => this.stats[1].coreCount.current >= 5,
-                metric: (game) => this.stats[1].coreCount.max,
+                metric: (game) => this.stats[1].coreCount.current,
                 metricType: 'max',
                 metricCondition: (game) => game.winner === 1
             },
@@ -245,8 +247,8 @@ class AchievementManager {
             {
                 id: 'speed_run',
                 title: 'スピード決着',
-                description: '12ターン以内に勝利する',
-                condition: (game) => game.turnCount <= 12,
+                description: '30ターン以内に勝利する',
+                condition: (game) => game.turnCount <= 30,
                 metric: (game) => game.turnCount,
                 metricType: 'min',
                 metricCondition: (game) => game.winner === 1
@@ -417,7 +419,6 @@ class AchievementManager {
 
     // データ読み込み
     loadData() {
-        const json = localStorage.getItem(this.STORAGE_KEY);
         const defaults = {
             progress: {
                 // [mapType]: { [diff]: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 } }
@@ -426,32 +427,19 @@ class AchievementManager {
             }
         };
 
-        if (json) {
-            try {
-                const data = JSON.parse(json);
-                const mergedProgress = JSON.parse(JSON.stringify(defaults.progress));
-                if (data.progress) {
-                    for (const map in data.progress) {
-                        for (const diff in data.progress[map]) {
-                            if (mergedProgress[map] && mergedProgress[map][diff]) {
-                                const oldData = data.progress[map][diff];
-                                // 旧データからの移行を考慮
-                                mergedProgress[map][diff] = { ...mergedProgress[map][diff], ...oldData };
-                                if (!mergedProgress[map][diff].best) mergedProgress[map][diff].best = {};
-                                if (mergedProgress[map][diff].totalLosses === undefined) mergedProgress[map][diff].totalLosses = 0;
-                                if (mergedProgress[map][diff].totalDraws === undefined) mergedProgress[map][diff].totalDraws = 0;
-                                if (mergedProgress[map][diff].totalSuicideWins === undefined) mergedProgress[map][diff].totalSuicideWins = 0;
-                            }
-                        }
-                    }
-                }
-                return { progress: mergedProgress };
-            } catch (e) {
-                console.error('Achievement load error:', e);
-                return defaults;
-            }
+        const migrationMap = {
+            init: () => JSON.parse(JSON.stringify(defaults))
+        };
+
+        try {
+            const data = DataManager.getSavedData(this.STORAGE_KEY, migrationMap);
+            // DataManager から返却された構造をそのまま信頼する。
+            // 構造変更が必要な場合は migrationMap で定義すべき。
+            return data;
+        } catch (e) {
+            console.error('Achievement load error:', e);
+            return defaults;
         }
-        return defaults;
     }
 
     // ゲーム終了時のチェック
@@ -597,7 +585,7 @@ class AchievementManager {
             ...this.data,
             lifeStats: {} // For now, we might skip detailed StatItem.life persistence if not critical for current achievements
         };
-        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(saveData));
+        DataManager.setSavedData(this.STORAGE_KEY, saveData);
     }
 
     // リセット
@@ -612,7 +600,7 @@ class AchievementManager {
                 mini: {
                     easy: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 },
                     normal: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 },
-                    hard: { achievements: {}, best: {}, winStreak: 0, lossStreak: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 }
+                    hard: { achievements: {}, best: {}, winStreak: 0, x: 0, totalWins: 0, totalLosses: 0, totalDraws: 0 }
                 }
             }
         };
@@ -660,9 +648,3 @@ class AchievementManager {
         }
     }
 }
-
-window.BurstCascade = window.BurstCascade || {};
-window.BurstCascade.AchievementManager = AchievementManager;
-window.BurstCascade.StatItem = StatItem;
-window.BurstCascade.RangeStatItem = RangeStatItem;
-window.BurstCascade.PlayerStats = PlayerStats;

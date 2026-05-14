@@ -428,7 +428,7 @@
         <div class="dashboard" id="dashboard-column">
             <header>
                 <h1>BURST CASCADE</h1>
-                <div class="subtitle">Test Suite Console (Ver 5.4.0)</div>
+                <div class="subtitle">Test Suite Console <span id="suite-version"></span></div>
             </header>
 
             <div class="controls">
@@ -614,14 +614,14 @@
     </script>
 
     <!-- Load dependencies -->
-    <script src="../constants.js?v=5.4.0"></script>
-    <script src="../utils.js?v=5.4.0"></script>
-    <script src="../map.js?v=5.4.0"></script>
-    <script src="../achievements.js?v=5.4.0"></script>
-    <script src="../sound.js?v=5.4.0"></script>
-    <script src="../renderer.js?v=5.4.0"></script>
-    <script src="../ai.js?v=5.4.0"></script>
-    <script src="../main.js?v=5.4.0"></script>
+    <script src="../constants.js"></script>
+    <script src="../utils.js"></script>
+    <script src="../map.js"></script>
+    <script src="../achievements.js"></script>
+    <script src="../sound.js"></script>
+    <script src="../renderer.js"></script>
+    <script src="../ai.js"></script>
+    <script src="../main.js"></script>
     <script src="jest-browser-shim.js"></script>
 
     <script>
@@ -634,8 +634,11 @@
             { id: 'jest-starter-decision', file: 'unit/core/game_starter_decision.test.js', title: 'Core: Game Starter Decision' },
             // Logic
             { id: 'jest-achievements', file: 'unit/logic/achievements.test.js', title: 'Logic: Achievement Manager' },
+            { id: 'jest-achievements-ext', file: 'unit/logic/achievements_extended.test.js', title: 'Logic: Achievements Extended' },
             { id: 'jest-stats', file: 'unit/logic/stats.test.js', title: 'Logic: Stat Items' },
             { id: 'jest-injection', file: 'unit/logic/injection.test.js', title: 'Logic: Injection Logic' },
+            { id: 'jest-verification', file: 'unit/logic/verification.test.js', title: 'Logic: Bug Fix Verification' },
+            { id: 'jest-datamanager', file: 'unit/logic/dataManager.test.js', title: 'Logic: Data Manager' },
             // Modules
             { id: 'jest-renderer', file: 'unit/modules/renderer.test.js', title: 'Module: Renderer' },
             { id: 'jest-sound', file: 'unit/modules/sound.test.js', title: 'Module: SoundManager' },
@@ -654,6 +657,12 @@
             { id: 'ai_diff', file: 'browser/test_ai_difficulty.js', title: 'AI Difficulty', desc: 'AI探索深度と評価係数の適用確認。' },
             { id: 'minimap', file: 'browser/test_minimap.js', title: 'Minimap Logic', desc: 'MINIマップ特有の領域制限と処理。' }
         ];
+
+        // Set version display
+        if (typeof __APP_VERSION__ !== 'undefined') {
+            const suiteVer = document.getElementById('suite-version');
+            if (suiteVer) suiteVer.textContent = `(Ver ${__APP_VERSION__})`;
+        }
 
         const consoleOutput = document.getElementById('console-output');
         const summaryText = document.getElementById('test-summary');
