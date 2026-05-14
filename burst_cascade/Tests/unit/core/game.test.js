@@ -25,8 +25,8 @@ describe('Refactoring Smoke Tests', () => {
         });
 
         test('SoundManager should have correct initial masterVolume', () => {
-            // Ver 4.8.0 change: masterVolume default is 0.4
-            expect(game.sound.masterVolume).toBe(0.4);
+            // masterVolume default is 0.5
+            expect(game.sound.masterVolume).toBe(0.5);
         });
     });
 

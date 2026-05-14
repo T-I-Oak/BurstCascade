@@ -9,8 +9,8 @@ describe('SoundManager Module', () => {
     });
 
     test('SoundManager should initialize with default volume', () => {
-        // Ver 4.8.0 default is 0.4
-        expect(sound.masterVolume).toBe(0.4);
+        // Default volume is 0.5
+        expect(sound.masterVolume).toBe(0.5);
         expect(sound.isMuted).toBe(false);
     });
 

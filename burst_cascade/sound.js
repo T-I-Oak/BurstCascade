@@ -11,7 +11,7 @@ export class SoundManager {
         this.schedulerId = null;
         this.currentPattern = null;
         this.targetBpm = Constants.BPM.GAME;
-        this.masterVolume = 0.4; // Initial setting value (0.0 to 1.0) - Slider 50% = 0.4
+        this.masterVolume = 0.5; // Initial setting value (0.0 to 1.0) - Slider 50% = 0.5
         this.masterGain = null;
         this.isMuted = false;
         // Dynamic Rhythmic Intensities
