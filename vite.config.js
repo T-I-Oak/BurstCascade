@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { resolve } from 'path';
 
 // package.json からバージョンを取得
-const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
+const pkg = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf-8'));
 
 export default defineConfig({
   base: '/BurstCascade/',
@@ -26,6 +26,6 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./burst_cascade/tests/vitest.setup.js'],
+    setupFiles: ['./burst_cascade/Tests/vitest.setup.js'],
   },
 });
