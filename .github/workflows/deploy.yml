@@ -1,0 +1,28 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master # master ブランチにプッシュされた時に発火
+  workflow_dispatch: # 手動実行も可能にする
+
+permissions:
+  contents: write # gh-pages ブランチへの書き込み権限が必要
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v4
+
+      - name: Install and Build 🔧
+        run: |
+          npm install
+          npm run build
+
+      - name: Deploy 🚀
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages # 公開用のブランチ
+          folder: dist    # Vite のビルド出力フォルダ

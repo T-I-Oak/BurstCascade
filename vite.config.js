@@ -6,17 +6,20 @@ import { resolve } from 'path';
 const pkg = JSON.parse(readFileSync(resolve(__dirname, 'package.json'), 'utf-8'));
 
 export default defineConfig({
+  base: '/BurstCascade/',
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
   build: {
     target: 'esnext',
     cssTarget: 'chrome100',
+    cssMinify: false,
+    assetsInlineLimit: 0,
     rollupOptions: {
       output: {
-        assetFileNames: 'assets/[name].[ext]',
-        chunkFileNames: 'assets/[name].[hash].js',
-        entryFileNames: 'assets/[name].[hash].js',
+        assetFileNames: 'assets/[name]-[hash].[ext]',
+        chunkFileNames: 'assets/[name]-[hash].js',
+        entryFileNames: 'assets/[name]-[hash].js',
       },
     },
   },
