@@ -5,8 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
-  <script type="module" crossorigin src="/BurstCascade/assets/index-VHvMNJ8a.js"></script>
-  <link rel="stylesheet" crossorigin href="/BurstCascade/assets/index-C-dIQ9Lz.css">
+  <script type="module" crossorigin src="/BurstCascade/assets/index-COZvCIpO.js"></script>
+  <link rel="stylesheet" crossorigin href="/BurstCascade/assets/index-BwM-cJA8.css">
 </head>
 
 <body>
@@ -75,9 +75,9 @@
                         </div>
                         <div class="menu-footer">
                             <button id="start-help-btn" class="footer-btn">HOW TO PLAY</button>
-                            <a href="https://t-i-oak.github.io/GameWorksOAK/" target="_blank" rel="noopener noreferrer" class="copyright-link">
+                            <div id="copyright-container" class="copyright-container">
                                 <div class="copyright">© T.I.OAK 2026</div>
-                            </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -233,32 +233,48 @@
 
                 <!-- ゲームオーバー -->
                 <div id="game-over-content" class="modal-content hidden">
-                    <div id="result-header">
-                        <h2 id="winner-text">Player 1 Wins!</h2>
-                        <p id="victory-message">Dominance established.</p>
-                    </div>
-
-                    <div id="result-body">
-                        <div id="final-board-container">
-                            <canvas id="result-board-canvas"></canvas>
+                    <div class="result-scroll-container">
+                        <div id="result-header">
+                            <h2 id="winner-text">Player 1 Wins!</h2>
+                            <p id="victory-message">Dominance established.</p>
                         </div>
 
-                        <div id="result-achievements" class="hidden">
-                            <div class="ach-title-bar">
-                                <h3>ACHIEVEMENTS</h3>
-                                <div id="result-conditions">
-                                    <span id="res-map-size">REGULAR</span>
-                                    <span id="res-ai-level">HARD</span>
+                        <div id="result-body">
+                            <div id="final-board-container">
+                                <canvas id="result-board-canvas"></canvas>
+                            </div>
+
+                            <div id="result-achievements" class="hidden">
+                                <div class="ach-title-bar">
+                                    <h3>ACHIEVEMENTS</h3>
+                                    <div id="result-conditions">
+                                        <span id="res-map-size">REGULAR</span>
+                                        <span id="res-ai-level">HARD</span>
+                                    </div>
+                                </div>
+                                <div id="achievements-list">
+                                    <!-- JSで動的に生成 -->
                                 </div>
                             </div>
-                            <div id="achievements-list">
-                                <!-- JSで動的に生成 -->
-                            </div>
+                        </div>
+
+                        <div class="menu-options result-options">
+                            <button id="share-btn" class="menu-btn share-btn">SHARE RESULT</button>
+                            <button id="restart-btn" class="menu-btn primary">RETURN TO TITLE</button>
                         </div>
                     </div>
+                </div>
+            </div>
 
-                    <div class="menu-options">
-                        <button id="restart-btn" class="menu-btn primary">RETURN TO TITLE</button>
+
+            <!-- シェア確認モーダル (Ver 6.6.12) -->
+            <div id="share-confirm-overlay" class="hidden">
+                <div class="modal-content share-confirm-content">
+                    <h3>RESULT COPIED!</h3>
+                    <p>結果画像をクリップボードにコピーしました。<br>Xを開いて貼り付け（Ctrl+V）しますか？</p>
+                    <div class="share-confirm-buttons">
+                        <button id="share-confirm-x-btn" class="menu-btn primary">OPEN X</button>
+                        <button id="share-confirm-close-btn" class="menu-btn secondary">CLOSE</button>
                     </div>
                 </div>
             </div>
