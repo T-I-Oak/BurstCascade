@@ -594,4 +594,23 @@ export class Renderer {
         drawDots(playerChains.self, selfColor, 0, 4, playerAnims.self, 'self');
         drawDots(playerChains.enemy, enemyColor, 5.2, 2, playerAnims.enemy, 'enemy');
     }
+
+    renderToCanvas(targetCanvas, map, layout) {
+        const ctx = targetCanvas.getContext('2d');
+        ctx.clearRect(0, 0, targetCanvas.width, targetCanvas.height);
+
+        const sortedHexes = [...map.hexes]
+            .filter(hex => hex.zone === 'main') // メインマップのみを描画 (Ver 6.0.1)
+            .sort((a, b) => {
+                const zA = a.q + a.r;
+                const zB = b.q + b.r;
+                if (zA !== zB) return zA - zB;
+                return a.r - b.r;
+            });
+
+        sortedHexes.forEach(hex => {
+            // 静的表示用にホバー効果などを無効化して描画
+            this.drawHex(hex, ctx, layout);
+        });
+    }
 }

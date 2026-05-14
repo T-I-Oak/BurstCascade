@@ -83,7 +83,6 @@ export class Game {
         this.helpCloseBtn = getEl('help-close-btn');
         this.helpBackBtn = document.querySelector('.help-back-btn');
 
-        this.peekBoardBtn = getEl('peek-board-btn');
 
         // Achievement UI elements
         this.achievementsBtn = getEl('achievements-btn');
@@ -190,24 +189,6 @@ export class Game {
             this.achievementManager.startNewGame();
         }
 
-        // 盤面覗き見機能 (Hold to View)
-        const startPeek = (e) => {
-            e.preventDefault(); // タッチ時のスクロール等防止
-            this.overlay.classList.add('hidden');
-        };
-        const endPeek = (e) => {
-            e.preventDefault();
-            if (this.gameOver) {
-                this.overlay.classList.remove('hidden');
-            }
-        };
-
-        this.peekBoardBtn.addEventListener('mousedown', startPeek);
-        this.peekBoardBtn.addEventListener('touchstart', startPeek, { passive: false });
-
-        this.peekBoardBtn.addEventListener('mouseup', endPeek);
-        this.peekBoardBtn.addEventListener('mouseleave', endPeek);
-        this.peekBoardBtn.addEventListener('touchend', endPeek);
 
         window.addEventListener('resize', () => this.resize());
         this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
@@ -317,7 +298,6 @@ export class Game {
         this.modeSelection.classList.add('hidden');
         this.achievementsContent.classList.add('hidden');
         this.gameOverContent.classList.add('hidden');
-        this.peekBoardBtn.classList.add('hidden');
 
         // ゲーム中かタイトルかで見せるボタンを変える
         if (isGameRunning) {
@@ -362,7 +342,6 @@ export class Game {
         if (this.helpContent) this.helpContent.classList.add('hidden');
         if (this.achievementsContent) this.achievementsContent.classList.add('hidden');
         if (this.gameOverContent) this.gameOverContent.classList.add('hidden');
-        if (this.peekBoardBtn) this.peekBoardBtn.classList.add('hidden');
     }
 
     startGame() {
@@ -456,7 +435,6 @@ export class Game {
             this.overlay.classList.add('hidden'); // Ver 5.2.4: 即座に隠す
             this.modeSelection.classList.add('hidden');
             this.gameOverContent.classList.add('hidden');
-            this.peekBoardBtn.classList.add('hidden');
         }
 
         this.render(); // 初回描画
@@ -727,7 +705,6 @@ export class Game {
     }
 
     showGameOver(winner) {
-
         this.winner = winner; // Ver 4.7.1: 実績判定用に勝者を記録
         this.updateHistoryStats(); // ゲーム終了直前の状態を統計に反映
         this.gameOver = true;
@@ -735,15 +712,15 @@ export class Game {
         this.gameOverContent.classList.remove('hidden');
         this.modeSelection.classList.add('hidden');
         this.helpContent.classList.add('hidden');
-        this.peekBoardBtn.classList.remove('hidden');
+
         const winnerText = document.getElementById('winner-text');
-        const p = this.gameOverContent.querySelector('p');
+        const victoryMsg = document.getElementById('victory-message');
 
         const victoryType = this.getVictoryType(winner);
         const message = this.getVictoryMessage(victoryType, winner);
 
         winnerText.textContent = message.title;
-        if (p) p.innerHTML = message.subtitle;
+        if (victoryMsg) victoryMsg.innerHTML = message.subtitle;
 
         // Set background based on winner
         if (winner === 0) {
@@ -753,28 +730,107 @@ export class Game {
                 'linear-gradient(135deg, #4ade80, #16a34a)' :
                 'linear-gradient(135deg, #f87171, #dc2626)';
         }
+        winnerText.style.webkitBackgroundClip = 'text';
+        winnerText.style.webkitTextFillColor = 'transparent';
 
-        // Check Achievements
+        // --- 設定ラベルの反映 (Ver 6.6.1: 表記の完全統一) ---
+        const mapSizeLabel = document.getElementById('res-map-size');
+        const aiLevelLabel = document.getElementById('res-ai-level');
+        if (mapSizeLabel) mapSizeLabel.innerText = (this.map.mapType || 'REGULAR').toUpperCase();
+        if (aiLevelLabel) {
+            if (this.gameMode === 'pvc') {
+                aiLevelLabel.innerText = (this.ai.difficulty || 'NORMAL').toUpperCase();
+                aiLevelLabel.classList.remove('hidden');
+            } else {
+                aiLevelLabel.classList.add('hidden');
+            }
+        }
+
+        // --- 最終盤面の描画 (Ver 6.0.1) ---
+        const resultCanvas = document.getElementById('result-board-canvas');
+        if (resultCanvas) {
+            requestAnimationFrame(() => {
+                const container = document.getElementById('final-board-container');
+                const size = container.clientWidth || 400;
+                resultCanvas.width = size;
+                resultCanvas.height = size;
+
+                import('./map.js').then(({ Layout }) => {
+                    const canvasSize = size;
+                    const padding = 30; // 余裕を持たせるためのパディング
+                    const availableSize = canvasSize - padding * 2;
+                    
+                    // 1. 仮のレイアウト（サイズ1, 原点0）で全ヘックスのバウンディングボックスを計算
+                    const tempLayout = new Layout(1, { x: 0, y: 0 });
+                    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                    
+                    const mainHexes = this.map.hexes.filter(h => h.zone === 'main');
+                    mainHexes.forEach(hex => {
+                        // 高さによるY方向の突き出し量 (renderer.js の unitThickness ロジックに準拠)
+                        const h = Math.abs(hex.height) * 0.12; 
+                        const vertices = tempLayout.getPolygonVertices(hex);
+                        vertices.forEach(v => {
+                            // 底面
+                            minX = Math.min(minX, v.x); maxX = Math.max(maxX, v.x);
+                            minY = Math.min(minY, v.y); maxY = Math.max(maxY, v.y);
+                            // 天面（高さによるY座標の減少）
+                            minY = Math.min(minY, v.y - h);
+                        });
+                    });
+
+                    const contentWidth = maxX - minX;
+                    const contentHeight = maxY - minY;
+                    
+                    // 2. 最適なスケール（hexSize）を決定
+                    const scale = Math.min(availableSize / contentWidth, availableSize / contentHeight);
+                    const finalHexSize = scale;
+                    
+                    // 3. コンテンツの幾何学的な中心をキャンバスの中央に配置するための原点（origin）を算出
+                    const contentCenterX = (minX + maxX) / 2 * scale;
+                    const contentCenterY = (minY + maxY) / 2 * scale;
+                    const origin = {
+                        x: canvasSize / 2 - contentCenterX,
+                        y: canvasSize / 2 - contentCenterY
+                    };
+
+                    const resultLayout = new Layout(finalHexSize, origin);
+                    this.renderer.renderToCanvas(resultCanvas, this.map, resultLayout);
+                });
+            });
+        }
+
+        // --- アチーブメント情報の表示 (Ver 6.0.0) ---
+        const achContainer = document.getElementById('result-achievements');
+        const achList = document.getElementById('achievements-list');
+        if (achList) achList.innerHTML = '';
+        
         if (this.gameMode === 'pvc') {
             const aiLevel = this.aiLevelSelect.querySelector('.selected').dataset.value;
             const mapType = this.sizeSelect.querySelector('.selected').dataset.value;
 
-            const unlocked = this.achievementManager.checkAchievements(this, mapType, aiLevel);
-            if (unlocked.length > 0) {
-                // Ver 4.7.32: Clear previous achievement notification to prevent duplication
-                const oldNotify = document.getElementById('achievement-notification');
-                if (oldNotify) oldNotify.remove();
+            const newUnlocks = this.achievementManager.checkAchievements(this, mapType, aiLevel);
+            const sessionAchs = this.achievementManager.getSessionAchievements(this, mapType, aiLevel, newUnlocks);
 
-                const p = document.createElement('p');
-                p.id = 'achievement-notification';
-                p.style.color = '#fbbf24';
-                p.style.fontWeight = 'bold';
-                p.style.marginTop = '10px';
-                p.innerHTML = `🏆 ACHIEVEMENT UNLOCKED!<br><span style="font-size:0.85em; opacity:0.9;">${unlocked.map(u => u.title).join(', ')}</span>`;
-                document.querySelector('#game-over-content').appendChild(p);
+            if (sessionAchs.length > 0) {
+                achContainer.classList.remove('hidden');
+                sessionAchs.forEach(ach => {
+                    const item = document.createElement('div');
+                    item.className = 'achievement-item' + (ach.isNew ? ' new-unlock' : '');
+                    item.innerHTML = `
+                        <span class="ach-item-title">${ach.title}</span>
+                        <span class="ach-item-desc">${ach.description}</span>
+                        ${ach.isNew ? '<span class="new-badge">NEW!</span>' : ''}
+                    `;
+                    achList.appendChild(item);
+                });
+            } else {
+                achContainer.classList.add('hidden');
             }
+        } else {
+            achContainer.classList.add('hidden');
         }
 
+        // BGM 制御
         if (this.gameMode === 'pvp') {
             this.sound.startBgm('victory');
         } else if (winner === 1) {
@@ -782,9 +838,6 @@ export class Game {
         } else {
             this.sound.startBgm('defeat');
         }
-
-        winnerText.style.webkitBackgroundClip = 'text';
-        winnerText.style.webkitTextFillColor = 'transparent';
     }
 
     updateHistoryStats() {
@@ -808,12 +861,10 @@ export class Game {
             // ゲーム終了時は結果表示画面を表示したままにする
             if (this.overlay) this.overlay.classList.remove('hidden');
             if (this.gameOverContent) this.gameOverContent.classList.remove('hidden');
-            if (this.peekBoardBtn) this.peekBoardBtn.classList.remove('hidden');
         } else {
             // ゲーム中でなければオーバーレイごと隠す
             if (this.overlay) this.overlay.classList.add('hidden');
             if (this.gameOverContent) this.gameOverContent.classList.add('hidden');
-            if (this.peekBoardBtn) this.peekBoardBtn.classList.add('hidden');
         }
         if (this.modeSelection) this.modeSelection.classList.add('hidden');
     }

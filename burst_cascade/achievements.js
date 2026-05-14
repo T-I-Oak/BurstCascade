@@ -513,6 +513,25 @@ export class AchievementManager {
         return newUnlocks;
     }
 
+    // 今回のゲームで条件を満たしたすべてのアチーブメントを取得 (Ver 6.0.0)
+    getSessionAchievements(game, mapType, diff, newUnlocks) {
+        const diffKey = diff.toLowerCase();
+        const context = this.data.progress[mapType] ? this.data.progress[mapType][diffKey] : null;
+        if (!context) return [];
+
+        return this.achievements.filter(ach => {
+            const isConditionMet = !ach.metricCondition || ach.metricCondition(game, context);
+            return isConditionMet && ach.condition(game, context);
+        }).map(ach => {
+            return {
+                id: ach.id,
+                title: ach.title,
+                description: ach.description,
+                isNew: newUnlocks.some(n => n.id === ach.id)
+            };
+        });
+    }
+
 
     // UI表示用のデータ取得
     getDisplayData(mapType) {

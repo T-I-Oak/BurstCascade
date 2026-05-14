@@ -233,16 +233,36 @@
 
                 <!-- ゲームオーバー -->
                 <div id="game-over-content" class="modal-content hidden">
-                    <h2 id="winner-text">Player 1 Wins!</h2>
-                    <p>Dominance established.</p>
+                    <div id="result-header">
+                        <h2 id="winner-text">Player 1 Wins!</h2>
+                        <p id="victory-message">Dominance established.</p>
+                    </div>
+
+                    <div id="result-body">
+                        <div id="final-board-container">
+                            <canvas id="result-board-canvas"></canvas>
+                        </div>
+
+                        <div id="result-achievements" class="hidden">
+                            <div class="ach-title-bar">
+                                <h3>ACHIEVEMENTS</h3>
+                                <div id="result-conditions">
+                                    <span id="res-map-size">REGULAR</span>
+                                    <span id="res-ai-level">HARD</span>
+                                </div>
+                            </div>
+                            <div id="achievements-list">
+                                <!-- JSで動的に生成 -->
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="menu-options">
                         <button id="restart-btn" class="menu-btn primary">RETURN TO TITLE</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 盤面覗き見ボタン (ホールドで非表示) -->
-            <button id="peek-board-btn" class="overlay-toggle-btn hidden">PEEK BOARD</button>
 
             <!-- CPU思考中オーバーレイ（回路アニメーション用） -->
             <div id="ai-thinking-overlay" class="hidden">
