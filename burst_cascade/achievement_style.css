@@ -130,8 +130,9 @@
 }
 
 .medal-label {
-    font-size: 1.2rem; /* メダル絵文字のサイズ */
-    font-weight: 900;
+    font-size: 0.5rem; /* 未獲得時の文字ラベルサイズ */
+    letter-spacing: -0.01rem;
+    font-weight: 700;
     line-height: 1;
     display: block;
 }
@@ -140,10 +141,42 @@
     color: rgba(255, 255, 255, 0.1);
 }
 
-.medal-slot.locked .medal-label {
-    font-size: 0.5rem; /* 未獲得時の文字ラベルサイズ */
-    letter-spacing: -0.01rem;
-    font-weight: 700;
+/* SVGメダルの基本スタイル */
+.medal-svg {
+    width: 24px;
+    height: 24px;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.3));
+}
+
+.medal-text {
+    font-size: 11px;
+    font-weight: 900;
+    font-family: 'Outfit', sans-serif;
+    fill: rgba(0, 0, 0, 0.2); /* 影で彫り込んだような質感 */
+    pointer-events: none;
+}
+
+.medal-inner-rim {
+    stroke: rgba(255, 255, 255, 0.4);
+}
+
+.medal-ribbon {
+    fill: #ef4444; /* 明るい赤 */
+    filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+}
+
+/* 難易度別のメダル色 */
+.medal-svg.easy .medal-base { fill: #cd7f32; }   /* Bronze */
+.medal-svg.normal .medal-base { fill: #c0c0c0; } /* Silver */
+.medal-svg.hard .medal-base { fill: #ffd700; }   /* Gold */
+
+/* 完全制覇時のメダルテキスト反転 (削除) */
+.ach-card.mastered .medal-text {
+    /* 共通の rgba(255, 255, 255, 0.1) を維持 */
+}
+
+.ach-card.mastered .medal-ribbon {
+    filter: brightness(0.8) contrast(1.2); /* ゴールド背景に合わせて少し落ち着かせる */
 }
 
 .medal-slot.earned {

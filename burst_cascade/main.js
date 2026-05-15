@@ -586,14 +586,30 @@ export class Game {
             }
             if (cardStateClass) card.classList.add(cardStateClass);
 
+            const getMedalSVG = (type) => {
+                const initial = type[0].toUpperCase();
+                // 勲章（メダル）デザイン: リボン + 二重円
+                return `
+                    <svg viewBox="0 0 24 24" class="medal-svg ${type}">
+                        <!-- リボン (V字型) -->
+                        <path d="M7 2 L17 2 L17 15 L12 11 L7 15 Z" class="medal-ribbon"/>
+                        <!-- メダル外縁 (少し厚みを持たせる) -->
+                        <circle cx="12" cy="14" r="8.5" class="medal-base"/>
+                        <!-- 内側の装飾ライン -->
+                        <circle cx="12" cy="14" r="6.5" class="medal-inner-rim" fill="none" stroke-width="0.8"/>
+                        <!-- 刻印文字 -->
+                        <text x="12" y="17.5" text-anchor="middle" class="medal-text">${initial}</text>
+                    </svg>
+                `;
+            };
+
             const createMedalSlot = (earned, type, bestVal) => {
-                const medalIcons = { easy: '🥉', normal: '🥈', hard: '🥇' };
                 const labels = { easy: 'EASY', normal: 'NORM', hard: 'HARD' };
-                const icon = earned ? medalIcons[type] : labels[type];
+                const visual = earned ? getMedalSVG(type) : `<span class="medal-label">${labels[type]}</span>`;
                 const statusClass = earned ? 'earned' : 'locked';
                 
                 let html = `<div class="medal-slot ${statusClass} ${type}">
-                    <span class="medal-label">${icon}</span>`;
+                    ${visual}`;
                 
                 if (this.isDevMode && bestVal !== undefined) {
                     html += `<div class="dev-best">${bestVal}</div>`;
