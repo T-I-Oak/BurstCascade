@@ -1,6 +1,7 @@
-/* 実績画面 (Ver ESM/Vite) */
+/* 実績画面 (Ver 7.0.0 - Unified Dashboard) */
+
 #achievements-content {
-    max-width: 800px;
+    max-width: 1000px; /* カード2列表示のため広げる */
     width: 95%;
     padding: 2rem 1.5rem;
 }
@@ -23,154 +24,242 @@
     font-weight: bold;
 }
 
+/* タブは廃止予定だが、一応非表示にしておく (ロジック変更までの猶予) */
 .tabs {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.tab-btn {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: #94a3b8;
-    padding: 0.6rem 1.5rem;
-    border-radius: 0.5rem;
-    cursor: pointer;
-    font-weight: 700;
-    transition: all 0.2s;
-}
-
-.tab-btn.active {
-    background: rgba(56, 189, 248, 0.2);
-    border-color: var(--accent-color);
-    color: #fff;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
-}
-
-.tab-btn:hover:not(.active) {
-    background: rgba(255, 255, 255, 0.1);
+    display: none;
 }
 
 .achievements-scroll-container {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0.5rem;
+    padding: 1rem;
+    border-radius: 1rem;
     background: rgba(0, 0, 0, 0.2);
 }
 
-#achievements-table {
-    width: 100%;
-    border-collapse: collapse;
-    color: #cbd5e1;
-    font-size: 0.9rem;
+/* グリッドレイアウト */
+#achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.2rem;
 }
 
-#achievements-table th {
-    background: rgba(15, 23, 42, 0.8);
-    position: sticky;
-    top: 0;
-    padding: 1rem;
-    font-weight: 700;
-    text-align: center;
-    border-bottom: 2px solid rgba(56, 189, 248, 0.3);
-    z-index: 10;
+/* カード基本スタイル */
+.ach-card {
+    display: flex;
+    background: rgba(30, 41, 59, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0.8rem;
+    overflow: hidden;
+    min-height: 100px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
-#achievements-table th:first-child {
+/* 左側：実績情報 */
+.ach-card-left {
+    flex: 1.2;
+    padding: 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     text-align: left;
-    padding-left: 1.5rem;
-}
-
-#achievements-table td {
-    padding: 0.8rem 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-    transition: background 0.2s;
-}
-
-#achievements-table tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
-}
-
-/* アチーブメント名の列 */
-.ach-title-cell {
-    text-align: left;
-    padding-left: 1.5rem !important;
+    background: rgba(15, 23, 42, 0.4);
+    transition: background 0.5s;
 }
 
 .ach-name {
-    font-weight: 700;
-    font-size: 1rem;
+    font-weight: 900;
+    font-size: 1.1rem;
     color: #f8fafc;
-    display: block;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.05rem;
 }
 
 .ach-desc {
     font-size: 0.75rem;
     color: #94a3b8;
-    display: block;
-    line-height: 1.3;
+    line-height: 1.4;
+    font-weight: 500;
 }
 
-/* メダルセル */
-.medal-cell {
-    text-align: center;
-    width: 80px;
-    font-size: 1.5rem;
+/* 右側：進捗マトリックス */
+.ach-card-right {
+    flex: 1;
+    padding: 0.8rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.medal-locked {
-    color: rgba(255, 255, 255, 0.1);
-    font-size: 1.2rem;
+.matrix-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
 }
 
-.medal-earned {
-    filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5));
-    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.dev-best {
+.map-label {
     font-size: 0.65rem;
+    font-weight: 900;
     color: var(--accent-color);
-    margin-top: 4px;
-    font-family: monospace;
+    letter-spacing: 0.1rem;
+    width: 60px;
     opacity: 0.8;
 }
 
-/* ロック状態（名前伏字） */
-.ach-locked .ach-name,
-.ach-locked .ach-desc {
+.medal-slots {
+    display: flex;
+    gap: 0.4rem;
+}
+
+.medal-slot {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.medal-label {
+    font-size: 1.2rem; /* メダル絵文字のサイズ */
+    font-weight: 900;
+    line-height: 1;
+    display: block;
+}
+
+.medal-slot.locked {
+    color: rgba(255, 255, 255, 0.1);
+}
+
+.medal-slot.locked .medal-label {
+    font-size: 0.5rem; /* 未獲得時の文字ラベルサイズ */
+    letter-spacing: -0.01rem;
+    font-weight: 700;
+}
+
+.medal-slot.earned {
+    animation: medal-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.medal-slot.earned.easy { filter: drop-shadow(0 0 5px rgba(205, 127, 50, 0.6)); }
+.medal-slot.earned.normal { filter: drop-shadow(0 0 5px rgba(192, 192, 192, 0.6)); }
+.medal-slot.earned.hard { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)); }
+
+/* --- 段階的なビジュアル変化 --- */
+
+/* 解除済み (1/6以上) - 左側がゴールド */
+.ach-card.unlocked-any .ach-card-left,
+.ach-card.mastered .ach-card-left {
+    background: linear-gradient(135deg, #ebed58 0%, #8a691e 100%);
+}
+
+.ach-card.unlocked-any .ach-name,
+.ach-card.mastered .ach-name {
+    color: #1c0d0d !important;
+}
+
+.ach-card.unlocked-any .ach-desc,
+.ach-card.mastered .ach-desc {
+    color: rgba(28, 13, 13, 0.8) !important;
+}
+
+/* 完全制覇 (6/6) - 全面ゴールド */
+.ach-card.mastered {
+    border-color: #fbbf24;
+    box-shadow: 0 0 25px rgba(235, 237, 88, 0.2);
+}
+
+.ach-card.mastered .ach-card-right {
+    background: linear-gradient(135deg, rgba(235, 237, 88, 0.9) 0%, rgba(138, 105, 30, 0.9) 100%);
+    border-left-color: rgba(28, 13, 13, 0.1);
+}
+
+.ach-card.mastered .map-label,
+.ach-card.mastered .medal-label {
+    color: #1c0d0d !important;
+    opacity: 1 !important;
+}
+
+.ach-card.mastered .medal-slot {
+    background: rgba(0, 0, 0, 0.5);
+    border-color: rgba(28, 13, 13, 0.1);
+}
+
+/* 未公開 (Revealedロジック用) */
+.ach-card.locked-all .ach-name,
+.ach-card.locked-all .ach-desc {
     color: rgba(255, 255, 255, 0.3);
 }
 
-/* ロック状態（ヒント表示） */
-.ach-hint .ach-name {
+.ach-card.is-hint .ach-name {
     color: rgba(255, 255, 255, 0.7);
 }
 
-.ach-hint .ach-desc {
+.ach-card.is-hint .ach-desc {
     color: rgba(255, 255, 255, 0.5);
 }
 
-@keyframes pop-in {
-    0% {
-        transform: scale(0);
-        opacity: 0;
-    }
+/* アニメーション */
+@keyframes medal-pop {
+    0% { transform: scale(0); }
+    70% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
 
-    70% {
-        transform: scale(1.2);
-    }
+@keyframes mastered-pulse {
+    from { box-shadow: 0 0 15px rgba(235, 237, 88, 0.2); transform: translateY(0); }
+    to { box-shadow: 0 0 30px rgba(235, 237, 88, 0.4); transform: translateY(-2px); }
+}
 
-    100% {
-        transform: scale(1);
-        opacity: 1;
+/* Debug Best Style */
+.dev-best {
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: var(--accent-color);
+    font-family: monospace;
+    opacity: 0.9;
+    line-height: 1;
+}
+
+.ach-card.unlocked-any .dev-best,
+.ach-card.mastered .dev-best {
+    color: #1c0d0d; /* ゴールド背景時は暗い色に */
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 900px) {
+    #achievements-grid {
+        grid-template-columns: 1fr;
     }
 }
 
+@media (max-width: 480px) {
+    .ach-card {
+        flex-direction: column;
+    }
+    .ach-card-left {
+        padding: 1rem;
+    }
+    .ach-card-right {
+        border-left: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 1rem;
+    }
+    .map-label {
+        width: 50px;
+    }
+}
+
+/* Debug Reset Button */
 .debug-btn {
     background: transparent;
     border: 1px solid rgba(239, 68, 68, 0.3);
@@ -185,56 +274,4 @@
 .debug-btn:hover {
     background: rgba(239, 68, 68, 0.1);
     opacity: 1 !important;
-}
-
-@media (max-height: 500px) {
-    #achievements-content {
-        padding: 0.5rem;
-        border-radius: 0.8rem;
-    }
-
-    #achievements-content h2 {
-        font-size: 1.2rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .tabs {
-        gap: 0.3rem;
-        margin-bottom: 0.5rem;
-    }
-
-    .tab-btn {
-        padding: 0.3rem 0.6rem;
-        font-size: 0.7rem;
-        border-radius: 0.3rem;
-    }
-
-    #achievements-table {
-        font-size: 0.75rem;
-    }
-
-    #achievements-table th {
-        padding: 0.4rem;
-    }
-
-    #achievements-table td {
-        padding: 0.3rem 0.4rem;
-    }
-
-    .ach-name {
-        font-size: 0.8rem;
-    }
-
-    .ach-desc {
-        font-size: 0.65rem;
-    }
-
-    .medal-cell {
-        width: 40px;
-        font-size: 1rem;
-    }
-
-    .ach-title-cell {
-        padding-left: 0.5rem !important;
-    }
 }

@@ -185,7 +185,7 @@ export class Game {
                         this.achievementTabs.forEach(t => t.classList.remove('active'));
                         tab.classList.add('active');
                         const mapType = tab.dataset.map;
-                        this.updateAchievementsUI(mapType);
+                        this.updateAchievementsUI();
                         this.sound.playPlace();
                     });
                 });
@@ -467,19 +467,7 @@ export class Game {
         this.helpContent.classList.add('hidden');
         this.gameOverContent.classList.add('hidden');
 
-        // 現在の設定（マップサイズ）をデフォルトとして表示
-        const currentSize = this.sizeSelect.querySelector('.selected').dataset.value;
-
-        // タブのactive状態を更新
-        this.achievementTabs.forEach(tab => {
-            if (tab.dataset.map === currentSize) {
-                tab.classList.add('active');
-            } else {
-                tab.classList.remove('active');
-            }
-        });
-
-        this.updateAchievementsUI(currentSize);
+        this.updateAchievementsUI();
     }
 
     // --- Settings Persistence (Ver 4.5.3) ---
@@ -548,81 +536,104 @@ export class Game {
         }
     }
 
-    updateAchievementsUI(mapType = 'regular') {
-        // Get active tab if mapType is not specified (e.g. initial open)
-        if (!mapType) {
-            const activeTab = document.querySelector('.tab-btn.active');
-            mapType = activeTab ? activeTab.dataset.map : 'regular';
-        }
+    updateAchievementsUI() {
+        const grid = document.getElementById('achievements-grid');
+        if (!grid) return;
 
-        // ShowAchievements 時に最新の状態を反映
+        // 最新のデータを取得
+        const miniData = this.achievementManager.getDisplayData('mini');
+        const regularData = this.achievementManager.getDisplayData('regular');
+        const baseList = this.achievementManager.getRevealedList('regular');
+
+        // デバッグモード状態を確認
         this.isDevMode = localStorage.getItem('burst-cascade-dev-mode') === 'true';
         if (this.achievementResetBtn) {
             this.achievementResetBtn.style.display = this.isDevMode ? 'block' : 'none';
         }
 
-        const data = this.achievementManager.getRevealedList(mapType);
-        this.achievementsTableBody.innerHTML = '';
+        grid.innerHTML = '';
 
         let totalEarned = 0;
         let totalCount = 0;
 
-        const createMedalHtml = (earned, bestVal) => {
-            let html = earned ? '<span class="medal-earned">🏅</span>' : '<span class="medal-locked">●</span>';
-            if (this.isDevMode && bestVal !== undefined) {
-                html += `<div class="dev-best">Best: ${bestVal}</div>`;
-            }
-            return html;
-        };
+        baseList.forEach((item, idx) => {
+            const mini = miniData[idx];
+            const regular = regularData[idx];
+            
+            const earnedCount = 
+                (mini.earned.easy ? 1 : 0) + (mini.earned.normal ? 1 : 0) + (mini.earned.hard ? 1 : 0) +
+                (regular.earned.easy ? 1 : 0) + (regular.earned.normal ? 1 : 0) + (regular.earned.hard ? 1 : 0);
+            
+            totalEarned += earnedCount;
+            totalCount += 6;
 
-        data.forEach(item => {
-            const tr = document.createElement('tr');
+            const isMastered = earnedCount === 6;
+            const isUnlockedAny = earnedCount > 0;
 
-            // Achievement Title Cell
-            const tdTitle = document.createElement('td');
-            tdTitle.className = 'ach-title-cell';
+            const card = document.createElement('div');
+            card.className = 'ach-card';
+            if (isMastered) card.classList.add('mastered');
+            else if (isUnlockedAny) card.classList.add('unlocked-any');
+
+            let displayTitle = '???';
+            let displayDesc = '???';
+            let cardStateClass = 'locked-all';
 
             if (item.isRevealed) {
-                const description = item.isHint ? '？？？' : item.description;
-                tdTitle.innerHTML = `<span class="ach-name">${item.title}</span><span class="ach-desc">${description}</span>`;
-                if (item.isHint) {
-                    tdTitle.classList.add('ach-hint');
-                }
-            } else {
-                tdTitle.innerHTML = `<span class="ach-name">???</span><span class="ach-desc">???</span>`;
-                tdTitle.classList.add('ach-locked');
+                displayTitle = item.title;
+                displayDesc = item.isHint ? '？？？' : item.description;
+                cardStateClass = item.isHint ? 'is-hint' : '';
             }
-            tr.appendChild(tdTitle);
+            if (cardStateClass) card.classList.add(cardStateClass);
 
-            // Easy
-            const tdEasy = document.createElement('td');
-            tdEasy.className = 'medal-cell';
-            tdEasy.innerHTML = createMedalHtml(item.earned.easy, item.best.easy);
-            tr.appendChild(tdEasy);
+            const createMedalSlot = (earned, type, bestVal) => {
+                const medalIcons = { easy: '🥉', normal: '🥈', hard: '🥇' };
+                const labels = { easy: 'EASY', normal: 'NORM', hard: 'HARD' };
+                const icon = earned ? medalIcons[type] : labels[type];
+                const statusClass = earned ? 'earned' : 'locked';
+                
+                let html = `<div class="medal-slot ${statusClass} ${type}">
+                    <span class="medal-label">${icon}</span>`;
+                
+                if (this.isDevMode && bestVal !== undefined) {
+                    html += `<div class="dev-best">${bestVal}</div>`;
+                }
+                html += `</div>`;
+                return html;
+            };
 
-            // Normal
-            const tdNormal = document.createElement('td');
-            tdNormal.className = 'medal-cell';
-            tdNormal.innerHTML = createMedalHtml(item.earned.normal, item.best.normal);
-            tr.appendChild(tdNormal);
+            card.innerHTML = `
+                <div class="ach-card-left">
+                    <span class="ach-name">${displayTitle}</span>
+                    <span class="ach-desc">${displayDesc}</span>
+                </div>
+                <div class="ach-card-right">
+                    <div class="matrix-row">
+                        <span class="map-label">MINI</span>
+                        <div class="medal-slots">
+                            ${createMedalSlot(mini.earned.easy, 'easy', mini.best.easy)}
+                            ${createMedalSlot(mini.earned.normal, 'normal', mini.best.normal)}
+                            ${createMedalSlot(mini.earned.hard, 'hard', mini.best.hard)}
+                        </div>
+                    </div>
+                    <div class="matrix-row">
+                        <span class="map-label">REGULAR</span>
+                        <div class="medal-slots">
+                            ${createMedalSlot(regular.earned.easy, 'easy', regular.best.easy)}
+                            ${createMedalSlot(regular.earned.normal, 'normal', regular.best.normal)}
+                            ${createMedalSlot(regular.earned.hard, 'hard', regular.best.hard)}
+                        </div>
+                    </div>
+                </div>
+            `;
 
-            // Hard
-            const tdHard = document.createElement('td');
-            tdHard.className = 'medal-cell';
-            tdHard.innerHTML = createMedalHtml(item.earned.hard, item.best.hard);
-            tr.appendChild(tdHard);
-
-            this.achievementsTableBody.appendChild(tr);
-
-            // Calculate progress for current map type (all diffs combined)
-            if (item.earned.easy) totalEarned++;
-            if (item.earned.normal) totalEarned++;
-            if (item.earned.hard) totalEarned++;
-            totalCount += 3;
+            grid.appendChild(card);
         });
 
         const percent = Math.floor((totalEarned / totalCount) * 100);
-        this.achievementPercent.textContent = `${percent}%`;
+        if (this.achievementPercent) {
+            this.achievementPercent.textContent = `${percent}%`;
+        }
     }
 
     getVictoryType(winner) {
