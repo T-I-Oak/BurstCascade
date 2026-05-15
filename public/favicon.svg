@@ -1,0 +1,31 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@900&amp;display=swap');
+    </style>
+    <g transform="translate(128, 110)">
+        <defs>
+            <linearGradient id="sideGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#166534;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#0b321a;stop-opacity:1" />
+            </linearGradient>
+        </defs>
+        <!-- Side Faces -->
+        <path d="M 70.7 63.6 L 96.6 -35.5 L 96.6 0.5 L 70.7 99.6 Z" fill="url(#sideGrad)" stroke="#064e3b" stroke-width="1"/>
+        <path d="M -96.6 35.5 L -25.9 99.2 L -25.9 135.2 L -96.6 71.5 Z" fill="url(#sideGrad)" stroke="#064e3b" stroke-width="1"/>
+        <path d="M -25.9 99.2 L 70.7 63.6 L 70.7 99.6 L -25.9 135.2 Z" fill="url(#sideGrad)" stroke="#064e3b" stroke-width="1"/>
+        
+        <!-- Top Face -->
+        <path d="M 70.7 63.6 L -25.9 99.2 L -96.6 35.5 L -70.7 -63.6 L 25.9 -99.2 L 96.6 -35.5 Z" 
+              fill="#16a34a" stroke="#4ade80" stroke-width="3" stroke-linejoin="round"/>
+        
+        <!-- Top Highlight -->
+        <path d="M 96.6 -35.5 L 70.7 63.6 L -25.9 99.2" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+
+        <!-- Matrix Transformed Text -->
+        <g transform="matrix(0.9659, 0.1622, -0.2588, 0.9918, 0, 0)">
+            <text x="0" y="0" dominant-baseline="central" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Outfit, sans-serif" font-weight="900" font-size="120" transform="translate(1.5, 1.5)">B</text>
+            <text x="0" y="0" dominant-baseline="central" text-anchor="middle" fill="rgba(0,0,0,0.4)" font-family="Outfit, sans-serif" font-weight="900" font-size="120" transform="translate(-2, -2)">B</text>
+            <text x="0" y="0" dominant-baseline="central" text-anchor="middle" fill="#003e00" font-family="Outfit, sans-serif" font-weight="900" font-size="120">B</text>
+        </g>
+    </g>
+</svg>
