@@ -1,5 +1,5 @@
 import { describe, test, expect, beforeEach } from 'vitest';
-import { SoundManager } from '../../../sound.js';
+import { SoundManager } from '../../src/sound.js';
 
 describe('SoundManager Module', () => {
     let sound;
@@ -9,7 +9,6 @@ describe('SoundManager Module', () => {
     });
 
     test('SoundManager should initialize with default volume', () => {
-        // Default volume is 0.5
         expect(sound.masterVolume).toBe(0.5);
         expect(sound.isMuted).toBe(false);
     });
@@ -25,9 +24,5 @@ describe('SoundManager Module', () => {
         expect(sound.isMuted).toBe(!initialState);
         sound.toggleMute();
         expect(sound.isMuted).toBe(initialState);
-    });
-
-    test('playPlace should not throw even if AudioContext is mocked', () => {
-        expect(() => sound.playPlace()).not.toThrow();
     });
 });

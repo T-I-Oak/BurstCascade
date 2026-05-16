@@ -6,5 +6,13 @@
 - [ ] デフォルトモードの変更
     - PvC / MINI / NORMAL に変更する
 - [x] (A-01) AI思考中オーバーレイ（Analyzing cascade...）が表示され続けてしまうバグの修正 (v0.4.1)
-- [ ] (A-02) テスト構成および命名規則の共通仕様（GameWorks OAK）への完全準拠
-    - src/Tests を tests/implementation に移行し、src と同じフォルダ構造・ファイル命名規則（[対象ファイル名].test.js）を徹底する。
+- [x] (A-02) プロジェクト構造の完全正常化 (v0.5.1)
+    - src/Tests を tests/implementation に移行。
+    - src/ 配下の不要な package.json, node_modules, 設定ファイルを削除・整理。
+    - 構造変更後も開発環境・テストが正常に動作することを確認する。
+- [ ] (A-04) ドキュメントの再構成（仕様書の分割と番号付与）
+- [ ] (A-03) プロジェクトアセットの整備（thumbnail.png の作成・配置）
+- [ ] (A-05) CSSのリファクタリング（!important 排除と命名規則の適用）
+- [ ] (A-06) main.js の機能分割（1ファイル500行制限への準拠）
+
+

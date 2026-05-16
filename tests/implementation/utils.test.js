@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { Utils } from '../../../utils.js';
+import { Utils } from '../../src/utils.js';
 
 describe('Utils Module', () => {
     describe('adjustColor', () => {
