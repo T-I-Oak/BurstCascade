@@ -768,6 +768,7 @@ main {
     margin: 2rem auto 0;
 }
 
+#ai-thinking-overlay.hidden,
 #overlay.hidden,
 #share-confirm-overlay.hidden,
 .modal-content.hidden,

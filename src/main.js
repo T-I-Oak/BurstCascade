@@ -96,6 +96,7 @@ export class Game {
 
         this.focusEffects = [];
         this.dropEffects = [];
+        this.aiTimer = null; // AI手番開始用タイマー
 
         // --- 開発者モードの初期化 ---
         this.isDevMode = localStorage.getItem('burst-cascade-dev-mode') === 'true';
@@ -351,6 +352,14 @@ export class Game {
         this.isAIThinking = false;
         this.turnEndRequested = false;
 
+        if (this.aiTimer) {
+            clearTimeout(this.aiTimer);
+            this.aiTimer = null;
+        }
+        if (this.aiOverlay) {
+            this.aiOverlay.classList.add('hidden');
+        }
+
         this.sound.stopBgm();
         this.showModeSelection();
     }
@@ -455,6 +464,14 @@ export class Game {
             this.overlay.classList.add('hidden'); // Ver 5.2.4: 即座に隠す
             this.modeSelection.classList.add('hidden');
             this.gameOverContent.classList.add('hidden');
+        }
+
+        if (this.aiTimer) {
+            clearTimeout(this.aiTimer);
+            this.aiTimer = null;
+        }
+        if (this.aiOverlay) {
+            this.aiOverlay.classList.add('hidden');
         }
 
         this.render(); // 初回描画
@@ -1648,9 +1665,13 @@ export class Game {
     // --- AI (CPU) Logic ---
 
     async handleCPUTurn() {
-        if (this.gameOver) return;
+        // 二重実行防止および状態チェック
+        if (this.gameOver || this.isAIThinking || this.currentPlayer !== 2) return;
+        
         this.isAIThinking = true;
-        this.aiOverlay.classList.remove('hidden');
+        if (this.aiOverlay) {
+            this.aiOverlay.classList.remove('hidden');
+        }
 
         const startTime = Date.now();
         const bestMove = this.ai.getBestMove(this.map, this.chains);
@@ -1660,7 +1681,9 @@ export class Game {
         const waitTime = Math.max(0, 1000 - elapsed);
         await new Promise(resolve => setTimeout(resolve, waitTime));
 
-        this.aiOverlay.classList.add('hidden');
+        if (this.aiOverlay) {
+            this.aiOverlay.classList.add('hidden');
+        }
         this.isAIThinking = false;
 
         if (bestMove) {
@@ -1744,14 +1767,16 @@ export class Game {
             this.sound.playTurnChange();
 
             if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
-                setTimeout(() => this.handleCPUTurn(), 400); // 余裕を持って開始
+                if (this.aiTimer) clearTimeout(this.aiTimer);
+                this.aiTimer = setTimeout(() => this.handleCPUTurn(), 400); // 余裕を持って開始
             }
         } else if (this.isProcessingMove) {
 
             this.isProcessingMove = false;
 
             if (this.gameMode === 'pvc' && this.currentPlayer === 2 && !this.gameOver) {
-                setTimeout(() => this.handleCPUTurn(), 400); // 継続手番でもAIを叩く
+                if (this.aiTimer) clearTimeout(this.aiTimer);
+                this.aiTimer = setTimeout(() => this.handleCPUTurn(), 400); // 継続手番でもAIを叩く
             }
         }
     }
