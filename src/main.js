@@ -5,7 +5,7 @@ import { Constants } from './constants.js';
 import { Utils } from './utils.js';
 import { SoundManager } from './sound.js';
 import { Renderer } from './renderer.js';
-import { DataManager } from './dataManager.js';
+import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
 import { shareResult } from './share.js';
 
 export class Game {

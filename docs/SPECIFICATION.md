@@ -55,7 +55,9 @@
 - **FX チェーン**: コンプレッサー、リバーブ、ディレイを多段接続し、ブラウザ上でのリッチな音響空間を実現。
 
 ### 2.4. データ管理 (Data Persistence)
-- **DataManager**: `DataManager` クラスが LocalStorage の読み書きと、アプリのメジャーバージョン（`__APP_VERSION__`）に応じた自動マイグレーション処理を一元管理します。
+- **DataManager**: `GameWorks OAK Common Library` の `DataManager` を直接参照し、LocalStorage の読み書きを一元管理します。
+- **標準データ構造**: セーブデータは `{ v: version, d: data }` のラッパー形式で永続化され、管理用メタデータと実データが分離されます。
+- **共有リソースの利用**: ライブラリ本体は GameWorks OAK ポータルが提供する URL から直接インポートされ、プロジェクトを跨いで常に同一のロジックが適用されることが保証されます。
 
 ---
 
@@ -77,36 +79,6 @@
 - **Build Tool**: Vite
 - **Sound**: Web Audio API (Manual Synthesis & Scheduling)
 - **Testing**: Vitest (jsdom environment)
+- **Library**: GameWorks OAK Common Library (Remote ESM Import)
 
 ---
-
-## 5. ディレクトリ構造
-```
-BurstCascade/
-├── index.html              # エントリーポイント (HTML)
-├── package.json            # プロジェクト設定・依存関係
-├── vite.config.js          # Vite 設定
-├── docs/                   # ドキュメント
-├── burst_cascade/          # ゲームソースコード
-│   ├── app.js              # エントリーポイント (JS)
-│   ├── main.js             # ゲームメインロジック (Game クラス)
-│   ├── map.js              # ヘックスマップ管理 (HexMap クラス等)
-│   ├── ai.js               # AI ロジック
-│   ├── achievements.js      # 実績・統計管理
-│   ├── renderer.js         # 描画エンジン
-│   ├── sound.js            # サウンド管理
-│   ├── constants.js        # 定数定義
-│   ├── dataManager.js      # ストレージ・マイグレーション管理
-│   ├── tutorial.js         # チュートリアル演出
-│   ├── utils.js            # ユーティリティ関数
-│   └── tests/              # テストディレクトリ
-│       ├── vitest.setup.js # Vitest 初期設定
-│       └── unit/           # ユニットテスト
-```
-
----
-
-## 6. ビルド・開発環境
-- **Vite**: 開発サーバーおよびプロダクションビルドに使用。
-- **Vitest**: ユニットテストフレームワーク。`npm test` で全てのユニットテストを実行します。
-- **バージョン管理**: `package.json` の `version` フィールドおよび `update_history.json` で管理されます。

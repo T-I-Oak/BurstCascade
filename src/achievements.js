@@ -116,7 +116,7 @@ export class PlayerStats {
     }
 }
 
-import { DataManager } from './dataManager.js';
+import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
 
 export class AchievementManager {
     constructor() {

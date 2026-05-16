@@ -10,6 +10,11 @@ export default defineConfig({
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },
+  server: {
+    fs: {
+      allow: ['..'],
+    },
+  },
   build: {
     target: 'esnext',
     cssTarget: 'chrome100',
@@ -23,9 +28,14 @@ export default defineConfig({
       },
     },
   },
+  resolve: {
+    alias: {
+      'https://t-i-oak.github.io/GameWorksOAK/lib': resolve(__dirname, '../GameWorksOAK/src/lib'),
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',
-    setupFiles: ['./burst_cascade/Tests/vitest.setup.js'],
+    setupFiles: ['./src/Tests/vitest.setup.js'],
   },
 });

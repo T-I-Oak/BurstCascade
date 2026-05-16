@@ -1,11 +1,19 @@
 {
-  "id": "burst-cascade",
-  "title": "BURST CASCADE",
-  "genre": "連鎖爆発ストラテジー",
-  "version": "0.3.0",
-  "author": "T.I.OAK",
-  "description": "純粋なエネルギーの結晶体「ヘキサグリッド」を舞台に、エネルギーの注入と爆発（Burst）、そして連鎖（Cascade）を駆使して、対立する勢力の「共鳴中枢（Core）」を奪還・無効化する戦略ゲーム。",
-  "logo_path": "burst_cascade/logo.svg",
-  "favicon_path": "favicon.svg",
-  "update_history_path": "data/update_history.json"
+  "title": "Burst Cascade",
+  "description": "ヘキサグリッドを舞台にした陣取りストラテジー。エネルギーを Burst（爆発）させ、発生する連続ターンを繋いで一気に盤面を制圧せよ。",
+  "tags": ["対戦型陣取り", "ヘキサ・ストラテジー", "バースト・連鎖"],
+  "logo": {
+    "path": "assets/logo.svg",
+    "type": "standard"
+  },
+  "badge": {
+    "content": "Coming Soon",
+    "type": "info"
+  },
+  "button": {
+    "content": "PLAY NOW",
+    "url": "https://t-i-oak.github.io/BurstCascade/",
+    "type": "published"
+  },
+  "image": "assets/thumbnail.png"
 }
