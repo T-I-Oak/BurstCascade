@@ -1,5 +1,17 @@
 import { vi, beforeEach } from 'vitest';
+import { setAppVersion } from '../../GameWorksOAK/src/lib/utils/env.js';
+
+// Mock remote library for tests
+vi.mock('https://t-i-oak.github.io/GameWorksOAK/lib/utils/env.js', () => {
+    return import('../../GameWorksOAK/src/lib/utils/env.js');
+});
+vi.mock('https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js', () => {
+    return import('../../GameWorksOAK/src/lib/core/dataManager.js');
+});
+
 global.window.IS_TESTING = true;
+global.__APP_VERSION__ = '0.6.3';
+setAppVersion(global.__APP_VERSION__);
 
 // Mock Canvas getContext
 HTMLCanvasElement.prototype.getContext = vi.fn().mockReturnValue({

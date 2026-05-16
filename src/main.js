@@ -6,7 +6,11 @@ import { Utils } from './utils.js';
 import { SoundManager } from './sound.js';
 import { Renderer } from './renderer.js';
 import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
+import { setAppVersion } from 'https://t-i-oak.github.io/GameWorksOAK/lib/utils/env.js';
 import { shareResult } from './share.js';
+
+// 共通ライブラリをプロジェクトのバージョンで初期化
+setAppVersion(__APP_VERSION__);
 
 export class Game {
     constructor() {
