@@ -5,37 +5,44 @@ import { resolve } from 'path';
 // package.json からバージョンを取得
 const pkg = JSON.parse(readFileSync(resolve(process.cwd(), 'package.json'), 'utf-8'));
 
-export default defineConfig({
-  base: '/BurstCascade/',
-  define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
-  },
-  server: {
-    fs: {
-      allow: ['..'],
+export default defineConfig(({ mode }) => {
+  const isDev = mode === 'development';
+
+  return {
+    base: '/BurstCascade/',
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
     },
-  },
-  build: {
-    target: 'esnext',
-    cssTarget: 'chrome100',
-    cssMinify: false,
-    assetsInlineLimit: 0,
-    rollupOptions: {
-      output: {
-        assetFileNames: 'assets/[name]-[hash].[ext]',
-        chunkFileNames: 'assets/[name]-[hash].js',
-        entryFileNames: 'assets/[name]-[hash].js',
+    server: {
+      fs: {
+        allow: ['..'],
       },
     },
-  },
-  resolve: {
-    alias: {
-      'https://t-i-oak.github.io/GameWorksOAK/lib': resolve(__dirname, '../GameWorksOAK/src/lib'),
+    build: {
+      target: 'esnext',
+      cssTarget: 'chrome100',
+      cssMinify: false,
+      assetsInlineLimit: 0,
+      rollupOptions: {
+        external: [
+          /^https:\/\/t-i-oak\.github\.io\/GameWorksOAK\//,
+        ],
+        output: {
+          assetFileNames: 'assets/[name]-[hash].[ext]',
+          chunkFileNames: 'assets/[name]-[hash].js',
+          entryFileNames: 'assets/[name]-[hash].js',
+        },
+      },
     },
-  },
-  test: {
-    globals: true,
-    environment: 'jsdom',
-    setupFiles: ['./tests/vitest.setup.js'],
-  },
+    resolve: {
+      alias: isDev ? {
+        'https://t-i-oak.github.io/GameWorksOAK/lib': resolve(__dirname, '../GameWorksOAK/src/lib'),
+      } : {},
+    },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: ['./tests/vitest.setup.js'],
+    },
+  };
 });
