@@ -1,8 +1,7 @@
-import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { describe, test, expect, beforeEach } from 'vitest';
 import { Game } from '../../src/main.js';
-import { Utils } from '../../src/utils.js';
 
-describe('Game Core (main.js)', () => {
+describe('UIManager Module', () => {
     let game;
 
     beforeEach(() => {
@@ -45,25 +44,8 @@ describe('Game Core (main.js)', () => {
         game = new Game();
     });
 
-    describe('Initialization and Basics', () => {
-        test('Game instance should be available', () => {
-            expect(game).toBeDefined();
-            expect(game instanceof Game).toBe(true);
-        });
-
-        test('Utility Methods: adjustColor should correctly lighten/darken hex colors', () => {
-            expect(Utils.adjustColor('#000000', 10)).toBe('#0a0a0a');
-            expect(Utils.adjustColor('#ffffff', -10).toLowerCase()).toBe('#f5f5f5');
-        });
-
-        test('SoundManager should be instantiated in Game', () => {
-            expect(game.sound).toBeDefined();
-            expect(typeof game.sound.init).toBe('function');
-        });
-
-        test('Game should have required UI elements linked', () => {
-            expect(game.canvas).not.toBeNull();
-            expect(game.volumeSlider).not.toBeNull();
-        });
+    test('Game should have required UI elements linked', () => {
+        expect(game.canvas).not.toBeNull();
+        expect(game.volumeSlider).not.toBeNull();
     });
 });
