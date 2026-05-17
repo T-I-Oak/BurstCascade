@@ -148,7 +148,7 @@ export class AchievementManager {
             {
                 id: 'learner',
                 title: '学習者',
-                description: '敗北する',
+                description: 'AIに敗北する',
                 condition: (game) => true,
                 metric: (game, context) => context.totalLosses,
                 metricType: 'max',
@@ -175,16 +175,16 @@ export class AchievementManager {
             {
                 id: 'unscathed',
                 title: '無傷',
-                description: 'コアを一度も無力化されずに勝利する',
-                condition: (game) => this.stats[2].neutralized[1].game === 0,
-                metric: (game) => this.stats[2].neutralized[1].game,
+                description: 'コアを一度も失わずに勝利する',
+                condition: (game) => (this.stats[1].neutralized[1].game + this.stats[2].neutralized[1].game) === 0,
+                metric: (game) => (this.stats[1].neutralized[1].game + this.stats[2].neutralized[1].game),
                 metricType: 'min',
                 metricCondition: (game) => game.winner === 1
             },
             {
                 id: 'minimalist',
                 title: '省エネ勝利',
-                description: '供給エネルギーを一度も増やさずに勝利する',
+                description: '供給エネルギー強化を一度も発生させずに勝利する',
                 condition: (game) => this.stats[1].rewardEnergy.game === 0,
                 metric: (game) => this.stats[1].rewardEnergy.game,
                 metricType: 'min',
@@ -193,9 +193,29 @@ export class AchievementManager {
             {
                 id: 'core_frugal',
                 title: '第一形態維持',
-                description: '自分のコアを一度も増幅させずに勝利する',
+                description: '自分のコアを一度も追加せずに勝利する',
                 condition: (game) => this.stats[1].rewardCore.game === 0,
                 metric: (game) => this.stats[1].rewardCore.game,
+                metricType: 'min',
+                metricCondition: (game) => game.winner === 1
+            },
+            {
+                id: 'efficient_resonance',
+                title: '効率的共鳴',
+                description: '累積連鎖回数を10回以下に抑えて勝利する',
+                condition: (game) => {
+                    const p1Starts = game.coinToss?.result !== 2;
+                    const adjustedTurns = game.turnCount + (p1Starts ? 1 : 0);
+                    const p1Turns = Math.floor(adjustedTurns / 2);
+                    const cascades = this.stats[1].actions.game - p1Turns;
+                    return cascades <= 10;
+                },
+                metric: (game) => {
+                    const p1Starts = game.coinToss?.result !== 2;
+                    const adjustedTurns = game.turnCount + (p1Starts ? 1 : 0);
+                    const p1Turns = Math.floor(adjustedTurns / 2);
+                    return Math.max(0, this.stats[1].actions.game - p1Turns);
+                },
                 metricType: 'min',
                 metricCondition: (game) => game.winner === 1
             },
@@ -409,7 +429,7 @@ export class AchievementManager {
             {
                 id: 'total_wins_20',
                 title: '常勝軍団',
-                description: '通算20勝を達成する',
+                description: 'AIに通算20勝する',
                 condition: (game, context) => (context && context.totalWins >= 20),
                 metric: (game, context) => context.totalWins,
                 metricType: 'max'

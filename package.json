@@ -1,6 +1,6 @@
 {
   "name": "burst-cascade",
-  "version": "0.8.5",
+  "version": "0.9.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

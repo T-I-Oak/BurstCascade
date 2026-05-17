@@ -308,3 +308,24 @@
     background: rgba(239, 68, 68, 0.1);
     opacity: 1 !important;
 }
+
+/* RETURN TO TITLE ボタンの右寄せ */
+#achievements-back-btn {
+    margin-left: auto;
+}
+
+/* MINIメダル用の内側の背景トーンダウン定義（メダル外形やリボンは通常輝度のまま） */
+.medal-svg.mini.easy .medal-base {
+    fill: #8c531e !important; /* ダークブロンズ */
+}
+.medal-svg.mini.normal .medal-base {
+    fill: #787878 !important; /* ダークシルバー */
+}
+.medal-svg.mini.hard .medal-base {
+    fill: #ad8f00 !important; /* ダークゴールド */
+}
+
+/* 暗くなった背景に対して、文字盤の文字を明るい白半透明に反転させて浮き上がらせる */
+.medal-svg.mini .medal-text {
+    fill: rgba(255, 255, 255, 0.2) !important;
+}

@@ -239,11 +239,15 @@ export class UIManager {
             }
             if (cardStateClass) card.classList.add(cardStateClass);
 
-            const getMedalSVG = (type) => {
+            const getMedalSVG = (type, mapType) => {
                 const initial = type[0].toUpperCase();
+                const ribbonStripe = mapType === 'regular'
+                    ? '<rect x="11" y="2" width="2" height="9.5" fill="#38bdf8" />'
+                    : '';
                 return `
-                    <svg viewBox="0 0 24 24" class="medal-svg ${type}">
+                    <svg viewBox="0 0 24 24" class="medal-svg ${type} ${mapType}">
                         <path d="M7 2 L17 2 L17 15 L12 11 L7 15 Z" class="medal-ribbon"/>
+                        ${ribbonStripe}
                         <circle cx="12" cy="14" r="8.5" class="medal-base"/>
                         <circle cx="12" cy="14" r="6.5" class="medal-inner-rim" fill="none" stroke-width="0.8"/>
                         <text x="12" y="17.5" text-anchor="middle" class="medal-text">${initial}</text>
@@ -251,12 +255,13 @@ export class UIManager {
                 `;
             };
 
-            const createMedalSlot = (earned, type, bestVal) => {
+            const createMedalSlot = (earned, type, bestVal, mapType) => {
                 const labels = { easy: 'EASY', normal: 'NORM', hard: 'HARD' };
-                const visual = earned ? getMedalSVG(type) : `<span class="medal-label">${labels[type]}</span>`;
+                const visual = earned ? getMedalSVG(type, mapType) : `<span class="medal-label">${labels[type]}</span>`;
                 const statusClass = earned ? 'earned' : 'locked';
+                const miniClass = mapType === 'mini' ? 'mini' : '';
                 
-                let html = `<div class="medal-slot ${statusClass} ${type}">
+                let html = `<div class="medal-slot ${statusClass} ${type} ${miniClass}">
                     ${visual}`;
                 
                 if (g.isDevMode && bestVal !== undefined) {
@@ -275,17 +280,17 @@ export class UIManager {
                     <div class="matrix-row">
                         <span class="map-label">MINI</span>
                         <div class="medal-slots">
-                            ${createMedalSlot(mini.earned.easy, 'easy', mini.best.easy)}
-                            ${createMedalSlot(mini.earned.normal, 'normal', mini.best.normal)}
-                            ${createMedalSlot(mini.earned.hard, 'hard', mini.best.hard)}
+                            ${createMedalSlot(mini.earned.easy, 'easy', mini.best.easy, 'mini')}
+                            ${createMedalSlot(mini.earned.normal, 'normal', mini.best.normal, 'mini')}
+                            ${createMedalSlot(mini.earned.hard, 'hard', mini.best.hard, 'mini')}
                         </div>
                     </div>
                     <div class="matrix-row">
                         <span class="map-label">REGULAR</span>
                         <div class="medal-slots">
-                            ${createMedalSlot(regular.earned.easy, 'easy', regular.best.easy)}
-                            ${createMedalSlot(regular.earned.normal, 'normal', regular.best.normal)}
-                            ${createMedalSlot(regular.earned.hard, 'hard', regular.best.hard)}
+                            ${createMedalSlot(regular.earned.easy, 'easy', regular.best.easy, 'regular')}
+                            ${createMedalSlot(regular.earned.normal, 'normal', regular.best.normal, 'regular')}
+                            ${createMedalSlot(regular.earned.hard, 'hard', regular.best.hard, 'regular')}
                         </div>
                     </div>
                 </div>
