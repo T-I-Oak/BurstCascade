@@ -19,9 +19,9 @@
 - **[STOP] オーナーの承認を得る**
 
 ### No.02: テスト環境の仮想DOM更新とテストの合格確認
-- [ ] `tests/vitest.setup.js` の `document.body.innerHTML` において、`id="size-select"` の `selected` クラスを `regular` から `mini` に変更する。
-- [ ] 各テストファイル（`uiManager.test.js`, `renderer.test.js`, `main.test.js`, `inputHandler.test.js`, `gameStateManager.test.js`）内の `document.body.innerHTML` の `size-select` 部分についても同様に `selected` クラスを `mini` に変更する。
-- [ ] `npm test` を実行し、既存および変更後のすべてのテストが完全にパスすることを確認する。
+- [x] `tests/vitest.setup.js` の `document.body.innerHTML` において、`id="size-select"` の `selected` クラスを `regular` から `mini` に変更する。
+- [x] 各テストファイル（`uiManager.test.js`, `renderer.test.js`, `main.test.js`, `inputHandler.test.js`, `gameStateManager.test.js`）内の `document.body.innerHTML` の `size-select` 部分についても同様に `selected` クラスを `mini` に変更する。
+- [x] `npm test` を実行し、既存および変更後のすべてのテストが完全にパスすることを確認する。
 - **[STOP] オーナーの承認を得る**
 
 ### No.03: 最終監査・ドキュメント更新
