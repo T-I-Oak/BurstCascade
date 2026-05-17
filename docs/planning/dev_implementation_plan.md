@@ -14,8 +14,8 @@
 ## 3. 実装ステップ
 
 ### No.01: 設定ロード初期値とHTMLデフォルトの変更
-- [ ] `src/main.js` 内の `loadSettings` に定義されている設定未保存時の初期オブジェクト（`migrationMap.init()`）で、`size` を `'regular'` から `'mini'` に変更する。
-- [ ] `index.html` 内の `MAP SIZE` トグルオプション（`id="size-select"`）にて、`data-value="mini"` に `selected` クラスを付与し、`data-value="regular"` から `selected` クラスを除去する。
+- [x] `src/main.js` 内の `loadSettings` に定義されている設定未保存時の初期オブジェクト（`migrationMap.init()`）で、`size` を `'regular'` から `'mini'` に変更する。
+- [x] `index.html` 内の `MAP SIZE` トグルオプション（`id="size-select"`）にて、`data-value="mini"` に `selected` クラスを付与し、`data-value="regular"` から `selected` クラスを除去する。
 - **[STOP] オーナーの承認を得る**
 
 ### No.02: テスト環境の仮想DOM更新とテストの合格確認
