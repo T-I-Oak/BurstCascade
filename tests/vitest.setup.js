@@ -138,8 +138,8 @@ beforeEach(() => {
                 <button class="toggle-btn" data-value="pvp"></button>
             </div>
             <div id="size-select">
-                <button class="toggle-btn" data-value="mini"></button>
-                <button class="toggle-btn selected" data-value="regular"></button>
+                <button class="toggle-btn selected" data-value="mini"></button>
+                <button class="toggle-btn" data-value="regular"></button>
             </div>
             <div id="ai-level-select">
                 <button class="toggle-btn" data-value="easy"></button>
