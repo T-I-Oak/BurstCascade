@@ -20,8 +20,8 @@ describe('UIManager Module', () => {
                 <div class="toggle-btn" data-value="pvp"></div>
             </div>
             <div id="size-select">
-                <div class="toggle-btn selected" data-value="regular"></div>
-                <div class="toggle-btn" data-value="mini"></div>
+                <div class="toggle-btn" data-value="regular"></div>
+                <div class="toggle-btn selected" data-value="mini"></div>
             </div>
             <div id="ai-level-select">
                 <div class="toggle-btn selected" data-value="normal"></div>

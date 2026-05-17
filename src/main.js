@@ -145,7 +145,7 @@ export class Game {
         const migrationMap = {
             init: () => ({
                 mode: 'pvc',
-                size: 'regular',
+                size: 'mini',
                 aiLevel: 'normal',
                 volume: 50
             })
