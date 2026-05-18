@@ -1,6 +1,6 @@
 import { Hex, Layout } from './map.js';
 
-export class TutorialRenderer {
+export class HowToPlayRenderer {
     constructor() {
         this.game = window.game;
         this.init();

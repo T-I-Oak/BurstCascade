@@ -970,8 +970,8 @@ main {
     letter-spacing: 0.2rem;
 }
 
-/* Tutorial Canvas */
-.tutorial-float-right {
+/* How to Play Canvas */
+.how-to-play-float-right {
     float: right;
     margin: 0 0 1rem 1.5rem;
     text-align: center;
@@ -982,7 +982,7 @@ main {
     padding: 10px;
 }
 
-.tutorial-canvas {
+.how-to-play-canvas {
     /* background/border removed */
     display: block;
 }
@@ -1154,7 +1154,7 @@ main {
     }
 }
 
-.tutorial-caption {
+.how-to-play-caption {
     font-size: 0.8rem;
     color: #94a3b8;
     margin-top: 0.3rem;
