@@ -365,7 +365,7 @@ main {
 .menu-scroll-container::-webkit-scrollbar,
 .help-scroll-container::-webkit-scrollbar,
 .result-scroll-container::-webkit-scrollbar,
-.achievements-scroll-container::-webkit-scrollbar,
+.AchievementsScrollContainer::-webkit-scrollbar,
 #achievements-list::-webkit-scrollbar {
     width: 6px;
 }
@@ -373,7 +373,7 @@ main {
 .menu-scroll-container::-webkit-scrollbar-track,
 .help-scroll-container::-webkit-scrollbar-track,
 .result-scroll-container::-webkit-scrollbar-track,
-.achievements-scroll-container::-webkit-scrollbar-track,
+.AchievementsScrollContainer::-webkit-scrollbar-track,
 #achievements-list::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.05);
     border-radius: 3px;
@@ -382,7 +382,7 @@ main {
 .menu-scroll-container::-webkit-scrollbar-thumb,
 .help-scroll-container::-webkit-scrollbar-thumb,
 .result-scroll-container::-webkit-scrollbar-thumb,
-.achievements-scroll-container::-webkit-scrollbar-thumb,
+.AchievementsScrollContainer::-webkit-scrollbar-thumb,
 #achievements-list::-webkit-scrollbar-thumb {
     background: var(--accent-color);
     border-radius: 3px;

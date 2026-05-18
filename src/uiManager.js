@@ -43,7 +43,7 @@ export class UIManager {
         g.achievementResetBtn = getEl('achievement-reset-btn');
         g.achievementsTableBody = document.querySelector('#achievements-table tbody');
         g.achievementPercent = getEl('achievement-percent');
-        g.achievementTabs = document.querySelectorAll('.tab-btn');
+        g.achievementTabs = document.querySelectorAll('.TabButton');
 
         // --- 開発者モードの初期化 ---
         g.isDevMode = localStorage.getItem('burst-cascade-dev-mode') === 'true';
@@ -224,18 +224,21 @@ export class UIManager {
             const isUnlockedAny = earnedCount > 0;
 
             const card = document.createElement('div');
-            card.className = 'ach-card';
-            if (isMastered) card.classList.add('mastered');
-            else if (isUnlockedAny) card.classList.add('unlocked-any');
+            card.className = 'AchievementCard';
+            if (isMastered) {
+                card.classList.add('state-mastered', 'texture-gold');
+            } else if (isUnlockedAny) {
+                card.classList.add('state-unlocked-any', 'texture-bronze-gold');
+            }
 
             let displayTitle = '???';
             let displayDesc = '???';
-            let cardStateClass = 'locked-all';
+            let cardStateClass = 'state-locked-all';
 
             if (item.isRevealed) {
                 displayTitle = item.title;
                 displayDesc = item.isHint ? '？？？' : item.description;
-                cardStateClass = item.isHint ? 'is-hint' : '';
+                cardStateClass = item.isHint ? 'state-hint' : '';
             }
             if (cardStateClass) card.classList.add(cardStateClass);
 
@@ -258,10 +261,10 @@ export class UIManager {
             const createMedalSlot = (earned, type, bestVal, mapType) => {
                 const labels = { easy: 'EASY', normal: 'NORM', hard: 'HARD' };
                 const visual = earned ? getMedalSVG(type, mapType) : `<span class="medal-label">${labels[type]}</span>`;
-                const statusClass = earned ? 'earned' : 'locked';
+                const statusClass = earned ? 'state-earned' : 'state-locked';
                 const miniClass = mapType === 'mini' ? 'mini' : '';
                 
-                let html = `<div class="medal-slot ${statusClass} ${type} ${miniClass}">
+                let html = `<div class="MedalSlot ${statusClass} ${type} ${miniClass}">
                     ${visual}`;
                 
                 if (g.isDevMode && bestVal !== undefined) {
@@ -272,22 +275,22 @@ export class UIManager {
             };
 
             card.innerHTML = `
-                <div class="ach-card-left">
+                <div class="AchievementCardLeft">
                     <span class="ach-name">${displayTitle}</span>
                     <span class="ach-desc">${displayDesc}</span>
                 </div>
-                <div class="ach-card-right">
-                    <div class="matrix-row">
+                <div class="AchievementCardRight">
+                    <div class="MatrixRow">
                         <span class="map-label">MINI</span>
-                        <div class="medal-slots">
+                        <div class="MedalSlots">
                             ${createMedalSlot(mini.earned.easy, 'easy', mini.best.easy, 'mini')}
                             ${createMedalSlot(mini.earned.normal, 'normal', mini.best.normal, 'mini')}
                             ${createMedalSlot(mini.earned.hard, 'hard', mini.best.hard, 'mini')}
                         </div>
                     </div>
-                    <div class="matrix-row">
+                    <div class="MatrixRow">
                         <span class="map-label">REGULAR</span>
-                        <div class="medal-slots">
+                        <div class="MedalSlots">
                             ${createMedalSlot(regular.earned.easy, 'easy', regular.best.easy, 'regular')}
                             ${createMedalSlot(regular.earned.normal, 'normal', regular.best.normal, 'regular')}
                             ${createMedalSlot(regular.earned.hard, 'hard', regular.best.hard, 'regular')}

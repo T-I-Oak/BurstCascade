@@ -119,13 +119,15 @@ beforeEach(() => {
                     <button id="help-close-btn"></button>
                     <button class="help-back-btn"></button>
                 </div>
-                <div id="achievements-content" class="modal-content hidden">
+                <div id="achievements-content" class="modal-content theme-cyber hidden">
                     <button id="achievements-back-btn"></button>
                     <button id="achievement-reset-btn"></button>
                     <table id="achievements-table"><tbody></tbody></table>
                     <div id="achievement-percent"></div>
-                    <button class="tab-btn" data-map="mini"></button>
-                    <button class="tab-btn" data-map="regular"></button>
+                    <div class="Tabs">
+                        <button class="TabButton" data-map="mini"></button>
+                        <button class="TabButton" data-map="regular"></button>
+                    </div>
                 </div>
                 <div id="game-over-content" class="modal-content hidden">
                     <h2 id="winner-text"></h2>

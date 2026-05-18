@@ -1,4 +1,8 @@
-/* 実績画面 (Ver 7.0.0 - Unified Dashboard) */
+/* theme-cyber: Burst Cascade's default cyber-neon dark style */
+.theme-cyber {
+    --ach-modal-border: rgba(56, 189, 248, 0.3);
+    --ach-text-gradient-end: var(--accent-color);
+}
 
 #achievements-content {
     max-width: 1000px; /* カード2列表示のため広げる */
@@ -10,11 +14,11 @@
     font-size: 2rem;
     margin-top: 0;
     margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, #fff, var(--accent-color));
+    background: linear-gradient(135deg, #fff, var(--ach-text-gradient-end, var(--accent-color)));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
-    border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+    border-bottom: 1px solid var(--ach-modal-border, rgba(56, 189, 248, 0.3));
     padding-bottom: 0.5rem;
 }
 
@@ -25,11 +29,11 @@
 }
 
 /* タブは廃止予定だが、一応非表示にしておく (ロジック変更までの猶予) */
-.tabs {
+.Tabs {
     display: none;
 }
 
-.achievements-scroll-container {
+.AchievementsScrollContainer {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -46,7 +50,7 @@
 }
 
 /* カード基本スタイル */
-.ach-card {
+.AchievementCard {
     display: flex;
     background: rgba(30, 41, 59, 0.7);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -58,7 +62,7 @@
 }
 
 /* 左側：実績情報 */
-.ach-card-left {
+.AchievementCardLeft {
     flex: 1.2;
     padding: 1.2rem;
     display: flex;
@@ -85,7 +89,7 @@
 }
 
 /* 右側：進捗マトリックス */
-.ach-card-right {
+.AchievementCardRight {
     flex: 1;
     padding: 0.8rem 1.2rem;
     display: flex;
@@ -96,7 +100,7 @@
     border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.matrix-row {
+.MatrixRow {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -112,12 +116,12 @@
     opacity: 0.8;
 }
 
-.medal-slots {
+.MedalSlots {
     display: flex;
     gap: 0.4rem;
 }
 
-.medal-slot {
+.MedalSlot {
     width: 36px;
     height: 36px;
     display: flex;
@@ -137,7 +141,7 @@
     display: block;
 }
 
-.medal-slot.locked {
+.MedalSlot.state-locked {
     color: rgba(255, 255, 255, 0.1);
 }
 
@@ -170,74 +174,73 @@
 .medal-svg.normal .medal-base { fill: #c0c0c0; } /* Silver */
 .medal-svg.hard .medal-base { fill: #ffd700; }   /* Gold */
 
-/* 完全制覇時のメダルテキスト反転 (削除) */
-.ach-card.mastered .medal-text {
+.AchievementCard.state-mastered .medal-text {
     /* 共通の rgba(255, 255, 255, 0.1) を維持 */
 }
 
-.ach-card.mastered .medal-ribbon {
+.AchievementCard.state-mastered .medal-ribbon {
     filter: brightness(0.8) contrast(1.2); /* ゴールド背景に合わせて少し落ち着かせる */
 }
 
-.medal-slot.earned {
+.MedalSlot.state-earned {
     animation: medal-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
-.medal-slot.earned.easy { filter: drop-shadow(0 0 5px rgba(205, 127, 50, 0.6)); }
-.medal-slot.earned.normal { filter: drop-shadow(0 0 5px rgba(192, 192, 192, 0.6)); }
-.medal-slot.earned.hard { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)); }
+.MedalSlot.state-earned.easy { filter: drop-shadow(0 0 5px rgba(205, 127, 50, 0.6)); }
+.MedalSlot.state-earned.normal { filter: drop-shadow(0 0 5px rgba(192, 192, 192, 0.6)); }
+.MedalSlot.state-earned.hard { filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6)); }
 
 /* --- 段階的なビジュアル変化 --- */
 
 /* 解除済み (1/6以上) - 左側がゴールド */
-.ach-card.unlocked-any .ach-card-left,
-.ach-card.mastered .ach-card-left {
+.AchievementCard.texture-bronze-gold .AchievementCardLeft,
+.AchievementCard.texture-gold .AchievementCardLeft {
     background: linear-gradient(135deg, #ebed58 0%, #8a691e 100%);
 }
 
-.ach-card.unlocked-any .ach-name,
-.ach-card.mastered .ach-name {
-    color: #1c0d0d !important;
+.AchievementCard.texture-bronze-gold .ach-name,
+.AchievementCard.texture-gold .ach-name {
+    color: #1c0d0d;
 }
 
-.ach-card.unlocked-any .ach-desc,
-.ach-card.mastered .ach-desc {
-    color: rgba(28, 13, 13, 0.8) !important;
+.AchievementCard.texture-bronze-gold .ach-desc,
+.AchievementCard.texture-gold .ach-desc {
+    color: rgba(28, 13, 13, 0.8);
 }
 
 /* 完全制覇 (6/6) - 全面ゴールド */
-.ach-card.mastered {
+.AchievementCard.state-mastered {
     border-color: #fbbf24;
     box-shadow: 0 0 25px rgba(235, 237, 88, 0.2);
 }
 
-.ach-card.mastered .ach-card-right {
+.AchievementCard.texture-gold .AchievementCardRight {
     background: linear-gradient(135deg, rgba(235, 237, 88, 0.9) 0%, rgba(138, 105, 30, 0.9) 100%);
     border-left-color: rgba(28, 13, 13, 0.1);
 }
 
-.ach-card.mastered .map-label,
-.ach-card.mastered .medal-label {
-    color: #1c0d0d !important;
-    opacity: 1 !important;
+.AchievementCard.state-mastered .map-label,
+.AchievementCard.state-mastered .medal-label {
+    color: #1c0d0d;
+    opacity: 1;
 }
 
-.ach-card.mastered .medal-slot {
+.AchievementCard.state-mastered .MedalSlot {
     background: rgba(0, 0, 0, 0.5);
     border-color: rgba(28, 13, 13, 0.1);
 }
 
 /* 未公開 (Revealedロジック用) */
-.ach-card.locked-all .ach-name,
-.ach-card.locked-all .ach-desc {
+.AchievementCard.state-locked-all .ach-name,
+.AchievementCard.state-locked-all .ach-desc {
     color: rgba(255, 255, 255, 0.3);
 }
 
-.ach-card.is-hint .ach-name {
+.AchievementCard.state-hint .ach-name {
     color: rgba(255, 255, 255, 0.7);
 }
 
-.ach-card.is-hint .ach-desc {
+.AchievementCard.state-hint .ach-desc {
     color: rgba(255, 255, 255, 0.5);
 }
 
@@ -263,8 +266,8 @@
     line-height: 1;
 }
 
-.ach-card.unlocked-any .dev-best,
-.ach-card.mastered .dev-best {
+.AchievementCard.texture-bronze-gold .dev-best,
+.AchievementCard.texture-gold .dev-best {
     color: #1c0d0d; /* ゴールド背景時は暗い色に */
 }
 
@@ -276,13 +279,13 @@
 }
 
 @media (max-width: 480px) {
-    .ach-card {
+    .AchievementCard {
         flex-direction: column;
     }
-    .ach-card-left {
+    .AchievementCardLeft {
         padding: 1rem;
     }
-    .ach-card-right {
+    .AchievementCardRight {
         border-left: none;
         border-top: 1px solid rgba(255, 255, 255, 0.1);
         padding: 1rem;
@@ -304,9 +307,9 @@
     transition: all 0.2s;
 }
 
-.debug-btn:hover {
+#achievements-content .debug-btn:hover {
     background: rgba(239, 68, 68, 0.1);
-    opacity: 1 !important;
+    opacity: 1;
 }
 
 /* RETURN TO TITLE ボタンの右寄せ */
@@ -316,16 +319,16 @@
 
 /* MINIメダル用の内側の背景トーンダウン定義（メダル外形やリボンは通常輝度のまま） */
 .medal-svg.mini.easy .medal-base {
-    fill: #8c531e !important; /* ダークブロンズ */
+    fill: #8c531e; /* ダークブロンズ */
 }
 .medal-svg.mini.normal .medal-base {
-    fill: #787878 !important; /* ダークシルバー */
+    fill: #787878; /* ダークシルバー */
 }
 .medal-svg.mini.hard .medal-base {
-    fill: #ad8f00 !important; /* ダークゴールド */
+    fill: #ad8f00; /* ダークゴールド */
 }
 
 /* 暗くなった背景に対して、文字盤の文字を明るい白半透明に反転させて浮き上がらせる */
 .medal-svg.mini .medal-text {
-    fill: rgba(255, 255, 255, 0.2) !important;
+    fill: rgba(255, 255, 255, 0.2);
 }
