@@ -11,6 +11,12 @@
     --p1-color: #ef4444;
     --p2-color: #3b82f6;
     --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+
+    /* チュートリアル用スタイル定義（サイバーネオン＆ぼかし） */
+    --tutorial-mask-color: rgba(10, 15, 30, 0.7);
+    --tutorial-highlight-stroke: rgba(56, 189, 248, 0.6);
+    --tutorial-highlight-shadow: rgba(56, 189, 248, 0.8);
+    --tutorial-highlight-shadow-blur: 15;
 }
 
 body {
@@ -1448,3 +1454,131 @@ main {
 .share-confirm-buttons button {
     min-width: 120px;
 }
+
+/* ==========================================================================
+   チュートリアル・システムUI (Ver 0.13.0)
+   ========================================================================== */
+#tutorial-mask-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9998;
+}
+
+.tutorial-tooltip {
+    position: fixed;
+    width: 320px;
+    padding: 1.25rem;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(56, 189, 248, 0.5);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(56, 189, 248, 0.25);
+    color: #f8fafc;
+    z-index: 9999;
+    font-family: inherit;
+    pointer-events: auto;
+    opacity: 1;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    animation: tooltipFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.tutorial-tooltip.hidden {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    position: fixed;
+}
+
+.tooltip-arrow {
+    position: absolute;
+    width: 0;
+    height: 0;
+    border-style: solid;
+}
+
+/* 上向きの矢印（吹き出しが対象の下側に配置される場合） */
+.tooltip-arrow.arrow-up {
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 0 8px 8px 8px;
+    border-color: transparent transparent rgba(56, 189, 248, 0.5) transparent;
+}
+.tooltip-arrow.arrow-up::after {
+    content: '';
+    position: absolute;
+    top: 1px;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 8px 8px 8px;
+    border-color: transparent transparent rgba(15, 23, 42, 0.95) transparent;
+}
+
+/* 下向きの矢印（吹き出しが対象の上側に配置される場合） */
+.tooltip-arrow.arrow-down {
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 8px 8px 0 8px;
+    border-color: rgba(56, 189, 248, 0.5) transparent transparent transparent;
+}
+.tooltip-arrow.arrow-down::after {
+    content: '';
+    position: absolute;
+    bottom: 1px;
+    left: -8px;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 8px 8px 0 8px;
+    border-color: rgba(15, 23, 42, 0.95) transparent transparent transparent;
+}
+
+.tooltip-content h3 {
+    color: #38bdf8;
+    font-size: 1.1rem;
+    margin: 0 0 0.5rem 0;
+    font-weight: 700;
+    letter-spacing: 0.05rem;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.2);
+    padding-bottom: 0.4rem;
+}
+
+.tooltip-content p {
+    color: #cbd5e1;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    margin: 0 0 1rem 0;
+    text-align: left;
+}
+
+.tooltip-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.tooltip-actions .menu-btn {
+    padding: 0.4rem 1.25rem;
+    font-size: 0.8rem;
+    margin: 0;
+}
+

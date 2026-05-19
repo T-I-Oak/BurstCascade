@@ -14,6 +14,15 @@ export class GameStateManager {
         const oldNotify = document.getElementById('achievement-notification');
         if (oldNotify) oldNotify.remove();
 
+        // ゲーム開始時にチュートリアル状態を確実に非表示リセット (No.05)
+        if (window.tutorialManager) {
+            window.tutorialManager.isShowing = false;
+            const tooltipEl = document.getElementById('tutorial-tooltip');
+            if (tooltipEl) tooltipEl.classList.add('hidden');
+            const maskCanvas = document.getElementById('tutorial-mask-canvas');
+            if (maskCanvas) maskCanvas.classList.add('hidden');
+        }
+
         const modeEl = g.playerSelect ? g.playerSelect.querySelector('.selected') : null;
         const sizeEl = g.sizeSelect ? g.sizeSelect.querySelector('.selected') : null;
         const aiLevelEl = g.aiLevelSelect ? g.aiLevelSelect.querySelector('.selected') : null;
@@ -126,6 +135,15 @@ export class GameStateManager {
         g.isAIThinking = false;
         g.turnEndRequested = false;
 
+        // タイトルに戻る際にもチュートリアルを確実に非表示クリア
+        if (window.tutorialManager) {
+            window.tutorialManager.isShowing = false;
+            const tooltipEl = document.getElementById('tutorial-tooltip');
+            if (tooltipEl) tooltipEl.classList.add('hidden');
+            const maskCanvas = document.getElementById('tutorial-mask-canvas');
+            if (maskCanvas) maskCanvas.classList.add('hidden');
+        }
+
         if (g.aiTimer) {
             clearTimeout(g.aiTimer);
             g.aiTimer = null;
@@ -160,6 +178,11 @@ export class GameStateManager {
             this.resetTurnStats();
 
             g.sound.playTurnChange();
+
+            // 【移送先①】：通常のターン交代により、Player 1のターンが開始されたその瞬間 (1回限り)
+            if (g.gameMode && g.currentPlayer === 1 && window.tutorialManager) {
+                window.tutorialManager.checkTrigger('turnStart', { game: g });
+            }
 
             if (g.gameMode === 'pvc' && g.currentPlayer === 2 && !g.gameOver) {
                 if (g.aiTimer) clearTimeout(g.aiTimer);
@@ -207,7 +230,7 @@ export class GameStateManager {
         g.hoveredNeighbors = [];
 
         g.isProcessingMove = true;
-        g.lastMoveHex = null;
+        g.lastMoveHex = targetHex;
         g.isWaitingForDrop = true;
         g.turnHadBurst = false;
         g.turnHadReward = false;
@@ -326,8 +349,9 @@ export class GameStateManager {
         }
     }
 
-    processChainReaction() {
+    processChainReaction(skipTutorial = false) {
         const g = this.game;
+
         const overflowedHexes = g.map.mainHexes.filter(h => h.height > 9 || h.height < -9);
 
         if (overflowedHexes.length === 0) {
@@ -339,6 +363,17 @@ export class GameStateManager {
                 this.finalizeTurn(false);
             }
             return;
+        }
+
+        // ★ 移送先：実際に爆発（バースト）が発生することが100%確定した、爆発キック直前の瞬間 (1回限り)
+        if (g.currentPlayer === 1 && window.tutorialManager && !skipTutorial) {
+            if (window.tutorialManager.checkTrigger('burst', { game: g })) {
+                // チュートリアルが表示されたため、連鎖爆発の実行を引き止めてフリーズ
+                g.pendingAction = () => {
+                    this.processChainReaction(true); // 再開時は判定をバイパスして即座に爆発！
+                };
+                return;
+            }
         }
 
         overflowedHexes.forEach(h => {

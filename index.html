@@ -195,8 +195,12 @@
                             </ul>
                         </section>
 
+                        <div class="tutorial-reset-container" style="margin: 20px 0; padding: 15px 10px; border-top: 1px solid rgba(56, 189, 248, 0.2); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; color: #cbd5e1;">
+                            <input type="checkbox" id="tutorial-reset-checkbox" style="width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer;">
+                            <label for="tutorial-reset-checkbox" style="cursor: pointer; user-select: none;">チュートリアルを最初から表示する</label>
+                        </div>
                     </div>
-                    <button id="help-bottom-back-btn" class="close-btn help-back-btn">RETURN TO TITLE</button>
+                    <button id="help-bottom-back-btn" class="close-btn">RETURN TO TITLE</button>
                     <button id="help-close-btn" class="close-btn hidden">CLOSE</button>
                 </div>
 
@@ -278,7 +282,20 @@
                     <div class="circuit-path p1"></div>
                     <div class="circuit-path p2"></div>
                     <div class="circuit-path p3"></div>
-                    <div class="circuit-text">ANALYZING CASCADE...</div>
+                </div>
+            </div>
+
+
+            <!-- チュートリアル用の動的暗幕マスクと吹き出しUI (Ver 0.13.0) -->
+            <canvas id="tutorial-mask-canvas" class="hidden"></canvas>
+            <div id="tutorial-tooltip" class="tutorial-tooltip hidden">
+                <div class="tooltip-arrow"></div>
+                <div class="tooltip-content">
+                    <h3 id="tutorial-title">Welcome to Burst Cascade</h3>
+                    <p id="tutorial-message">チュートリアルメッセージ</p>
+                    <div class="tooltip-actions">
+                        <button id="tutorial-next-btn" class="menu-btn primary small">OK</button>
+                    </div>
                 </div>
             </div>
         </main>

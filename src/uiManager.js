@@ -35,7 +35,7 @@ export class UIManager {
         g.gameStartBtn = getEl('game-start-btn');
         g.restartBtn = getEl('restart-btn');
         g.helpCloseBtn = getEl('help-close-btn');
-        g.helpBackBtn = document.querySelector('.help-back-btn');
+        g.helpBackBtn = getEl('help-bottom-back-btn');
 
         g.achievementsBtn = getEl('achievements-btn');
         g.achievementsContent = getEl('achievements-content');
@@ -104,7 +104,9 @@ export class UIManager {
                 this.closeOverlay();
                 if (!g.gameMode) g.sound.startBgm('title');
             });
-            if (g.helpBackBtn) g.helpBackBtn.addEventListener('click', () => this.showModeSelection());
+            if (g.helpBackBtn) g.helpBackBtn.addEventListener('click', () => {
+                g.resetToTitle();
+            });
 
             if (g.achievementsBtn) g.achievementsBtn.addEventListener('click', () => this.showAchievements());
             if (g.achievementsBackBtn) g.achievementsBackBtn.addEventListener('click', () => this.showModeSelection());

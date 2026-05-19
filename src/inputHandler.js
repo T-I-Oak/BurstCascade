@@ -73,6 +73,7 @@ export class InputHandler {
     handleClick(e) {
         const g = this.game;
         if (g.gameOver || g.isProcessingMove || g.isAIThinking || g.coinToss.active || g.currentPlayer === 0) return;
+        if (window.tutorialManager && window.tutorialManager.isShowing) return;
 
         const rect = g.canvas.getBoundingClientRect();
         const mouseX = (e.isSimulated ? e.clientX : (e.clientX || (e.touches && e.touches[0].clientX))) - rect.left;

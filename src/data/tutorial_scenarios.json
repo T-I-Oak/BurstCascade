@@ -1,0 +1,125 @@
+[
+  {
+    "trigger": "turnStart",
+    "title": "Welcome to Burst Cascade",
+    "pages": [
+      {
+        "message": "Burst Cascade へようこそ。このゲームは陣取りストラテジーゲームです。相手のコアを全滅させたら勝利です。まずは自陣（緑色）のグリッドをどれか1つタップしてみましょう。",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "map-all",
+            "shape": "rect"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trigger": "afterInject",
+    "title": "Energy Injected!",
+    "pages": [
+      {
+        "message": "素晴らしい！自陣のグリッドをタップすると、その位置と周囲のグリッドにエネルギーが注入されます。",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "tapped-hex-area",
+            "shape": "circle"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trigger": "turnStart",
+    "title": "Energy Indicator",
+    "pages": [
+      {
+        "message": "自陣グリッドをタップしたときに各グリッドに注入されるエネルギーの量は、プレイヤーごとのエリアに表示されています。",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "p1-hand",
+            "shape": "circle",
+            "padding": 25
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trigger": "turnStart",
+    "title": "Core Crystal",
+    "pages": [
+      {
+        "message": "グリッド上に置かれているクリスタルが「コア」です。グリッドを失った場合、そこにあるコアも同時に失われます。グリッドが保有できるエネルギーは最大9です。エネルギーが0になるか9を超えると、グリッドは消滅します。",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "map-all",
+            "shape": "rect"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trigger": "burst",
+    "title": "Grid Burst!",
+    "pages": [
+      {
+        "message": "エネルギー値が9を超えるとそのグリッドは爆発（Burst）します。爆発を発生させたプレイヤーは連続してエネルギーを注入することができます。",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "burst-hex",
+            "shape": "circle"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trigger": "burst",
+    "title": "Cascade Indicator",
+    "pages": [
+      {
+        "message": "爆発（Burst）を発生させると、爆発させたグリッドの陣営に応じたインジケーターが進みます。自陣グリッドを1ターン内で4回以上爆発させると、エネルギー注入の連続注入は終了して相手ターンに変わります。相手グリッドを2回爆発させるごとにランダムな自陣にコアが追加されます。",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "p1-indicator",
+            "shape": "rect"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "trigger": "turnStart",
+    "title": "Victory & Beyond",
+    "pages": [
+      {
+        "message": "自陣のコアを守りながら、相手のコアを全滅させたら勝利です。爆発（Burst）をうまく使って勝利をつかみ取ってください！！",
+        "highlight": [
+          {
+            "elementId": "game-canvas",
+            "targetType": "map-all",
+            "shape": "rect"
+          }
+        ]
+      },
+      {
+        "message": "詳しいゲームのルールは How To Play を参照してください。How To Play 内の「チュートリアルを最初から表示する」をチェックすることで、チュートリアルを最初から見直すことができます。それではゲームを楽しんでください！！",
+        "highlight": [
+          {
+            "elementId": "help-btn",
+            "targetType": "dom-element",
+            "shape": "rect"
+          }
+        ]
+      }
+    ]
+  }
+]

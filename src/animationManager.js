@@ -109,9 +109,35 @@ export class AnimationManager {
 
             // 1. 土地の着弾待ち（すべて着弾した場合）
             if (g.isWaitingForDrop && lands.every(de => de.landed)) {
-                // 土地をエフェクトから除去（連鎖計算に影響を与えないため）
+                // もし afterInject または burst チュートリアルが起動予定なら、
+                // 即座にフェーズを終了せず、盤面の隆起イージングが完全に完了するのを待つ
+                if (g.currentPlayer === 1 && window.tutorialManager) {
+                    const willTriggerAfterInject = window.tutorialManager.willTrigger('afterInject', { game: g });
+                    const hasBurst = g.map.mainHexes.some(h => h.height > 9 || h.height < -9);
+                    const willTriggerBurst = hasBurst && window.tutorialManager.willTrigger('burst', { game: g });
+
+                    if (willTriggerAfterInject || willTriggerBurst) {
+                        const isEasingFinished = g.map.hexes.every(hex => Math.abs(hex.height - hex.visualHeight) < 0.05);
+                        if (!isEasingFinished) {
+                            return; // 隆起完了を待機
+                        }
+                    }
+                }
+
+                // 土地待ちフェーズを安全に終了する
                 g.dropEffects = g.dropEffects.filter(de => de.type !== 'land');
                 g.isWaitingForDrop = false; // 土地待ちフェーズ終了
+
+                // 移送先：フェーズ終了のこの一瞬に 1回だけ afterInject 判定を実行
+                if (g.currentPlayer === 1 && window.tutorialManager) {
+                    if (window.tutorialManager.checkTrigger('afterInject', { game: g })) {
+                        // チュートリアルが表示された場合は、連鎖爆発の開始を保留してフリーズ
+                        g.pendingAction = () => {
+                            g.processChainReaction();
+                        };
+                        return;
+                    }
+                }
 
                 g.processChainReaction();
             }
@@ -392,6 +418,12 @@ export class AnimationManager {
                 g.coinToss.active = false;
                 g.currentPlayer = g.coinToss.result;
                 g.closeOverlay();
+
+                // 【移送先②】：ゲーム最初のターンがPlayer 1で開始されたその瞬間 (1回限り)
+                if (g.gameMode && g.currentPlayer === 1 && window.tutorialManager) {
+                    window.tutorialManager.checkTrigger('turnStart', { game: g });
+                }
+
                 if (g.gameMode === 'pvc' && g.currentPlayer === 2) {
                     g.handleCPUTurn();
                 }

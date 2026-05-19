@@ -141,4 +141,63 @@ describe('GameStateManager Module', () => {
             expect(game.turnEndRequested).toBe(false);
         });
     });
+
+    describe('Tutorial Integration (Triggers)', () => {
+        test('afterInject trigger should freeze and set pendingAction on land impact', () => {
+            game.startGame();
+            game.coinToss.active = false;
+            game.currentPlayer = 1;
+            game.isWaitingForDrop = true;
+
+            // 落下エフェクト（lands）がすべて着弾した状態をモック
+            const targetHex = game.map.getHexAt(0, 0, 'main');
+            game.dropEffects = [
+                { type: 'land', landed: true, targetHex: targetHex, y: 0, targetY: 0 }
+            ];
+
+            // Mock tutorialManager
+            window.tutorialManager = {
+                willTrigger: vi.fn().mockReturnValue(true), // 先行チェックもtrueを返す
+                checkTrigger: vi.fn().mockImplementation((triggerName) => {
+                    return triggerName === 'afterInject';
+                })
+            };
+
+            // updateDropEffectsを呼ぶと、lands着弾完了フェーズ交代の瞬間になり、afterInject判定が走りフリーズするはず！
+            game.animations.updateDropEffects(16);
+
+            // processChainReaction の起動自体を保留アクションとして保存しているはず
+            expect(game.pendingAction).toBeDefined();
+            expect(typeof game.pendingAction).toBe('function');
+
+            // Cleanup
+            window.tutorialManager = undefined;
+        });
+
+        test('burst trigger should freeze processChainReaction and set pendingAction when overflow exists', () => {
+            game.startGame();
+            game.coinToss.active = false;
+            game.currentPlayer = 1;
+
+            // Force an overflowed hex
+            const targetHex = game.map.getHexAt(0, 0, 'main');
+            targetHex.height = 10; // > 9 (overflow)
+
+            // Mock tutorialManager
+            window.tutorialManager = {
+                checkTrigger: vi.fn().mockImplementation((triggerName) => {
+                    return triggerName === 'burst';
+                })
+            };
+
+            game.state.processChainReaction();
+
+            // Should freeze (return early) because of the burst trigger and overflowed hex
+            expect(game.pendingAction).toBeDefined();
+            expect(typeof game.pendingAction).toBe('function');
+
+            // Cleanup
+            window.tutorialManager = undefined;
+        });
+    });
 });

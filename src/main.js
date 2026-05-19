@@ -216,6 +216,15 @@ export class Game {
         // Always request next frame even if map is null to keep pulseValue and UI alive.
         requestAnimationFrame((t) => this.animate(t));
 
+        // チュートリアル表示中はアニメーションを完全にフリーズ（静止描画のみ維持）
+        if (window.tutorialManager && window.tutorialManager.isShowing) {
+            this.render();
+            if (typeof window.tutorialManager.updateMask === 'function') {
+                window.tutorialManager.updateMask();
+            }
+            return;
+        }
+
         this.pulseValue = (Math.sin(time / 500) + 1) / 2; // 0 to 1
 
         // --- コイントス演出の更新 (Ver 5.2.0) ---
