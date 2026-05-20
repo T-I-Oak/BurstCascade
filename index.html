@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <script type="module" crossorigin src="/BurstCascade/assets/index-DHGE17UQ.js"></script>
-  <link rel="stylesheet" crossorigin href="/BurstCascade/assets/index-CQmvUQyB.css">
+  <script type="module" crossorigin src="/BurstCascade/assets/index-DOMJyE3k.js"></script>
+  <link rel="stylesheet" crossorigin href="/BurstCascade/assets/index-Dgbg-yyM.css">
 </head>
 
 <body>
@@ -98,9 +98,9 @@
 
                         <section class="help-section">
                             <h3>目的</h3>
-                            <div class="tutorial-float-right">
-                                <canvas id="help-core-canvas" class="tutorial-canvas" width="120" height="120"></canvas>
-                                <p class="tutorial-caption">共鳴中枢（Core）</p>
+                            <div class="how-to-play-float-right">
+                                <canvas id="help-core-canvas" class="how-to-play-canvas" width="120" height="120"></canvas>
+                                <p class="how-to-play-caption">共鳴中枢（Core）</p>
                             </div>
                             <p>相手勢力がマップ中に保有している<strong>「共鳴中枢（Core）」</strong>をすべて<strong>無効化</strong>したら勝利となります。</p>
                             <ul class="help-list">
@@ -121,10 +121,10 @@
                             </ul>
 
                             <div class="rule-item">
-                                <div class="tutorial-float-right">
-                                    <canvas id="help-inject-canvas" class="tutorial-canvas" width="120"
+                                <div class="how-to-play-float-right">
+                                    <canvas id="help-inject-canvas" class="how-to-play-canvas" width="120"
                                         height="120"></canvas>
-                                    <p class="tutorial-caption">エネルギー注入</p>
+                                    <p class="how-to-play-caption">エネルギー注入</p>
                                 </div>
                                 <h4>1. エネルギー注入フェーズ</h4>
                                 <p>自勢力のグリッドを選択してエネルギーを注入する<strong>アクション</strong>を行います。</p>
@@ -138,10 +138,10 @@
                             </div>
 
                             <div class="rule-item">
-                                <div class="tutorial-float-right">
-                                    <canvas id="help-overload-canvas" class="tutorial-canvas" width="120"
+                                <div class="how-to-play-float-right">
+                                    <canvas id="help-overload-canvas" class="how-to-play-canvas" width="120"
                                         height="120"></canvas>
-                                    <p class="tutorial-caption">爆発（Burst）</p>
+                                    <p class="how-to-play-caption">爆発（Burst）</p>
                                 </div>
                                 <h4>爆発（Burst）</h4>
                                 <p>アクションによって注入されたエネルギーが限界（エネルギー値9）を超えたときに発生します。</p>
@@ -164,10 +164,10 @@
                             </div>
 
                             <div class="rule-item">
-                                <div class="tutorial-float-right">
-                                    <canvas id="help-reconstruct-canvas" class="tutorial-canvas" width="120"
+                                <div class="how-to-play-float-right">
+                                    <canvas id="help-reconstruct-canvas" class="how-to-play-canvas" width="120"
                                         height="120"></canvas>
-                                    <p class="tutorial-caption">供給エネルギー再構築</p>
+                                    <p class="how-to-play-caption">供給エネルギー再構築</p>
                                 </div>
                                 <h4>2. 供給エネルギー再構築フェーズ</h4>
                                 <p>アクション終了後、7つの供給エネルギーのうちランダムな2つが選ばれ、再構築されます（±1 ずつ変化）。</p>
@@ -195,22 +195,26 @@
                             </ul>
                         </section>
 
+                        <div class="tutorial-reset-container" style="margin: 20px 0; padding: 15px 10px; border-top: 1px solid rgba(56, 189, 248, 0.2); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; color: #cbd5e1;">
+                            <input type="checkbox" id="tutorial-reset-checkbox" style="width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer;">
+                            <label for="tutorial-reset-checkbox" style="cursor: pointer; user-select: none;">チュートリアルを最初から表示する</label>
+                        </div>
                     </div>
-                    <button id="help-bottom-back-btn" class="close-btn help-back-btn">RETURN TO TITLE</button>
+                    <button id="help-bottom-back-btn" class="close-btn">RETURN TO TITLE</button>
                     <button id="help-close-btn" class="close-btn hidden">CLOSE</button>
                 </div>
 
                 <!-- 実績画面 (Ver 4.7.0) -->
-                <div id="achievements-content" class="modal-content hidden">
+                <div id="achievements-content" class="modal-content theme-cyber hidden">
                     <h2>ACHIEVEMENTS <span id="achievement-percent"
                             style="font-size: 0.6em; margin-left: 10px;">0%</span></h2>
 
-                    <div class="tabs">
-                        <button class="tab-btn" data-map="mini">MINI</button>
-                        <button class="tab-btn active" data-map="regular">REGULAR</button>
+                    <div class="Tabs">
+                        <button class="TabButton" data-map="mini">MINI</button>
+                        <button class="TabButton active" data-map="regular">REGULAR</button>
                     </div>
 
-                    <div class="achievements-scroll-container">
+                    <div class="AchievementsScrollContainer">
                         <div id="achievements-grid">
                             <!-- JSでカードを動的に生成 -->
                         </div>
@@ -278,7 +282,20 @@
                     <div class="circuit-path p1"></div>
                     <div class="circuit-path p2"></div>
                     <div class="circuit-path p3"></div>
-                    <div class="circuit-text">ANALYZING CASCADE...</div>
+                </div>
+            </div>
+
+
+            <!-- チュートリアル用の動的暗幕マスクと吹き出しUI (Ver 0.13.0) -->
+            <canvas id="tutorial-mask-canvas" class="hidden"></canvas>
+            <div id="tutorial-tooltip" class="tutorial-tooltip hidden">
+                <div class="tooltip-arrow"></div>
+                <div class="tooltip-content">
+                    <h3 id="tutorial-title">Welcome to Burst Cascade</h3>
+                    <p id="tutorial-message">チュートリアルメッセージ</p>
+                    <div class="tooltip-actions">
+                        <button id="tutorial-next-btn" class="menu-btn primary small">OK</button>
+                    </div>
                 </div>
             </div>
         </main>
