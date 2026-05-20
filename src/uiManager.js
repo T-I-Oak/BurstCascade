@@ -2,6 +2,8 @@ import { shareResult } from './share.js';
 import { Constants } from './constants.js';
 import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
 import { Layout } from './map.js';
+import { AchievementUI } from './ui/achievementUI.js';
+import { GameResultUI } from './ui/gameResultUI.js';
 
 export class UIManager {
     constructor(game) {
