@@ -1,5 +1,18 @@
 [
   {
+    "version": "0.17",
+    "date": "2026-05-20",
+    "content": [
+      { "type": "etc", "text": "内部改善" }
+    ]
+  },
+  {
+    "version": "0.16",
+    "date": "2026-05-20",
+    "content": [
+      { "type": "etc", "text": "内部改善" }
+    ]
+  },
     "version": "0.15",
     "date": "2026-05-20",
     "content": [
