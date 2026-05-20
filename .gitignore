@@ -6,3 +6,4 @@ dev_*
 local_*
 *.log
 .vite
+/_agent/
