@@ -154,6 +154,8 @@ export class InputHandler {
     initGestureHandler() {
         const g = this.game;
         let isActivating = false;
+        const gestureEvents = ['pointerdown', 'touchend', 'pointerup', 'mousedown', 'keydown', 'click'];
+        const listenerOptions = { capture: true };
 
         const handleFirstGesture = async (e) => {
             if (isActivating) return;
@@ -167,8 +169,8 @@ export class InputHandler {
                     await g.sound.activateFromUserGesture();
 
                     if (g.sound.ctx && g.sound.ctx.state === 'running') {
-                        ['click', 'touchend', 'keydown', 'pointerup'].forEach(evt => {
-                            document.removeEventListener(evt, handleFirstGesture);
+                        gestureEvents.forEach(evt => {
+                            document.removeEventListener(evt, handleFirstGesture, listenerOptions);
                         });
                         g.audioActivated = true;
                     }
@@ -186,8 +188,8 @@ export class InputHandler {
             }
         };
 
-        ['click', 'touchend', 'keydown', 'pointerup'].forEach(evt => {
-            document.addEventListener(evt, handleFirstGesture);
+        gestureEvents.forEach(evt => {
+            document.addEventListener(evt, handleFirstGesture, listenerOptions);
         });
     }
 }
