@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.18",
+    "date": "2026-05-21",
+    "content": [
+      { "type": "fix", "text": "iPadでチュートリアルのハイライト枠とゲーム結果画面の数字表示がずれる問題を修正" },
+      { "type": "etc", "text": "内部改善" }
+    ]
+  },
+  {
+    "version": "0.17",
+    "date": "2026-05-20",
+    "content": [
+      { "type": "etc", "text": "内部改善" }
+    ]
+  },
+  {
+    "version": "0.16",
+    "date": "2026-05-20",
+    "content": [
+      { "type": "etc", "text": "内部改善" }
+    ]
+  },
+  {
     "version": "0.15",
     "date": "2026-05-20",
     "content": [

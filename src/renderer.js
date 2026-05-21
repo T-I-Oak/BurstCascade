@@ -335,9 +335,7 @@ export class Renderer {
         const ctx = overrideCtx || this.ctx;
         const layout = overrideLayout || this.game.layout;
 
-        // Ver 5.2.6: 描画対象のキャンバスがメインゲームのものではない場合、DPR補正を無効化する
-        const isMainCanvas = ctx.canvas === this.game.canvas;
-        const dpr = isMainCanvas ? (window.devicePixelRatio || 1) : 1;
+        const dpr = this._getContextDpr(ctx);
 
         ctx.save();
         const { angle, tilt, scaleY } = layout.projection;
@@ -376,9 +374,6 @@ export class Renderer {
         const coreSize = layout.size * 0.4 * hex.visualFlagScale;
         const playerColor = hex.flagOwner === 1 ? '#4ade80' : '#f87171';
 
-        // Ver 5.2.6: dpr 補正の適用判断 (ctx.setTransform はここでは使わないが、座標計算に影響する場合に備える)
-        const isMainCanvas = ctx.canvas === game.canvas;
-        const dpr = isMainCanvas ? (window.devicePixelRatio || 1) : 1;
         const floatY = Math.sin(game.pulseValue * Math.PI) * 4 * hex.visualFlagScale;
 
         ctx.save();
@@ -595,11 +590,18 @@ export class Renderer {
         drawDots(playerChains.enemy, enemyColor, 5.2, 2, playerAnims.enemy, 'enemy');
     }
 
-    renderToCanvas(targetCanvas, map, layout) {
+    _getContextDpr(ctx) {
+        if (typeof ctx.__burstCascadeDpr === 'number') {
+            return ctx.__burstCascadeDpr;
+        }
+        return ctx.canvas === this.game.canvas ? (window.devicePixelRatio || 1) : 1;
+    }
+
+    renderToCanvas(targetCanvas, map, layout, renderDpr = 1) {
         const ctx = targetCanvas.getContext('2d');
-        const dpr = window.devicePixelRatio || 1;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, targetCanvas.width / dpr, targetCanvas.height / dpr);
+        ctx.__burstCascadeDpr = renderDpr;
+        ctx.setTransform(renderDpr, 0, 0, renderDpr, 0, 0);
+        ctx.clearRect(0, 0, targetCanvas.width / renderDpr, targetCanvas.height / renderDpr);
 
         const sortedHexes = [...map.hexes]
             .filter(hex => hex.zone === 'main') // メインマップのみを描画 (Ver 6.0.1)

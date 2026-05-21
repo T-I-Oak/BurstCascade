@@ -53,6 +53,7 @@ describe('Renderer Module', () => {
 
     test('drawHex should accept override context and layout', () => {
         const mockCtx = {
+            canvas: document.createElement('canvas'),
             save: vi.fn(),
             restore: vi.fn(),
             beginPath: vi.fn(),
@@ -77,5 +78,44 @@ describe('Renderer Module', () => {
         renderer.drawHex(hex, mockCtx, mockLayout);
         expect(mockCtx.save).toHaveBeenCalled();
         expect(mockCtx.restore).toHaveBeenCalled();
+    });
+
+    test('drawHexNumber should use explicit render DPR for non-main canvases', () => {
+        const targetCanvas = document.createElement('canvas');
+        const mockCtx = {
+            canvas: targetCanvas,
+            __burstCascadeDpr: 2,
+            save: vi.fn(),
+            restore: vi.fn(),
+            setTransform: vi.fn(),
+            fillText: vi.fn()
+        };
+
+        renderer.drawHexNumber(10, 20, 0, { top: '#ffffff' }, 3, mockCtx, game.layout);
+
+        expect(mockCtx.setTransform).toHaveBeenCalled();
+        const transform = mockCtx.setTransform.mock.calls[0];
+        expect(transform[4]).toBe(20);
+        expect(transform[5]).toBe(40);
+    });
+
+    test('renderToCanvas should keep result canvas drawing on one DPR scale', () => {
+        const targetCanvas = document.createElement('canvas');
+        targetCanvas.width = 800;
+        targetCanvas.height = 800;
+        const mockCtx = {
+            canvas: targetCanvas,
+            setTransform: vi.fn(),
+            clearRect: vi.fn()
+        };
+        targetCanvas.getContext = vi.fn().mockReturnValue(mockCtx);
+        const drawHex = vi.spyOn(renderer, 'drawHex').mockImplementation(() => {});
+
+        renderer.renderToCanvas(targetCanvas, game.map, game.layout, 2);
+
+        expect(mockCtx.__burstCascadeDpr).toBe(2);
+        expect(mockCtx.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
+        expect(mockCtx.clearRect).toHaveBeenCalledWith(0, 0, 400, 400);
+        expect(drawHex).toHaveBeenCalled();
     });
 });
