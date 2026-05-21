@@ -38,6 +38,18 @@ describe('SoundManager Module', () => {
         expect(ctx.resume).toHaveBeenCalled();
     });
 
+    test('primeFromUserGesture should create and unlock without awaiting resume', () => {
+        const sourceStart = vi.fn();
+        const ctx = createAudioContextMock({ sourceStart });
+        window.AudioContext = vi.fn(() => ctx);
+
+        sound.primeFromUserGesture();
+
+        expect(window.AudioContext).toHaveBeenCalled();
+        expect(sourceStart).toHaveBeenCalled();
+        expect(ctx.resume).not.toHaveBeenCalled();
+    });
+
     test('startBgm should resume pending pattern after audio activation', async () => {
         const ctx = createAudioContextMock();
         window.AudioContext = vi.fn(() => ctx);

@@ -72,7 +72,7 @@ describe('InputHandler Module', () => {
 
             handler.initGestureHandler();
 
-            ['pointerdown', 'touchend', 'pointerup', 'mousedown', 'keydown', 'click'].forEach(eventName => {
+            ['touchstart', 'pointerdown', 'touchend', 'pointerup', 'mousedown', 'keydown', 'click'].forEach(eventName => {
                 expect(addEventSpy).toHaveBeenCalledWith(
                     eventName,
                     expect.any(Function),

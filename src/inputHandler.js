@@ -153,39 +153,39 @@ export class InputHandler {
 
     initGestureHandler() {
         const g = this.game;
-        let isActivating = false;
-        const gestureEvents = ['pointerdown', 'touchend', 'pointerup', 'mousedown', 'keydown', 'click'];
+        const primeEvents = ['touchstart', 'pointerdown'];
+        const resumeEvents = ['touchend', 'pointerup', 'mousedown', 'keydown', 'click'];
+        const gestureEvents = [...new Set([...primeEvents, ...resumeEvents])];
         const listenerOptions = { capture: true };
 
-        const handleFirstGesture = async (e) => {
-            if (isActivating) return;
-            isActivating = true;
-            try {
-                if (g.sound && g.sound.ctx && g.sound.ctx.state === 'running') {
-                    return;
-                }
+        const removeGestureListeners = () => {
+            gestureEvents.forEach(evt => {
+                document.removeEventListener(evt, handleFirstGesture, listenerOptions);
+            });
+        };
 
-                if (g.sound) {
-                    await g.sound.activateFromUserGesture();
-
-                    if (g.sound.ctx && g.sound.ctx.state === 'running') {
-                        gestureEvents.forEach(evt => {
-                            document.removeEventListener(evt, handleFirstGesture, listenerOptions);
-                        });
-                        g.audioActivated = true;
-                    }
-                }
-            } finally {
-                isActivating = false;
+        const handleFirstGesture = (e) => {
+            if (!g.sound) return;
+            if (g.sound.ctx && g.sound.ctx.state === 'running') {
+                removeGestureListeners();
+                g.audioActivated = true;
+                return;
             }
 
-            if (g.sound && g.sound.ctx && g.sound.ctx.state === 'running') {
+            if (primeEvents.includes(e.type) && !g.sound.ctx) {
+                g.sound.primeFromUserGesture();
+            }
+
+            g.sound.activateFromUserGesture().then(() => {
+                if (!g.sound.ctx || g.sound.ctx.state !== 'running') return;
+                removeGestureListeners();
+                g.audioActivated = true;
                 if (g.sound.isPlaying && g.sound.currentPattern) {
                     g.sound.startBgm(g.sound.currentPattern);
                 } else if (!g.gameMode && !window.IS_TESTING) {
                     g.sound.startBgm('title');
                 }
-            }
+            });
         };
 
         gestureEvents.forEach(evt => {
