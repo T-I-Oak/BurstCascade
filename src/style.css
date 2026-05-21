@@ -208,6 +208,7 @@ h1 {
     header {
         padding: 0.4rem 0.8rem;
         gap: 0.5rem;
+        flex-wrap: wrap;
     }
 
     h1 {
@@ -221,6 +222,9 @@ h1 {
 
     #status-container {
         gap: 0.5rem;
+        flex: 1 1 100%;
+        order: 3;
+        justify-content: stretch;
     }
 
     #help-btn {
@@ -229,10 +233,35 @@ h1 {
         white-space: nowrap;
     }
 
+    #war-gauge-container {
+        max-width: none;
+        min-width: 160px;
+    }
+
     .chain-counter {
         min-width: 50px;
         font-size: 0.7rem;
         padding: 0.1rem 0.4rem;
+    }
+}
+
+@media (max-width: 420px) {
+    header {
+        align-items: flex-start;
+    }
+
+    .header-title {
+        flex: 1 1 160px;
+        min-width: 0;
+    }
+
+    .logo-header {
+        max-width: 100%;
+        height: 1.15rem;
+    }
+
+    #help-btn {
+        flex: 0 0 auto;
     }
 }
 
@@ -967,6 +996,64 @@ main {
     text-align: right;
     font-family: 'Inter', sans-serif;
     text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+@media (max-width: 520px) {
+    .settings-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "players"
+            "ai"
+            "size"
+            "sound";
+        gap: 0.7rem;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .setting-group {
+        min-width: 0;
+    }
+
+    .toggle-options {
+        min-width: 0;
+    }
+
+    .toggle-btn {
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .toggle-btn .sub {
+        display: block;
+        margin-left: 0;
+        margin-top: 0.15rem;
+    }
+
+    .volume-container {
+        gap: 0.7rem;
+        padding: 0.7rem 0.8rem;
+    }
+}
+
+@media (max-width: 360px) {
+    #mode-selection-content {
+        width: 96%;
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+    }
+
+    .menu-options {
+        max-width: 100%;
+    }
+
+    .toggle-btn {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+        font-size: 0.78rem;
+    }
 }
 
 .menu-btn.large {
