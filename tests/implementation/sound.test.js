@@ -54,6 +54,16 @@ describe('SoundManager Module', () => {
         expect(sound.pendingBgmPattern).toBeNull();
         expect(sound.scheduler).toHaveBeenCalled();
     });
+
+    test('recordAudioDebug should render diagnostic state to the panel', () => {
+        document.body.innerHTML = '<pre id="audio-debug-output"></pre>';
+
+        sound.recordAudioDebug('test event');
+
+        const text = document.getElementById('audio-debug-output').textContent;
+        expect(text).toContain('ctx: none');
+        expect(text).toContain('last: test event');
+    });
 });
 
 function createAudioContextMock({ sourceStart = vi.fn() } = {}) {
