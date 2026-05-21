@@ -11,6 +11,7 @@
       { "type": "fix", "text": "iPad Safari向けに音声起動を初期化と再開の2段階に調整" },
       { "type": "etc", "text": "リリース前確認用の音声デバッグ表示を削除" },
       { "type": "etc", "text": "renderer.jsの機能分割によりコード品質を改善" },
+      { "type": "fix", "text": "iPadでブラウザ復帰後に音が停止したままになる問題を修正" },
       { "type": "etc", "text": "内部改善" }
     ]
   },
