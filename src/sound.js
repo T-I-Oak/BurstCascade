@@ -19,6 +19,7 @@ export class SoundManager {
         this.p2Intensity = 0;
         this.maxCores = 5; // Default normalized ceiling
         this.patternStartTick = 0; // Ver 4.7.20: Track pattern change time
+        this.pendingBgmPattern = null;
     }
 
     updateContextData(cores1, cores2, totalCores = 0) {
@@ -94,12 +95,20 @@ export class SoundManager {
             try {
                 await this.ctx.resume();
                 this.unlock();
+                this.startPendingBgm();
             } catch (e) {
                 // console.warn('AudioContext resume failed:', e);
             }
         } else {
             this.unlock();
+            this.startPendingBgm();
         }
+    }
+
+    activateFromUserGesture() {
+        if (!this.ctx) this.init();
+        this.unlock();
+        return this.resume();
     }
 
     /**
@@ -253,6 +262,7 @@ export class SoundManager {
         const prevPattern = this.currentPattern;
         this.currentPattern = type;
         this.isPlaying = true;
+        this.pendingBgmPattern = type;
 
         if (!this.ctx) this.init();
         if (this.ctx.state === 'suspended') return;
@@ -273,9 +283,16 @@ export class SoundManager {
 
         if (this.schedulerId) return;
 
+        this.pendingBgmPattern = null;
         this.bpm = this.targetBpm;
         this.nextNoteTime = this.ctx.currentTime + 0.1;
         this.scheduler();
+    }
+
+    startPendingBgm() {
+        if (!this.ctx || this.ctx.state === 'suspended' || !this.pendingBgmPattern) return;
+        const pattern = this.pendingBgmPattern;
+        this.startBgm(pattern);
     }
 
     stopBgm() {
