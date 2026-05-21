@@ -5,7 +5,6 @@
 現在、この区分の未完了バックログはありません。
 
 ## リファクタリング・コード品質向上
-- [ ] renderer.js の機能分割（1ファイル500行制限への準拠）
 - [ ] `map.js` の static import / dynamic import 混在による Vite build warning を整理する
 
 ## 最終確認

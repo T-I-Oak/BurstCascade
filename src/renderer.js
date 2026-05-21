@@ -1,5 +1,7 @@
 import { Constants } from './constants.js';
 import { Utils } from './utils.js';
+import { drawCoinToss } from './rendererCoinToss.js';
+import { drawLabel } from './rendererLabels.js';
 
 export class Renderer {
     constructor(game) {
@@ -65,8 +67,8 @@ export class Renderer {
         // 戦況 (フラッグ数) を更新
         this._updateUIBars();
 
-        this.drawLabel('Player 1', 'hand-p1', Constants.PARTICLE_COLORS[1], 'left');
-        this.drawLabel('Player 2', 'hand-p2', Constants.PARTICLE_COLORS[2], 'right');
+        drawLabel(this, 'Player 1', 'hand-p1', Constants.PARTICLE_COLORS[1], 'left');
+        drawLabel(this, 'Player 2', 'hand-p2', Constants.PARTICLE_COLORS[2], 'right');
 
         // 収束演出（フォーカス・エフェクト）の描画
         game.focusEffects.forEach(fe => {
@@ -120,7 +122,7 @@ export class Renderer {
 
         // --- コイントス演出の描画 (Ver 5.2.0) ---
         if (game.coinToss.active) {
-            this.drawCoinToss();
+            drawCoinToss(this);
         }
     }
 
@@ -202,71 +204,6 @@ export class Renderer {
         if (hex.visualFlagScale > 0.01) {
             this.drawCore(hex, h, ctx, layout);
         }
-
-        ctx.restore();
-    }
-
-    drawCoinToss() {
-        const game = this.game;
-        const ctx = this.ctx;
-        const dpr = window.devicePixelRatio || 1;
-        const centerX = (this.canvas.width / dpr) / 2;
-        const centerY = (this.canvas.height / dpr) / 2;
-        const ct = game.coinToss;
-
-        ctx.save();
-
-        // 1. 背景の暗転 (シームレス化：完全に廃止)
-        // 背景は一切暗転させない
-
-        // 2. 粒子の描画 (gathering & burst)
-        ct.particles.forEach(p => {
-            if (p.life <= 0) return;
-            const color = Constants.PARTICLE_COLORS[p.player];
-            ctx.fillStyle = color;
-            ctx.globalAlpha = p.active === false ? 0 : (p.life || 0.8);
-            ctx.beginPath();
-            ctx.arc(centerX + p.x, centerY + p.y, p.size || 3, 0, Math.PI * 2);
-            ctx.fill();
-        });
-        ctx.globalAlpha = 1.0;
-
-        // 3. 中心エネルギーボールの描画 (gathering ～ fusion フェーズ)
-        if (ct.phase === 'gathering' || ct.phase === 'fusion' || (ct.phase === 'burst' && ct.timer < 150)) {
-            const size = ct.ballSize * (ct.pulse || 1);
-            if (size > 2) {
-                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, size);
-                gradient.addColorStop(0, 'white');
-                gradient.addColorStop(0.2, '#fef3c7'); // Amber 100
-                gradient.addColorStop(0.5, '#fbbf24'); // Amber 400 (再構築ドットと同系色)
-                gradient.addColorStop(1, 'transparent');
-
-                ctx.save();
-                ctx.globalAlpha = 1.0;
-                ctx.fillStyle = gradient;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, size, 0, Math.PI * 2);
-                ctx.fill();
-
-                // 外側の二次グロー（ふんわりとした広がり）
-                ctx.globalAlpha = 0.4 * (ct.pulse || 1);
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, size * 1.8, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.restore();
-            }
-        }
-
-        // 4. 爆発時のフラッシュ
-        if (ct.phase === 'burst' && ct.timer < 250) {
-            const flashAlpha = 1.0 - (ct.timer / 250);
-            // 盤面が見えるように白フラッシュのアルファも調整 (1.0 -> 0.6)
-            ctx.fillStyle = `rgba(255, 255, 255, ${flashAlpha * 0.6})`;
-            ctx.fillRect(0, 0, this.canvas.width / dpr, this.canvas.height / dpr);
-        }
-
-        // 5. 通知テキスト (シームレス化：削除)
-        // "PLAYER X READY" などの表示は不要
 
         ctx.restore();
     }
@@ -463,131 +400,6 @@ export class Renderer {
             }
         }
         ctx.restore();
-    }
-
-    drawLabel(text, zoneId, color, align) {
-        const game = this.game;
-        const ctx = this.ctx;
-        const center = game.map.centers[zoneId];
-        if (!center) return;
-        const pos = game.layout.hexToPixel({ q: center.q, r: center.r });
-
-        ctx.save();
-        const fontSize = Math.max(20, game.layout.size * 1.0);
-        ctx.font = `bold ${fontSize}px Inter, sans-serif`;
-        ctx.textAlign = align;
-        ctx.textBaseline = 'middle';
-        ctx.fillStyle = color;
-        ctx.shadowColor = 'rgba(0,0,0,0.8)';
-        ctx.shadowBlur = 4;
-        ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
-
-        const playerNum = (zoneId === 'hand-p1' ? 1 : 2);
-        const isActive = (game.currentPlayer === playerNum);
-
-        const marginX = game.layout.size * 2.5;
-        const textX = pos.x + (align === 'left' ? marginX : -marginX);
-
-        let finalText = text;
-        const isTossing = game.coinToss.active;
-        const isWinnerLabel = (isTossing && game.coinToss.phase === 'stabilized' && game.coinToss.result === playerNum);
-
-        // 矢印の表示制御
-        const showArrow = isTossing ? game.coinToss.showArrow : true;
-
-        if (playerNum === 1) {
-            finalText = text + (isActive && showArrow ? ' ◀' : ' 　');
-        } else {
-            finalText = (isActive && showArrow ? '▶ ' : '　 ') + text;
-        }
-
-        // 通常時の手番表示（発光） (Ver 5.4.1)
-        if (isActive && !isTossing && !game.gameOver) {
-            ctx.shadowColor = color;
-            ctx.shadowBlur = 15 + Math.sin(game.pulseValue * Math.PI) * 5;
-        }
-
-        // 確定時の強烈な発光効果 (Ver 5.4.2: シームレスな色彩遷移)
-        if (isWinnerLabel) {
-            const energyColorHex = '#fbbf24'; // エネルギーボールと同じ琥珀色
-            const pColorHex = Constants.PARTICLE_COLORS[playerNum];
-
-            const t = Math.min(1, game.coinToss.timer / 1000);
-            // 0.0s: PlayerColor -> 0.2s: EnergyYellow -> 1.0s: PlayerColor のカーブ
-            let colorFactor = 0;
-            if (t < 0.2) {
-                colorFactor = t / 0.2; // 上昇
-            } else {
-                colorFactor = Math.max(0, 1 - (t - 0.2) / 0.8); // 下落
-            }
-
-            const rgbP = Utils.hexToRgb(pColorHex);
-            const rgbE = Utils.hexToRgb(energyColorHex);
-
-            const r = Math.round(rgbP.r + (rgbE.r - rgbP.r) * colorFactor);
-            const g = Math.round(rgbP.g + (rgbE.g - rgbP.g) * colorFactor);
-            const b = Math.round(rgbP.b + (rgbE.b - rgbP.b) * colorFactor);
-
-            const interpolatedColor = `rgb(${r},${g},${b})`;
-            ctx.shadowColor = interpolatedColor;
-            ctx.fillStyle = interpolatedColor;
-
-            // 輝度に合わせてブラーも最大化
-            ctx.shadowBlur = 40 + colorFactor * 30; // 40 -> 70 -> 40
-            ctx.globalAlpha = 1.0;
-        }
-
-        ctx.fillText(finalText, textX, pos.y);
-
-        // チェーン・ドット
-        this._drawChainDots(playerNum, textX, pos.y, fontSize, align);
-
-        ctx.restore();
-    }
-
-    _drawChainDots(playerNum, textX, y, fontSize, align) {
-        const game = this.game;
-        const ctx = this.ctx;
-        const playerChains = game.chains[playerNum];
-        const dotY = y + (playerNum === 1 ? fontSize * 0.9 : -fontSize * 0.9);
-        const dotRadius = 4;
-        const dotSpacing = 14;
-        const selfColor = playerNum === 1 ? '#4ade80' : '#f87171';
-        const enemyColor = playerNum === 1 ? '#f87171' : '#4ade80';
-
-        const drawDots = (count, color, offsetIdx, maxCount, animVal, type) => {
-            const isFlowing = game.pendingRewards.some(r => r.player === playerNum && r.type === type && (r.status === 'flowing' || r.status === 'pending'));
-            const filledCount = isFlowing ? maxCount : Math.min(count, maxCount);
-            for (let i = 0; i < maxCount; i++) {
-                ctx.beginPath();
-                const dx = (i + offsetIdx) * dotSpacing;
-                const x = textX + (align === 'left' ? dx : -dx);
-
-                game.dotTargets[`${playerNum}-${type}-${i}`] = { x: x, y: dotY };
-
-                const isLastDot = (i === filledCount - 1);
-                const sCurve = Math.sin(animVal * Math.PI);
-                const scale = isLastDot ? 1.0 + sCurve * 3.0 : 1.0;
-                const brightness = isLastDot ? sCurve * 150 : 0;
-
-                ctx.arc(x, dotY, dotRadius * scale, 0, Math.PI * 2);
-                if (i < filledCount) {
-                    ctx.fillStyle = Utils.adjustColor(color, brightness);
-                    ctx.shadowColor = color;
-                    ctx.shadowBlur = 4 + sCurve * 40;
-                } else {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
-                    ctx.shadowBlur = 0;
-                }
-                ctx.fill();
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
-                ctx.stroke();
-            }
-        };
-
-        const playerAnims = game.chainAnims[playerNum];
-        drawDots(playerChains.self, selfColor, 0, 4, playerAnims.self, 'self');
-        drawDots(playerChains.enemy, enemyColor, 5.2, 2, playerAnims.enemy, 'enemy');
     }
 
     _getContextDpr(ctx) {
