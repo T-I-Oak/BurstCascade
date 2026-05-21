@@ -1,4 +1,5 @@
 import { Constants } from './constants.js';
+import { playSharedFinale } from './soundFinale.js';
 
 export class SoundManager {
     constructor() {
@@ -283,7 +284,11 @@ export class SoundManager {
         if (shouldResetTick || !this.schedulerId) {
             this.tick = 0;
         }
-        this.patternStartTick = this.tick;
+        if (type === 'victory' || type === 'defeat') {
+            this.patternStartTick = this.tick - (this.tick % 4);
+        } else {
+            this.patternStartTick = this.tick;
+        }
 
         // Dynamic BPM setup
         if (type === 'title') this.targetBpm = Constants.BPM.TITLE;
@@ -445,10 +450,8 @@ export class SoundManager {
     scheduleNote(tick, time) {
         if (this.currentPattern === 'title') {
             this.playTitle(tick, time);
-        } else if (this.currentPattern === 'victory') {
-            this.playVictory(tick, time);
-        } else if (this.currentPattern === 'defeat') {
-            this.playDefeat(tick, time);
+        } else if (this.currentPattern === 'victory' || this.currentPattern === 'defeat') {
+            playSharedFinale(this, tick, time);
         } else {
             this.playGame(tick, time, this.currentPattern === 'pinch');
         }
@@ -492,53 +495,4 @@ export class SoundManager {
         }
     }
 
-    playVictory(tick, time) {
-        this.playSharedFinale(tick, time);
-    }
-
-    playDefeat(tick, time) {
-        this.playSharedFinale(tick, time);
-    }
-
-    playSharedFinale(tick, time) {
-        const relTick = (tick - this.patternStartTick + 512) % 512;
-        const rhythm = tick % 16;
-
-        if (relTick < 48) {
-            if (rhythm === 0 || rhythm === 4) this.playDrum('kick', time, 0.18);
-            if (rhythm === 8) this.playDrum('snare', time, 0.1);
-            if (rhythm % 4 === 2) this.playDrum('hat', time, 0.03);
-            return;
-        }
-
-        if (relTick === 48 || relTick === 50) this.playDrum('kick', time, 0.3);
-        if (relTick === 52 || relTick === 56 || relTick === 60) {
-            this.playDrum('kick', time, 0.4);
-            this.playDrum('snare', time, 0.35);
-        }
-
-        if (relTick === 64) {
-            this.playDrum('kick', time, 0.6);
-            this.playDrum('snare', time, 0.5);
-
-            const bufSize = this.ctx.sampleRate * 3.5;
-            const buffer = this.ctx.createBuffer(1, bufSize, this.ctx.sampleRate);
-            const data = buffer.getChannelData(0);
-            for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
-            const noise = this.ctx.createBufferSource();
-            noise.buffer = buffer;
-            const filter = this.ctx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 4000;
-            const qGain = this.ctx.createGain();
-            qGain.gain.setValueAtTime(0.5, time);
-            qGain.gain.exponentialRampToValueAtTime(0.001, time + 3.0);
-            noise.connect(filter);
-            filter.connect(qGain);
-            qGain.connect(this.bgmGain);
-            noise.start(time);
-
-            this.playTone(35, time, 3.0, 0.6, 'sine', 'lowpass', 80, 1, 0);
-        }
-    }
 }

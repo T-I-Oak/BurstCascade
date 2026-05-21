@@ -4,6 +4,7 @@ import {
     bindSoundLifecycleResumeHandlers,
     resumeSoundAfterPageReturn
 } from '../../src/soundLifecycle.js';
+import { playSharedFinale } from '../../src/soundFinale.js';
 
 describe('SoundManager Module', () => {
     let sound;
@@ -69,6 +70,34 @@ describe('SoundManager Module', () => {
         expect(sound.currentPattern).toBe('game');
         expect(sound.pendingBgmPattern).toBeNull();
         expect(sound.scheduler).toHaveBeenCalled();
+    });
+
+    test('startBgm should align finale start to the current beat', () => {
+        const ctx = createAudioContextMock();
+        ctx.state = 'running';
+        window.AudioContext = vi.fn(() => ctx);
+        sound.scheduler = vi.fn();
+        sound.init();
+        sound.currentPattern = 'game';
+        sound.isPlaying = true;
+        sound.schedulerId = 1;
+        sound.tick = 37;
+
+        sound.startBgm('victory');
+
+        expect(sound.currentPattern).toBe('victory');
+        expect(sound.patternStartTick).toBe(36);
+        expect(sound.tick).toBe(37);
+    });
+
+    test('playSharedFinale should use finale-relative rhythm', () => {
+        sound.playDrum = vi.fn();
+        sound.playTone = vi.fn();
+        sound.patternStartTick = 37;
+
+        playSharedFinale(sound, 37, 1);
+
+        expect(sound.playDrum).toHaveBeenCalledWith('kick', 1, 0.2);
     });
 
     test('resumeSoundAfterPageReturn should restart scheduler without resetting music state', async () => {
