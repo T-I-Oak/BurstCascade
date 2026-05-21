@@ -208,7 +208,7 @@ export class GameResultUI {
                     };
 
                     const resultLayout = new Layout(finalHexSize, origin);
-                    g.renderer.renderToCanvas(resultCanvas, g.map, resultLayout);
+                    g.renderer.renderToCanvas(resultCanvas, g.map, resultLayout, dpr);
                 });
             });
         }
