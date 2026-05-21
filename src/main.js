@@ -4,6 +4,7 @@ import { AI } from './ai.js';
 import { Constants } from './constants.js';
 import { Utils } from './utils.js';
 import { SoundManager } from './sound.js';
+import { bindSoundLifecycleResumeHandlers } from './soundLifecycle.js';
 import { Renderer } from './renderer.js';
 import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
 import { setAppVersion } from 'https://t-i-oak.github.io/GameWorksOAK/lib/utils/env.js';
@@ -23,6 +24,7 @@ export class Game {
         this.map = new HexMap(4);
         this.layout = null;
         this.sound = new SoundManager();
+        bindSoundLifecycleResumeHandlers(this.sound);
         this.renderer = new Renderer(this);
         this.achievementManager = new AchievementManager();
 

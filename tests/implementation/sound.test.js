@@ -1,5 +1,9 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { SoundManager } from '../../src/sound.js';
+import {
+    bindSoundLifecycleResumeHandlers,
+    resumeSoundAfterPageReturn
+} from '../../src/soundLifecycle.js';
 
 describe('SoundManager Module', () => {
     let sound;
@@ -67,6 +71,37 @@ describe('SoundManager Module', () => {
         expect(sound.scheduler).toHaveBeenCalled();
     });
 
+    test('resumeSoundAfterPageReturn should restart scheduler for current pattern', async () => {
+        const ctx = createAudioContextMock();
+        window.AudioContext = vi.fn(() => ctx);
+        sound.scheduler = vi.fn();
+        sound.init();
+        sound.currentPattern = 'game';
+        sound.isPlaying = true;
+        sound.schedulerId = null;
+
+        await resumeSoundAfterPageReturn(sound);
+
+        expect(ctx.resume).toHaveBeenCalled();
+        expect(sound.currentPattern).toBe('game');
+        expect(sound.scheduler).toHaveBeenCalled();
+    });
+
+    test('bindSoundLifecycleResumeHandlers should resume audio when page becomes visible', () => {
+        const resumeSpy = vi.spyOn(sound, 'resume').mockResolvedValue();
+        sound.ctx = { state: 'running' };
+        bindSoundLifecycleResumeHandlers(sound);
+        Object.defineProperty(document, 'visibilityState', {
+            configurable: true,
+            value: 'visible'
+        });
+
+        document.dispatchEvent(new Event('visibilitychange'));
+        window.dispatchEvent(new Event('pageshow'));
+        window.dispatchEvent(new Event('focus'));
+
+        expect(resumeSpy).toHaveBeenCalledTimes(3);
+    });
 });
 
 function createAudioContextMock({ sourceStart = vi.fn() } = {}) {
