@@ -164,8 +164,7 @@ export class InputHandler {
                 }
 
                 if (g.sound) {
-                    g.sound.init();
-                    await g.sound.resume();
+                    await g.sound.activateFromUserGesture();
 
                     if (g.sound.ctx && g.sound.ctx.state === 'running') {
                         ['click', 'touchend', 'keydown', 'pointerup'].forEach(evt => {
