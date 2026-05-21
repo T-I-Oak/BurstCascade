@@ -126,6 +126,12 @@ export class SoundManager {
         return this.resume();
     }
 
+    primeFromUserGesture() {
+        this.recordAudioDebug('gesture prime');
+        if (!this.ctx) this.init();
+        this.unlock();
+    }
+
     bindAudioDebugControls() {
         if (typeof document === 'undefined') return;
         const unlockButton = document.getElementById('audio-debug-unlock-btn');
