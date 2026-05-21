@@ -139,6 +139,19 @@ describe('SoundManager Module', () => {
 
         expect(resumeSpy).toHaveBeenCalledTimes(3);
     });
+
+    test('resumeSoundAfterPageReturn should use activation path for post-return gesture', async () => {
+        const activateSpy = vi.spyOn(sound, 'activateFromUserGesture').mockImplementation(() => {
+            sound.ctx.state = 'running';
+            return Promise.resolve();
+        });
+        sound.ctx = { state: 'suspended' };
+
+        await resumeSoundAfterPageReturn(sound, { userGesture: true });
+
+        expect(activateSpy).toHaveBeenCalled();
+        expect(sound.ctx.state).toBe('running');
+    });
 });
 
 function createAudioContextMock({ sourceStart = vi.fn() } = {}) {
