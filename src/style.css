@@ -998,7 +998,7 @@ main {
     text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
 }
 
-@media (max-width: 520px) {
+@media (max-width: 580px) {
     .settings-container {
         grid-template-columns: 1fr;
         grid-template-areas:
