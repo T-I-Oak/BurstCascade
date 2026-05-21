@@ -20,6 +20,10 @@ export class SoundManager {
         this.maxCores = 5; // Default normalized ceiling
         this.patternStartTick = 0; // Ver 4.7.20: Track pattern change time
         this.pendingBgmPattern = null;
+        this.debugLog = [];
+        this.lastDebugEvent = 'constructed';
+        this.lastResumeError = null;
+        this.recordAudioDebug('constructed');
     }
 
     updateContextData(cores1, cores2, totalCores = 0) {
@@ -33,7 +37,12 @@ export class SoundManager {
     init() {
         if (this.ctx) return;
         const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) {
+            this.recordAudioDebug('AudioContext unavailable');
+            return;
+        }
         this.ctx = new AudioContext();
+        this.recordAudioDebug('AudioContext created');
 
         // --- High-end FX Chain ---
         this.masterCompressor = this.ctx.createDynamicsCompressor();
@@ -94,18 +103,23 @@ export class SoundManager {
         if (this.ctx.state === 'suspended') {
             try {
                 await this.ctx.resume();
+                this.recordAudioDebug('resume resolved');
                 this.unlock();
                 this.startPendingBgm();
             } catch (e) {
+                this.lastResumeError = e && e.message ? e.message : String(e);
+                this.recordAudioDebug('resume failed');
                 // console.warn('AudioContext resume failed:', e);
             }
         } else {
+            this.recordAudioDebug('resume skipped');
             this.unlock();
             this.startPendingBgm();
         }
     }
 
     activateFromUserGesture() {
+        this.recordAudioDebug('gesture activation');
         if (!this.ctx) this.init();
         this.unlock();
         return this.resume();
@@ -123,7 +137,9 @@ export class SoundManager {
             source.buffer = buffer;
             source.connect(this.ctx.destination);
             source.start(0);
+            this.recordAudioDebug('unlock source started');
         } catch (e) {
+            this.recordAudioDebug('unlock failed');
             // Ignore errors during silent unlock
         }
     }
@@ -138,6 +154,7 @@ export class SoundManager {
             this.masterGain.gain.setTargetAtTime(gainValue, this.ctx.currentTime, 0.1);
             this.bgmGain.gain.setTargetAtTime(1.0, this.ctx.currentTime, 0.1);
         }
+        this.recordAudioDebug('volume updated');
     }
 
     setVolume(vol) {
@@ -152,7 +169,11 @@ export class SoundManager {
 
     // --- SFX ---
     playPlace() {
-        if (!this.ctx || this.ctx.state === 'suspended') return;
+        if (!this.ctx || this.ctx.state === 'suspended') {
+            this.recordAudioDebug('playPlace blocked');
+            return;
+        }
+        this.recordAudioDebug('playPlace');
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.type = 'sine';
@@ -258,6 +279,7 @@ export class SoundManager {
     startBgm(type) {
         if (this.currentPattern === type && this.isPlaying && this.schedulerId) return;
         if (this.currentPattern === 'victory' && this.isPlaying) return;
+        this.recordAudioDebug(`startBgm ${type}`);
 
         const prevPattern = this.currentPattern;
         this.currentPattern = type;
@@ -265,7 +287,10 @@ export class SoundManager {
         this.pendingBgmPattern = type;
 
         if (!this.ctx) this.init();
-        if (this.ctx.state === 'suspended') return;
+        if (!this.ctx || this.ctx.state === 'suspended') {
+            this.recordAudioDebug(`startBgm pending ${type}`);
+            return;
+        }
 
         const shouldResetTick = (type === 'title' || prevPattern === 'title');
         if (shouldResetTick || !this.schedulerId) {
@@ -286,21 +311,65 @@ export class SoundManager {
         this.pendingBgmPattern = null;
         this.bpm = this.targetBpm;
         this.nextNoteTime = this.ctx.currentTime + 0.1;
+        this.recordAudioDebug(`scheduler start ${type}`);
         this.scheduler();
     }
 
     startPendingBgm() {
         if (!this.ctx || this.ctx.state === 'suspended' || !this.pendingBgmPattern) return;
         const pattern = this.pendingBgmPattern;
+        this.recordAudioDebug(`startPendingBgm ${pattern}`);
         this.startBgm(pattern);
     }
 
     stopBgm() {
         this.isPlaying = false;
+        this.pendingBgmPattern = null;
+        this.recordAudioDebug('stopBgm');
         if (this.schedulerId) {
             clearTimeout(this.schedulerId);
             this.schedulerId = null;
         }
+    }
+
+    recordAudioDebug(eventName) {
+        this.lastDebugEvent = eventName;
+        const state = this.getDebugState();
+        this.debugLog.unshift(`${new Date().toLocaleTimeString()} ${eventName} ctx=${state.ctxState}`);
+        this.debugLog = this.debugLog.slice(0, 8);
+        this.renderAudioDebug();
+    }
+
+    getDebugState() {
+        return {
+            ctxExists: !!this.ctx,
+            ctxState: this.ctx ? this.ctx.state : 'none',
+            currentPattern: this.currentPattern || 'none',
+            pendingBgmPattern: this.pendingBgmPattern || 'none',
+            isPlaying: this.isPlaying,
+            scheduler: !!this.schedulerId,
+            masterVolume: Number(this.masterVolume).toFixed(2),
+            isMuted: this.isMuted,
+            lastEvent: this.lastDebugEvent,
+            lastResumeError: this.lastResumeError || 'none'
+        };
+    }
+
+    renderAudioDebug() {
+        if (typeof document === 'undefined') return;
+        const output = document.getElementById('audio-debug-output');
+        if (!output) return;
+        const state = this.getDebugState();
+        output.textContent = [
+            `ctx: ${state.ctxState} (exists: ${state.ctxExists})`,
+            `bgm: ${state.currentPattern} pending: ${state.pendingBgmPattern}`,
+            `playing: ${state.isPlaying} scheduler: ${state.scheduler}`,
+            `volume: ${state.masterVolume} muted: ${state.isMuted}`,
+            `last: ${state.lastEvent}`,
+            `resumeError: ${state.lastResumeError}`,
+            '',
+            ...this.debugLog
+        ].join('\n');
     }
 
     scheduler() {
