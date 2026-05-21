@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { Game } from '../../src/main.js';
+import { InputHandler } from '../../src/inputHandler.js';
 
 describe('InputHandler Module', () => {
     let game;
@@ -61,6 +62,25 @@ describe('InputHandler Module', () => {
             game.handleClick({ isSimulated: true, simulatedHex: playerHex });
 
             expect(triggerDropSpy).toHaveBeenCalledWith(playerHex);
+        });
+    });
+
+    describe('Audio Gesture Activation', () => {
+        test('Should register first gesture handlers in capture phase', () => {
+            const addEventSpy = vi.spyOn(document, 'addEventListener');
+            const handler = new InputHandler({ canvas: document.createElement('canvas') });
+
+            handler.initGestureHandler();
+
+            ['pointerdown', 'touchend', 'pointerup', 'mousedown', 'keydown', 'click'].forEach(eventName => {
+                expect(addEventSpy).toHaveBeenCalledWith(
+                    eventName,
+                    expect.any(Function),
+                    expect.objectContaining({ capture: true })
+                );
+            });
+
+            addEventSpy.mockRestore();
         });
     });
 });
