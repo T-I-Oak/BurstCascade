@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { Game } from '../../src/main.js';
+import { drawLabel } from '../../src/rendererLabels.js';
 
 describe('Renderer Module', () => {
     let game;
@@ -117,5 +118,54 @@ describe('Renderer Module', () => {
         expect(mockCtx.setTransform).toHaveBeenCalledWith(2, 0, 0, 2, 0, 0);
         expect(mockCtx.clearRect).toHaveBeenCalledWith(0, 0, 400, 400);
         expect(drawHex).toHaveBeenCalled();
+    });
+
+    test('drawLabel should draw active marker as canvas shape instead of text glyph', () => {
+        const mockCtx = {
+            save: vi.fn(),
+            restore: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            closePath: vi.fn(),
+            arc: vi.fn(),
+            fill: vi.fn(),
+            stroke: vi.fn(),
+            fillText: vi.fn(),
+            measureText: vi.fn().mockReturnValue({ width: 80 })
+        };
+        const rendererMock = {
+            ctx: mockCtx,
+            game: {
+                currentPlayer: 2,
+                gameOver: false,
+                pulseValue: 0,
+                coinToss: { active: false },
+                layout: {
+                    size: 20,
+                    hexToPixel: vi.fn().mockReturnValue({ x: 200, y: 100 })
+                },
+                map: {
+                    centers: {
+                        'hand-p2': { q: 0, r: 0 }
+                    }
+                },
+                chains: {
+                    2: { self: 0, enemy: 0 }
+                },
+                chainAnims: {
+                    2: { self: 0, enemy: 0 }
+                },
+                pendingRewards: [],
+                dotTargets: {}
+            }
+        };
+
+        drawLabel(rendererMock, 'Player 2', 'hand-p2', '#f87171', 'right');
+
+        expect(mockCtx.fillText).toHaveBeenCalledWith('Player 2', expect.any(Number), 100);
+        expect(mockCtx.fillText.mock.calls[0][0]).not.toContain('▶');
+        expect(mockCtx.moveTo).toHaveBeenCalled();
+        expect(mockCtx.lineTo).toHaveBeenCalled();
     });
 });

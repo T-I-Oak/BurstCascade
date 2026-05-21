@@ -25,17 +25,10 @@ export function drawLabel(renderer, text, zoneId, color, align) {
     const marginX = game.layout.size * 2.5;
     const textX = pos.x + (align === 'left' ? marginX : -marginX);
 
-    let finalText = text;
     const isTossing = game.coinToss.active;
     const isWinnerLabel = (isTossing && game.coinToss.phase === 'stabilized' && game.coinToss.result === playerNum);
 
     const showArrow = isTossing ? game.coinToss.showArrow : true;
-
-    if (playerNum === 1) {
-        finalText = text + (isActive && showArrow ? ' ◀' : ' 　');
-    } else {
-        finalText = (isActive && showArrow ? '▶ ' : '　 ') + text;
-    }
 
     if (isActive && !isTossing && !game.gameOver) {
         ctx.shadowColor = color;
@@ -68,11 +61,31 @@ export function drawLabel(renderer, text, zoneId, color, align) {
         ctx.globalAlpha = 1.0;
     }
 
-    ctx.fillText(finalText, textX, pos.y);
+    ctx.fillText(text, textX, pos.y);
+
+    if (isActive && showArrow) {
+        drawActivePlayerMarker(renderer, playerNum, text, textX, pos.y, fontSize, align);
+    }
 
     drawChainDots(renderer, playerNum, textX, pos.y, fontSize, align);
 
     ctx.restore();
+}
+
+function drawActivePlayerMarker(renderer, playerNum, text, textX, y, fontSize, align) {
+    const ctx = renderer.ctx;
+    const textWidth = ctx.measureText(text).width;
+    const gap = fontSize * 0.45;
+    const size = fontSize * 0.42;
+    const x = align === 'left' ? textX + textWidth + gap : textX - textWidth - gap;
+    const direction = playerNum === 1 ? -1 : 1;
+
+    ctx.beginPath();
+    ctx.moveTo(x + direction * size * 0.55, y);
+    ctx.lineTo(x - direction * size * 0.45, y - size * 0.55);
+    ctx.lineTo(x - direction * size * 0.45, y + size * 0.55);
+    ctx.closePath();
+    ctx.fill();
 }
 
 function drawChainDots(renderer, playerNum, textX, y, fontSize, align) {
