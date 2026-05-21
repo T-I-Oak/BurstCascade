@@ -153,6 +153,7 @@ export class InputHandler {
 
     initGestureHandler() {
         const g = this.game;
+        let isActivating = false;
         const primeEvents = ['touchstart', 'pointerdown'];
         const resumeEvents = ['touchend', 'pointerup', 'mousedown', 'keydown', 'click'];
         const gestureEvents = [...new Set([...primeEvents, ...resumeEvents])];
@@ -174,8 +175,11 @@ export class InputHandler {
 
             if (primeEvents.includes(e.type) && !g.sound.ctx) {
                 g.sound.primeFromUserGesture();
+                return;
             }
 
+            if (isActivating || !resumeEvents.includes(e.type)) return;
+            isActivating = true;
             g.sound.activateFromUserGesture().then(() => {
                 if (!g.sound.ctx || g.sound.ctx.state !== 'running') return;
                 removeGestureListeners();
@@ -185,6 +189,8 @@ export class InputHandler {
                 } else if (!g.gameMode && !window.IS_TESTING) {
                     g.sound.startBgm('title');
                 }
+            }).finally(() => {
+                isActivating = false;
             });
         };
 
