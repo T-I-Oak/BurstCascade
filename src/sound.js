@@ -24,6 +24,7 @@ export class SoundManager {
         this.lastDebugEvent = 'constructed';
         this.lastResumeError = null;
         this.recordAudioDebug('constructed');
+        this.bindAudioDebugControls();
     }
 
     updateContextData(cores1, cores2, totalCores = 0) {
@@ -123,6 +124,33 @@ export class SoundManager {
         if (!this.ctx) this.init();
         this.unlock();
         return this.resume();
+    }
+
+    bindAudioDebugControls() {
+        if (typeof document === 'undefined') return;
+        const unlockButton = document.getElementById('audio-debug-unlock-btn');
+        const testButton = document.getElementById('audio-debug-test-btn');
+
+        if (unlockButton && !unlockButton.dataset.bound) {
+            unlockButton.dataset.bound = 'true';
+            unlockButton.addEventListener('click', async () => {
+                this.recordAudioDebug('manual unlock tap');
+                await this.activateFromUserGesture();
+                if (this.ctx && this.ctx.state === 'running') {
+                    const pattern = this.pendingBgmPattern || this.currentPattern || 'title';
+                    this.startBgm(pattern);
+                }
+            });
+        }
+
+        if (testButton && !testButton.dataset.bound) {
+            testButton.dataset.bound = 'true';
+            testButton.addEventListener('click', async () => {
+                this.recordAudioDebug('manual test tap');
+                await this.activateFromUserGesture();
+                this.playPlace();
+            });
+        }
     }
 
     /**
