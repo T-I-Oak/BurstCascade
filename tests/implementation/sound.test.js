@@ -64,6 +64,24 @@ describe('SoundManager Module', () => {
         expect(text).toContain('ctx: none');
         expect(text).toContain('last: test event');
     });
+
+    test('bindAudioDebugControls should bind unlock and test buttons', async () => {
+        document.body.innerHTML = `
+            <button id="audio-debug-unlock-btn"></button>
+            <button id="audio-debug-test-btn"></button>
+            <pre id="audio-debug-output"></pre>
+        `;
+        const activateSpy = vi.spyOn(sound, 'activateFromUserGesture').mockResolvedValue();
+        const playPlaceSpy = vi.spyOn(sound, 'playPlace').mockImplementation(() => {});
+
+        sound.bindAudioDebugControls();
+        document.getElementById('audio-debug-unlock-btn').click();
+        document.getElementById('audio-debug-test-btn').click();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(activateSpy).toHaveBeenCalledTimes(2);
+        expect(playPlaceSpy).toHaveBeenCalled();
+    });
 });
 
 function createAudioContextMock({ sourceStart = vi.fn() } = {}) {
