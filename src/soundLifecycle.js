@@ -19,9 +19,8 @@ export async function resumeSoundAfterPageReturn(sound) {
     await sound.resume();
     if (!sound.ctx || sound.ctx.state !== 'running') return;
 
-    const pattern = sound.pendingBgmPattern || sound.currentPattern;
-    if (sound.isPlaying && pattern && !sound.schedulerId) {
-        sound.currentPattern = null;
-        sound.startBgm(pattern);
+    if (sound.isPlaying && sound.currentPattern && !sound.schedulerId) {
+        sound.nextNoteTime = sound.ctx.currentTime + 0.1;
+        sound.scheduler();
     }
 }

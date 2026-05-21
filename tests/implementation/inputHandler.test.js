@@ -82,5 +82,32 @@ describe('InputHandler Module', () => {
 
             addEventSpy.mockRestore();
         });
+
+        test('Should prime on touchstart without starting BGM until resume gesture', async () => {
+            const handler = new InputHandler(game);
+            game.sound.primeFromUserGesture = vi.fn(() => {
+                game.sound.ctx = { state: 'suspended' };
+            });
+            game.sound.activateFromUserGesture = vi.fn(() => {
+                game.sound.ctx.state = 'running';
+                return Promise.resolve();
+            });
+            game.sound.startBgm = vi.fn();
+            game.gameMode = null;
+            window.IS_TESTING = false;
+
+            handler.initGestureHandler();
+            document.dispatchEvent(new Event('touchstart'));
+            expect(game.sound.primeFromUserGesture).toHaveBeenCalled();
+            expect(game.sound.activateFromUserGesture).not.toHaveBeenCalled();
+            expect(game.sound.startBgm).not.toHaveBeenCalled();
+
+            document.dispatchEvent(new Event('touchend'));
+            await Promise.resolve();
+            await Promise.resolve();
+
+            expect(game.sound.activateFromUserGesture).toHaveBeenCalledTimes(1);
+            window.IS_TESTING = true;
+        });
     });
 });

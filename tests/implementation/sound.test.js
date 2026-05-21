@@ -71,7 +71,7 @@ describe('SoundManager Module', () => {
         expect(sound.scheduler).toHaveBeenCalled();
     });
 
-    test('resumeSoundAfterPageReturn should restart scheduler for current pattern', async () => {
+    test('resumeSoundAfterPageReturn should restart scheduler without resetting music state', async () => {
         const ctx = createAudioContextMock();
         window.AudioContext = vi.fn(() => ctx);
         sound.scheduler = vi.fn();
@@ -79,11 +79,19 @@ describe('SoundManager Module', () => {
         sound.currentPattern = 'game';
         sound.isPlaying = true;
         sound.schedulerId = null;
+        sound.tick = 37;
+        sound.patternStartTick = 12;
+        sound.bpm = 116;
+        sound.targetBpm = 132;
 
         await resumeSoundAfterPageReturn(sound);
 
         expect(ctx.resume).toHaveBeenCalled();
         expect(sound.currentPattern).toBe('game');
+        expect(sound.tick).toBe(37);
+        expect(sound.patternStartTick).toBe(12);
+        expect(sound.bpm).toBe(116);
+        expect(sound.targetBpm).toBe(132);
         expect(sound.scheduler).toHaveBeenCalled();
     });
 
