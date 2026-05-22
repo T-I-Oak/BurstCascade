@@ -82,6 +82,25 @@ describe('Tutorial highlight rect calculation', () => {
         });
     });
 
+    test('single grid highlights use top hex bounds without column height', () => {
+        const game = createGame();
+        const hex = game.map.mainHexes.find(hex => !hex.isDisabled);
+        game.lastMoveHex = hex;
+        hex.height = 12;
+        hex.visualHeight = 12;
+
+        const rect = calculateTutorialHighlightRect({ targetType: 'tapped-hex-area' }, game);
+        const center = game.layout.hexToPixel(hex);
+        const halfWidth = game.layout.size * Math.sqrt(3) / 2;
+
+        expectViewportRectMatchesLogicalRect(rect, {
+            top: center.y - game.layout.size,
+            left: center.x - halfWidth,
+            width: halfWidth * 2,
+            height: game.layout.size * 2
+        });
+    });
+
     test('dom-element target bypasses canvas DPR conversion', () => {
         const game = createGame();
         const helpButton = document.getElementById('help-btn');
