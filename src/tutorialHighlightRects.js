@@ -58,13 +58,13 @@ function calculateHexBounds(hexes, layout, includeHeight) {
 function calculateSingleHexRect(hex, layout) {
     const pixel = layout.hexToPixel(hex);
     const size = layout.size;
-    const h = Math.abs(hex.visualHeight) * size * UNIT_THICKNESS_RATIO;
+    const hexWidth = size * HEX_WIDTH_RATIO;
 
     return {
-        top: pixel.y - h - size,
-        left: pixel.x - size,
-        width: size * 2,
-        height: size * 2 + h
+        top: pixel.y - size,
+        left: pixel.x - hexWidth / 2,
+        width: hexWidth,
+        height: size * 2
     };
 }
 

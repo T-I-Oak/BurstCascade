@@ -11,12 +11,17 @@ describe('Tutorial scenario data', () => {
         });
     });
 
-    test('should use circle highlights for tapped and burst grid targets', () => {
+    test('should use circle highlights with larger padding for tapped and burst grid targets', () => {
         const highlights = scenarios
             .flatMap(scenario => scenario.pages || [])
             .flatMap(page => page.highlight || []);
 
-        expect(highlights.find(hl => hl.targetType === 'tapped-hex-area')?.shape).toBe('circle');
-        expect(highlights.find(hl => hl.targetType === 'burst-hex')?.shape).toBe('circle');
+        const tappedHex = highlights.find(hl => hl.targetType === 'tapped-hex-area');
+        const burstHex = highlights.find(hl => hl.targetType === 'burst-hex');
+
+        expect(tappedHex?.shape).toBe('circle');
+        expect(tappedHex?.padding).toBe(30);
+        expect(burstHex?.shape).toBe('circle');
+        expect(burstHex?.padding).toBe(30);
     });
 });

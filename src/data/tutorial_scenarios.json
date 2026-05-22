@@ -31,7 +31,8 @@
           {
             "elementId": "game-canvas",
             "targetType": "tapped-hex-area",
-            "shape": "circle"
+            "shape": "circle",
+            "padding": 30
           }
         ]
       }
@@ -80,7 +81,8 @@
           {
             "elementId": "game-canvas",
             "targetType": "burst-hex",
-            "shape": "circle"
+            "shape": "circle",
+            "padding": 30
           }
         ]
       }
