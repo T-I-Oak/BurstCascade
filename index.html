@@ -31,12 +31,15 @@
             <div id="overlay">
                 <!-- タイトル・モード選択画面 -->
                 <div id="mode-selection-content" class="modal-content">
+                    <div class="title-panel-header">
                     <h1 class="main-title">
                         <img src="assets/logo.svg" alt="BURST CASCADE" class="logo-main">
                     </h1>
                     <div id="version-display" class="version-badge">Ver ---</div>
                     <p class="subtitle">連鎖爆発ストラテジー</p>
+                    </div>
                     <div class="menu-scroll-container">
+                        <div class="menu-scroll-content">
                         <div class="menu-options">
                             <div class="settings-container">
                                 <div class="setting-group" id="player-group">
@@ -79,6 +82,7 @@
                             <div id="copyright-container" class="copyright-container">
                                 <div class="copyright">© T.I.OAK 2026</div>
                             </div>
+                        </div>
                         </div>
                     </div>
                 </div>
@@ -206,6 +210,7 @@
 
                 <!-- 実績画面 (Ver 4.7.0) -->
                 <div id="achievements-content" class="modal-content theme-cyber hidden">
+                    <div class="achievements-panel-header">
                     <h2>ACHIEVEMENTS <span id="achievement-percent"
                             style="font-size: 0.6em; margin-left: 10px;">0%</span></h2>
 
@@ -214,9 +219,13 @@
                         <button class="TabButton active" data-map="regular">REGULAR</button>
                     </div>
 
+                    </div>
+
                     <div class="AchievementsScrollContainer">
+                        <div class="achievements-scroll-content">
                         <div id="achievements-grid">
                             <!-- JSでカードを動的に生成 -->
+                        </div>
                         </div>
                     </div>
 
@@ -229,6 +238,7 @@
                 <!-- ゲームオーバー -->
                 <div id="game-over-content" class="modal-content hidden">
                     <div class="result-scroll-container">
+                        <div class="result-scroll-content">
                         <div id="result-header">
                             <h2 id="winner-text">Player 1 Wins!</h2>
                             <p id="victory-message">Dominance established.</p>
@@ -248,7 +258,9 @@
                                     </div>
                                 </div>
                                 <div id="achievements-list">
+                                    <div class="result-achievements-list-content">
                                     <!-- JSで動的に生成 -->
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -256,6 +268,7 @@
                         <div class="menu-options result-options">
                             <button id="share-btn" class="menu-btn share-btn">SHARE RESULT</button>
                             <button id="restart-btn" class="menu-btn primary">RETURN TO TITLE</button>
+                        </div>
                         </div>
                     </div>
                 </div>

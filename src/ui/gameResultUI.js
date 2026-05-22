@@ -215,7 +215,8 @@ export class GameResultUI {
 
         // --- アチーブメント情報の表示 (Ver 6.0.0) ---
         const achContainer = document.getElementById('result-achievements');
-        const achList = document.getElementById('achievements-list');
+        const achList = document.querySelector('#achievements-list .result-achievements-list-content')
+            || document.getElementById('achievements-list');
         if (achList) achList.innerHTML = '';
         g.lastAchievements = []; // シェア用に初期化 (Ver 6.6.6)
         
