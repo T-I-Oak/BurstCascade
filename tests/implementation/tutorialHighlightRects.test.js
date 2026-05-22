@@ -35,6 +35,23 @@ function expectViewportRectMatchesLogicalRect(rect, logicalRect) {
     expect(rect.height).toBeCloseTo(logicalRect.height);
 }
 
+function calculateProjectedTopFaceBounds(hex, layout) {
+    const heightOffset = Math.abs(hex.visualHeight) * layout.size * 0.12;
+    const vertices = layout.getPolygonVertices(hex).map(vertex => ({
+        x: vertex.x,
+        y: vertex.y - heightOffset
+    }));
+    const xs = vertices.map(vertex => vertex.x);
+    const ys = vertices.map(vertex => vertex.y);
+
+    return {
+        top: Math.min(...ys),
+        left: Math.min(...xs),
+        width: Math.max(...xs) - Math.min(...xs),
+        height: Math.max(...ys) - Math.min(...ys)
+    };
+}
+
 describe('Tutorial highlight rect calculation', () => {
     beforeEach(() => {
         setDevicePixelRatio(2);
@@ -82,7 +99,7 @@ describe('Tutorial highlight rect calculation', () => {
         });
     });
 
-    test('single grid highlights use top hex bounds without column height', () => {
+    test('single grid highlights use projected top face bounds without column sides', () => {
         const game = createGame();
         const hex = game.map.mainHexes.find(hex => !hex.isDisabled);
         game.lastMoveHex = hex;
@@ -90,15 +107,8 @@ describe('Tutorial highlight rect calculation', () => {
         hex.visualHeight = 12;
 
         const rect = calculateTutorialHighlightRect({ targetType: 'tapped-hex-area' }, game);
-        const center = game.layout.hexToPixel(hex);
-        const halfWidth = game.layout.size * Math.sqrt(3) / 2;
 
-        expectViewportRectMatchesLogicalRect(rect, {
-            top: center.y - game.layout.size,
-            left: center.x - halfWidth,
-            width: halfWidth * 2,
-            height: game.layout.size * 2
-        });
+        expectViewportRectMatchesLogicalRect(rect, calculateProjectedTopFaceBounds(hex, game.layout));
     });
 
     test('dom-element target bypasses canvas DPR conversion', () => {

@@ -56,15 +56,23 @@ function calculateHexBounds(hexes, layout, includeHeight) {
 }
 
 function calculateSingleHexRect(hex, layout) {
-    const pixel = layout.hexToPixel(hex);
-    const size = layout.size;
-    const hexWidth = size * HEX_WIDTH_RATIO;
+    const heightOffset = Math.abs(hex.visualHeight) * layout.size * UNIT_THICKNESS_RATIO;
+    const vertices = layout.getPolygonVertices(hex).map(vertex => ({
+        x: vertex.x,
+        y: vertex.y - heightOffset
+    }));
+    const xs = vertices.map(vertex => vertex.x);
+    const ys = vertices.map(vertex => vertex.y);
+    const minX = Math.min(...xs);
+    const maxX = Math.max(...xs);
+    const minY = Math.min(...ys);
+    const maxY = Math.max(...ys);
 
     return {
-        top: pixel.y - size,
-        left: pixel.x - hexWidth / 2,
-        width: hexWidth,
-        height: size * 2
+        top: minY,
+        left: minX,
+        width: maxX - minX,
+        height: maxY - minY
     };
 }
 
