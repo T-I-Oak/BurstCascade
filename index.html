@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>BURST CASCADE - 連鎖爆発ストラテジー</title>
     <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
-  <script type="module" crossorigin src="/BurstCascade/assets/index-CtxmmCoV.js"></script>
-  <link rel="stylesheet" crossorigin href="/BurstCascade/assets/index-DPOXb5d3.css">
+  <script type="module" crossorigin src="/BurstCascade/assets/index-567qxOiI.js"></script>
+  <link rel="stylesheet" crossorigin href="/BurstCascade/assets/index-Beso8Ep0.css">
 </head>
 
 <body>
@@ -19,8 +19,8 @@
             <span id="help-btn">HOW TO PLAY</span>
             <div id="status-container">
                 <div id="war-gauge-container">
-                    <div id="p1-bar" class="gauge-bar" style="width: 50%;"></div>
-                    <div id="p2-bar" class="gauge-bar" style="width: 50%;"></div>
+                    <div id="p1-bar" class="gauge-bar gauge-bar-initial"></div>
+                    <div id="p2-bar" class="gauge-bar gauge-bar-initial"></div>
                     <div id="p1-score" class="score-label">3</div>
                     <div id="p2-score" class="score-label">3</div>
                 </div>
@@ -113,12 +113,12 @@
                             </ul>
                         </section>
 
-                        <div style="clear: both;"></div>
+                        <div class="clear-both"></div>
                         <section class="help-section">
                             <h3>システム・ルール</h3>
                             <p>ゲーム開始時に<strong>先攻プレイヤーがランダムに抽選</strong>されます。</p>
                             <p>このゲームは、<strong>「ターン」</strong>という単位で進行します。1つのターンは以下のフェーズのサイクルで構成されます。</p>
-                            <ul class="help-list" style="margin-bottom: 20px;">
+                            <ul class="help-list help-list-spaced">
                                 <li><strong>エネルギー注入フェーズ</strong>: エネルギー注入のアクションを行う段階です。</li>
                                 <li><strong>供給エネルギー再構築フェーズ</strong>: アクションの結果を受け、供給エネルギーが変化する段階です。</li>
                                 <li><strong>ターン継続チェックフェーズ</strong>: 次のターンに進むか、このターンのままアクションを続けるかを判定する段階です。</li>
@@ -199,9 +199,9 @@
                             </ul>
                         </section>
 
-                        <div class="tutorial-reset-container" style="margin: 20px 0; padding: 15px 10px; border-top: 1px solid rgba(56, 189, 248, 0.2); display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 0.9rem; color: #cbd5e1;">
-                            <input type="checkbox" id="tutorial-reset-checkbox" style="width: 18px; height: 18px; accent-color: #38bdf8; cursor: pointer;">
-                            <label for="tutorial-reset-checkbox" style="cursor: pointer; user-select: none;">チュートリアルを最初から表示する</label>
+                        <div class="tutorial-reset-container">
+                            <input type="checkbox" id="tutorial-reset-checkbox" class="tutorial-reset-checkbox">
+                            <label for="tutorial-reset-checkbox" class="tutorial-reset-label">チュートリアルを最初から表示する</label>
                         </div>
                     </div>
                     <button id="help-bottom-back-btn" class="close-btn">RETURN TO TITLE</button>
@@ -211,8 +211,7 @@
                 <!-- 実績画面 (Ver 4.7.0) -->
                 <div id="achievements-content" class="modal-content theme-cyber hidden">
                     <div class="achievements-panel-header">
-                    <h2>ACHIEVEMENTS <span id="achievement-percent"
-                            style="font-size: 0.6em; margin-left: 10px;">0%</span></h2>
+                    <h2>ACHIEVEMENTS <span id="achievement-percent" class="achievement-percent-label">0%</span></h2>
 
                     <div class="Tabs">
                         <button class="TabButton" data-map="mini">MINI</button>
