@@ -1,0 +1,421 @@
+
+.result-scroll-content {
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* スクロールバーのカスタマイズ (統一スタイル) */
+.menu-scroll-container::-webkit-scrollbar,
+.help-scroll-container::-webkit-scrollbar,
+.result-scroll-container::-webkit-scrollbar,
+.AchievementsScrollContainer::-webkit-scrollbar,
+#achievements-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.menu-scroll-container::-webkit-scrollbar-track,
+.help-scroll-container::-webkit-scrollbar-track,
+.result-scroll-container::-webkit-scrollbar-track,
+.AchievementsScrollContainer::-webkit-scrollbar-track,
+#achievements-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.menu-scroll-container::-webkit-scrollbar-thumb,
+.help-scroll-container::-webkit-scrollbar-thumb,
+.result-scroll-container::-webkit-scrollbar-thumb,
+.AchievementsScrollContainer::-webkit-scrollbar-thumb,
+#achievements-list::-webkit-scrollbar-thumb {
+    background: var(--accent-color);
+    border-radius: 3px;
+}
+
+.help-section {
+    margin-bottom: 2rem;
+}
+
+.help-section h2 {
+    font-size: 1.8rem;
+    margin-top: 0;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff, var(--accent-color));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.help-section h3 {
+    font-size: 1.2rem;
+    color: var(--accent-color);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.3);
+    padding-bottom: 0.3rem;
+    margin-bottom: 1rem;
+}
+
+.help-section h4 {
+    font-size: 1rem;
+    color: #f8fafc;
+    margin: 1rem 0 0.5rem 0;
+}
+
+.help-section p {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    margin: 0.5rem 0;
+}
+
+.flavor-text {
+    font-style: italic;
+    font-size: 0.95rem;
+    color: #94a3b8;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.rule-item {
+    margin-bottom: 2rem;
+    clear: both;
+}
+
+.rule-item p {
+    font-size: 0.9rem;
+    margin: 0.2rem 0;
+    color: #cbd5e1;
+}
+
+.help-list {
+    text-align: left;
+    padding: 0;
+    list-style: none;
+    margin: 0.5rem 0;
+}
+
+.help-list li {
+    margin-bottom: 0.6rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: #cbd5e1;
+    position: relative;
+    padding-left: 1.2rem;
+}
+
+.help-list li::before {
+    content: '•';
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+}
+
+.help-list-spaced {
+    margin-bottom: 20px;
+}
+
+.clear-both {
+    clear: both;
+}
+
+.tutorial-reset-container {
+    margin: 20px 0;
+    padding: 15px 10px;
+    border-top: 1px solid rgba(56, 189, 248, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+.tutorial-reset-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: #38bdf8;
+    cursor: pointer;
+}
+
+.tutorial-reset-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+.close-btn,
+#restart-btn {
+    background: var(--accent-color);
+    color: #0f172a;
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 0.5rem;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+    transition: transform 0.2s, filter 0.2s;
+    margin-top: 1rem;
+}
+
+.close-btn:hover,
+#restart-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+/* モード選択画面固有のスタイル (Ver 4.7.26 最終縮小) */
+.title-logo {
+    font-size: 2.8rem;
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: -0.05rem;
+    background: linear-gradient(135deg, #fff 0%, var(--accent-color) 50%, #818cf8 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.3));
+    line-height: 1.1;
+}
+
+.version-badge {
+    font-size: 0.8rem;
+    color: var(--accent-color);
+    margin-top: 0.3rem;
+    margin-bottom: 0.5rem;
+    opacity: 0.7;
+    font-weight: 700;
+    letter-spacing: 0.1rem;
+}
+
+.subtitle {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    letter-spacing: 0.3rem;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    font-weight: 300;
+}
+
+.menu-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.modal-actions {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.debug-btn {
+    opacity: 0.5;
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+}
+
+.debug-btn:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-btn {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    padding: 0.8rem 1.5rem;
+    border-radius: 0.8rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    min-height: 3.2rem;
+    height: 3.2rem; /* Force exact height */
+    line-height: 1.2;
+}
+
+.menu-btn.primary {
+    background: rgba(56, 189, 248, 0.15);
+    border-color: rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+.btn-sub {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.6;
+    letter-spacing: 0.1rem;
+}
+
+.menu-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+.menu-btn.primary:hover {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: var(--accent-color);
+}
+
+.menu-footer {
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.footer-link {
+    font-size: 0.9rem;
+    color: #64748b;
+    cursor: pointer;
+    transition: color 0.2s;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+}
+
+.footer-link:hover {
+    color: var(--accent-color);
+}
+
+.copyright-container {
+    font-size: 0.75rem;
+    color: #64748b;
+    margin-top: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.05rem;
+}
+
+.copyright-link {
+    color: inherit;
+    text-decoration: underline;
+    transition: opacity 0.2s;
+}
+
+.copyright-link:hover {
+    opacity: 0.8;
+}
+
+/* AI思考中：回路アニメーション */
+#ai-thinking-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    z-index: 50;
+    pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.circuit-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.circuit-core {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 60px;
+    height: 60px;
+    margin: -30px 0 0 -30px;
+    background: radial-gradient(circle, var(--accent-color), transparent 70%);
+    border-radius: 50%;
+    animation: core-pulse 1.5s infinite ease-in-out;
+    filter: blur(4px);
+}
+
+.circuit-path {
+    position: absolute;
+    border: 2px solid rgba(56, 189, 248, 0.1);
+    border-radius: 50%;
+}
+
+.circuit-path::after {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 50%;
+    width: 8px;
+    height: 8px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px 4px var(--accent-color);
+    animation: orbit 2s infinite linear;
+}
+
+.circuit-path.p1 {
+    width: 100px;
+    height: 100px;
+    top: 100px;
+    left: 100px;
+    animation: orbit 3s infinite linear reverse;
+}
+
+.circuit-path.p2 {
+    width: 180px;
+    height: 180px;
+    top: 60px;
+    left: 60px;
+    animation: orbit 5s infinite linear;
+}
+
+.circuit-path.p3 {
+    width: 260px;
+    height: 260px;
+    top: 20px;
+    left: 20px;
+    animation: orbit 7s infinite linear reverse;
+}
+
+.circuit-text {
+    position: absolute;
+    bottom: -40px;
+    width: 100%;
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    letter-spacing: 0.3rem;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+    animation: text-pulse 1s infinite alternate;
+}
+
+@keyframes core-pulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0.4;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(0.8);
+        opacity: 0.4;
+    }
+}
