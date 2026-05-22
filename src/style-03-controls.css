@@ -1,0 +1,456 @@
+
+@keyframes orbit {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes text-pulse {
+    from {
+        opacity: 0.4;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+#restart-btn {
+    width: fit-content;
+    margin: 2rem auto 0;
+}
+
+#ai-thinking-overlay.hidden,
+#overlay.hidden,
+#share-confirm-overlay.hidden,
+.modal-content.hidden,
+.hidden {
+    display: none;
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes scale-up {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+
+/* タイトル設定画面 (Ver 4.7.26 2カラム固定・配置安定化) */
+.settings-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "players ai"
+        "size sound";
+    column-gap: 3rem;
+    row-gap: 0.8rem;
+    width: 100%;
+    margin-bottom: 1rem;
+}
+
+#player-group {
+    grid-area: players;
+}
+
+#ai-level-group {
+    grid-area: ai;
+}
+
+#size-group {
+    grid-area: size;
+}
+
+#sound-group {
+    grid-area: sound;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    align-items: flex-start;
+    /* 左寄せに戻して左右の隙間を強調 */
+}
+
+.setting-group label {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    letter-spacing: 0.1rem;
+    text-transform: uppercase;
+    margin-left: 0.5rem;
+}
+
+.toggle-options {
+    display: flex;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0.8rem;
+    padding: 0.3rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toggle-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 0.6rem;
+    border-radius: 0.6rem;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+}
+
+.toggle-btn.selected {
+    background: rgba(56, 189, 248, 0.15);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+.toggle-btn:hover:not(.selected) {
+    color: #cbd5e1;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.toggle-btn .sub {
+    font-size: 0.7rem;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-left: 0.3rem;
+}
+
+/* Sound Volume Slider (Ver 4.8.0) */
+.volume-container {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 1rem;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 0.8rem;
+    padding: 0.8rem 1rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#volume-slider {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    cursor: pointer;
+}
+
+/* Track */
+#volume-slider::-webkit-slider-runnable-track {
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent-color) 0%, rgba(56, 189, 248, 0.2) 100%);
+    border-radius: 3px;
+    border: none;
+}
+
+#volume-slider::-moz-range-track {
+    height: 6px;
+    background: linear-gradient(90deg, var(--accent-color) 0%, rgba(56, 189, 248, 0.2) 100%);
+    border-radius: 3px;
+    border: none;
+}
+
+/* Thumb */
+#volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 20px;
+    width: 20px;
+    background: #fff;
+    border: 2px solid var(--accent-color);
+    border-radius: 50%;
+    margin-top: -7px;
+    /* (track_height/2 - thumb_height/2) */
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#volume-slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    background: #fff;
+    border: 2px solid var(--accent-color);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.8);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+#volume-slider:hover::-webkit-slider-thumb {
+    transform: scale(1.1);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 1);
+}
+
+#volume-value {
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    min-width: 3rem;
+    text-align: right;
+    font-family: 'Inter', sans-serif;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
+}
+
+@media (max-width: 580px) {
+    .settings-container {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "players"
+            "ai"
+            "size"
+            "sound";
+        gap: 0.7rem;
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .setting-group {
+        min-width: 0;
+    }
+
+    .toggle-options {
+        min-width: 0;
+    }
+
+    .toggle-btn {
+        min-width: 0;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+
+    .toggle-btn .sub {
+        display: block;
+        margin-left: 0;
+        margin-top: 0.15rem;
+    }
+
+    .volume-container {
+        gap: 0.7rem;
+        padding: 0.7rem 0.8rem;
+    }
+}
+
+@media (max-width: 360px) {
+    #mode-selection-content {
+        width: 96%;
+    }
+
+    .title-panel-header {
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+    }
+
+    .menu-scroll-content {
+        padding-left: 0.8rem;
+        padding-right: 0.8rem;
+        padding-bottom: 0.8rem;
+    }
+
+    .menu-options {
+        max-width: 100%;
+    }
+
+    .toggle-btn {
+        padding-left: 0.35rem;
+        padding-right: 0.35rem;
+        font-size: 0.78rem;
+    }
+}
+
+.menu-btn.large {
+    width: 100%;
+    font-size: 1.2rem;
+    padding: 1rem;
+    letter-spacing: 0.2rem;
+}
+
+/* How to Play Canvas */
+.how-to-play-float-right {
+    float: right;
+    margin: 0 0 1rem 1.5rem;
+    text-align: center;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    padding: 10px;
+}
+
+.how-to-play-canvas {
+    /* background/border removed */
+    display: block;
+}
+
+/* --- 小画面（垂直）対応 --- */
+@media (max-height: 750px) {
+    .modal-content {
+        padding: 0.8rem;
+        border-radius: 1rem;
+    }
+
+    #help-content .help-scroll-container {
+        padding: 0.8rem 0.6rem 0 0.8rem;
+    }
+
+    #help-content .close-btn {
+        margin: 0 0.8rem 0.8rem;
+    }
+
+    .title-panel-header {
+        padding: 0.8rem 0.8rem 0;
+    }
+
+    .menu-scroll-content,
+    .result-scroll-content {
+        padding: 0 0.8rem 0.8rem;
+    }
+
+    .title-logo {
+        font-size: 1.8rem;
+    }
+
+    .subtitle {
+        margin-bottom: 0.5rem;
+    }
+
+    .version-badge {
+        margin-bottom: 0.2rem;
+    }
+
+    .menu-options {
+        gap: 0.4rem;
+    }
+
+    .menu-btn {
+        padding: 0.5rem;
+        border-radius: 0.6rem;
+    }
+
+    .menu-btn.large {
+        font-size: 1rem;
+        padding: 0.7rem;
+    }
+
+    .settings-container {
+        row-gap: 0.4rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .setting-group label {
+        font-size: 0.7rem;
+        margin-bottom: 0.2rem;
+    }
+
+    .toggle-btn {
+        padding: 0.4rem;
+        font-size: 0.75rem;
+    }
+
+    .menu-footer {
+        margin-top: 1rem;
+    }
+
+    .help-section {
+        margin-bottom: 1rem;
+    }
+
+    .help-section h2 {
+        font-size: 1.4rem;
+    }
+
+    .rule-item {
+        margin-bottom: 1rem;
+    }
+}
+
+@media (max-height: 550px) {
+    .modal-content {
+        padding: 0.5rem;
+        gap: 0.2rem;
+    }
+
+    #help-content .help-scroll-container {
+        padding: 0.5rem 0.4rem 0 0.5rem;
+    }
+
+    #help-content .close-btn {
+        margin: 0 0.5rem 0.5rem;
+    }
+
+    .title-panel-header {
+        padding: 0.5rem 0.5rem 0;
+    }
+
+    .menu-scroll-content,
+    .result-scroll-content {
+        padding: 0 0.5rem 0.5rem;
+    }
+
+    .title-logo {
+        font-size: 1.4rem;
+    }
+
+    .subtitle {
+        display: none;
+        /* 高さ優先で非表示 */
+    }
+
+    .version-badge {
+        font-size: 0.6rem;
+        margin-bottom: 0;
+    }
+
+    .settings-container {
+        margin-bottom: 0.2rem;
+        row-gap: 0.2rem;
+    }
+
+    .menu-btn {
+        padding: 0.4rem;
+    }
+
+    .menu-btn.large {
+        padding: 0.6rem;
+    }
+
+    .menu-footer {
+        margin-top: 0.5rem;
+    }
+
+    .help-section {
+        margin-bottom: 0.5rem;
+    }
+
+    .help-section h2 {
+        font-size: 1.2rem;
+    }
+}

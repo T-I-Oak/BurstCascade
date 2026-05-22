@@ -33,6 +33,11 @@
 }
 
 /* タブは廃止予定だが、一応非表示にしておく (ロジック変更までの猶予) */
+.achievement-percent-label {
+    font-size: 0.6em;
+    margin-left: 10px;
+}
+
 .Tabs {
     display: none;
 }
