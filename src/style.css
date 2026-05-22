@@ -387,6 +387,11 @@ main {
     margin-bottom: 1rem;
 }
 
+.help-scroll-container {
+    padding-right: 2rem;
+    margin-right: -2rem;
+}
+
 .result-scroll-container {
     display: flex;
     flex-direction: column;
@@ -1087,6 +1092,11 @@ main {
         border-radius: 1rem;
     }
 
+    .help-scroll-container {
+        padding-right: 0.8rem;
+        margin-right: -0.6rem;
+    }
+
     .title-logo {
         font-size: 1.8rem;
     }
@@ -1149,6 +1159,11 @@ main {
     .modal-content {
         padding: 0.5rem;
         gap: 0.2rem;
+    }
+
+    .help-scroll-container {
+        padding-right: 0.6rem;
+        margin-right: -0.4rem;
     }
 
     .title-logo {
