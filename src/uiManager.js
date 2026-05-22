@@ -476,8 +476,7 @@ export class UIManager {
                 resultCanvas.width = size * dpr;
                 resultCanvas.height = size * dpr;
 
-                import('./map.js').then(({ Layout }) => {
-                    const canvasSize = size;
+                const canvasSize = size;
                     const padding = 30; // 余裕を持たせるためのパディング
                     const availableSize = canvasSize - padding * 2;
                     
@@ -516,7 +515,6 @@ export class UIManager {
 
                     const resultLayout = new Layout(finalHexSize, origin);
                     g.renderer.renderToCanvas(resultCanvas, g.map, resultLayout, dpr);
-                });
             });
         }
 
