@@ -21,7 +21,6 @@ function initializeApp() {
     const savedIndex = DataManager.getSavedData('burst-cascade-tutorial-index', migrationMap);
     window.tutorialManager = new TutorialManager(defaultScenarios, {
         initialScenarioIndex: savedIndex,
-        defaultPadding: 10,
         onSaveIndex: (index) => {
             DataManager.setSavedData('burst-cascade-tutorial-index', index);
         },
