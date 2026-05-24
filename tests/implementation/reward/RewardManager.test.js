@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { RewardManager } from '../../../src/reward/RewardManager.js';
+import { SUPPLY_ENERGY_LIMIT } from '../../../src/map.js';
 
 function createMockGame() {
   const mock = {
@@ -16,7 +17,11 @@ function createMockGame() {
     turnHadSelfReward: false,
     currentPlayer: 1,
     addParticles: vi.fn(),
-    triggerChainAnim: vi.fn()
+    triggerChainAnim: vi.fn(),
+    layout: {
+      hexToPixel: vi.fn(() => ({ x: 0, y: 0 })),
+      size: 10
+    }
   };
   return mock;
 }
@@ -54,5 +59,43 @@ describe('RewardManager functionality', () => {
     expect(game.flashAlpha).toBe(0.3);
     expect(game.addParticles).toHaveBeenCalled();
     expect(game.triggerChainAnim).toHaveBeenCalledWith(1, 'self');
+  });
+
+  it('self reward can raise supply energy up to the grid energy limit', () => {
+    const game = createMockGame();
+    const rm = new RewardManager(game);
+    const targetHex = {
+      height: SUPPLY_ENERGY_LIMIT - 1,
+      visualHeight: SUPPLY_ENERGY_LIMIT - 1,
+      updateOwner: vi.fn()
+    };
+    rm.applyRewardEffect({
+      player: 1,
+      type: 'self',
+      targetHex,
+      color: '#4ade80',
+      status: 'flowing'
+    });
+    expect(targetHex.height).toBe(SUPPLY_ENERGY_LIMIT);
+    expect(targetHex.updateOwner).toHaveBeenCalled();
+  });
+
+  it('self reward can lower supply energy down to the negative grid energy limit', () => {
+    const game = createMockGame();
+    const rm = new RewardManager(game);
+    const targetHex = {
+      height: -SUPPLY_ENERGY_LIMIT + 1,
+      visualHeight: -SUPPLY_ENERGY_LIMIT + 1,
+      updateOwner: vi.fn()
+    };
+    rm.applyRewardEffect({
+      player: 2,
+      type: 'self',
+      targetHex,
+      color: '#f87171',
+      status: 'flowing'
+    });
+    expect(targetHex.height).toBe(-SUPPLY_ENERGY_LIMIT);
+    expect(targetHex.updateOwner).toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { HexMap } from './map.js';
+import { HexMap, SUPPLY_ENERGY_LIMIT } from './map.js';
 
 export class AI {
     constructor(playerNum, difficulty = 'hard') {
@@ -217,7 +217,13 @@ export class AI {
                                 const absH = Math.abs(hx.height);
                                 if (absH < minAbs) { minAbs = absH; bestTarget = hx; }
                             }
-                            if (bestTarget) bestTarget.height += (player === 1 ? 1 : -1);
+                            if (bestTarget) {
+                                bestTarget.height += (player === 1 ? 1 : -1);
+                                bestTarget.height = Math.max(
+                                    -SUPPLY_ENERGY_LIMIT,
+                                    Math.min(SUPPLY_ENERGY_LIMIT, bestTarget.height)
+                                );
+                            }
                         } else {
                             // 空いている自陣に旗を立てる
                             const target = map.mainHexes.find(hx => hx.owner === player && !hx.hasFlag && !hx.isDisabled);
