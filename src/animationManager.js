@@ -109,18 +109,17 @@ export class AnimationManager {
 
             // 1. 土地の着弾待ち（すべて着弾した場合）
             if (g.isWaitingForDrop && lands.every(de => de.landed)) {
-                // もし afterInject または burst チュートリアルが起動予定なら、
-                // 即座にフェーズを終了せず、盤面の隆起イージングが完全に完了するのを待つ
+                // チュートリアル表示予定なら、待機フレームを挟まず完成状態でフリーズする
                 if (g.currentPlayer === 1 && window.tutorialManager) {
                     const willTriggerAfterInject = window.tutorialManager.willTrigger('afterInject', { game: g });
                     const hasBurst = g.map.mainHexes.some(h => h.height > 9 || h.height < -9);
                     const willTriggerBurst = hasBurst && window.tutorialManager.willTrigger('burst', { game: g });
 
                     if (willTriggerAfterInject || willTriggerBurst) {
-                        const isEasingFinished = g.map.hexes.every(hex => Math.abs(hex.height - hex.visualHeight) < 0.05);
-                        if (!isEasingFinished) {
-                            return; // 隆起完了を待機
-                        }
+                        g.map.hexes.forEach(hex => {
+                            hex.visualHeight = hex.height;
+                            hex.visualFlagScale = hex.hasFlag ? 1.0 : 0.0;
+                        });
                     }
                 }
 
