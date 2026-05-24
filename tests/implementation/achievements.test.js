@@ -108,6 +108,17 @@ describe('Achievement System (achievements.js)', () => {
             expect(ach.condition(gameMock2)).toBe(true);
             expect(ach.metric(gameMock2)).toBe(10);
         });
+
+        test('High Voltage unlocks when max cell energy reaches 12', () => {
+            const ach = am.achievements.find(a => a.id === 'high_voltage');
+            const gameMock = { winner: 1 };
+
+            am.stats[1].maxCellEnergy.max = 11;
+            expect(ach.condition(gameMock, am.stats)).toBe(false);
+
+            am.stats[1].maxCellEnergy.max = 12;
+            expect(ach.condition(gameMock, am.stats)).toBe(true);
+        });
     });
 
     describe('Extended Records', () => {

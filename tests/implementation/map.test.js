@@ -81,7 +81,7 @@ describe('Map Logic (map.js)', () => {
     });
 
     describe('Supply Energy Reconstruction', () => {
-        test('focus can increase supply energy up to the grid energy limit', () => {
+        test('focus can increase supply energy up to the supply energy limit', () => {
             const map = new HexMap(4, 'regular');
             const [receiver, giver] = map.handHexes['hand-p1'];
             receiver.height = SUPPLY_ENERGY_LIMIT - 1;
@@ -100,7 +100,7 @@ describe('Map Logic (map.js)', () => {
             randomSpy.mockRestore();
         });
 
-        test('focus can reduce supply energy down to the negative grid energy limit', () => {
+        test('focus can reduce supply energy down to the negative supply energy limit', () => {
             const map = new HexMap(4, 'regular');
             const [giver, receiver] = map.handHexes['hand-p2'];
             giver.height = -SUPPLY_ENERGY_LIMIT + 1;
