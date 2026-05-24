@@ -3,11 +3,13 @@
  * 軸座標系 (Axial Coordinates) を使用
  */
 
+export const SUPPLY_ENERGY_LIMIT = 9;
+
 export class Hex {
     constructor(q, r, height = 0, owner = 0, zone = 'main') {
         this.q = q;
         this.r = r;
-        this.height = height; // -5 to +5 (internal)
+        this.height = height;
         this.owner = owner;   // 0: Neutral, 1: P1, 2: P2
         this.zone = zone;
         this.hasFlag = false;
@@ -211,8 +213,8 @@ export class HexMap {
                 [giver, receiver] = (hexA.height > hexB.height) ? [hexA, hexB] : [hexB, hexA];
             }
 
-            // 3. 範囲チェック (-5 to +5)
-            if (giver.height > -5 && receiver.height < 5) {
+            // 3. 範囲チェック
+            if (giver.height > -SUPPLY_ENERGY_LIMIT && receiver.height < SUPPLY_ENERGY_LIMIT) {
                 // 変更はここでは適用せず、計画データとして返す
                 // giver: -1, receiver: +1
                 const updates = [

@@ -1,5 +1,5 @@
-import { describe, test, expect, beforeEach } from 'vitest';
-import { HexMap, Hex } from '../../src/map.js';
+import { describe, test, expect, beforeEach, vi } from 'vitest';
+import { HexMap, Hex, SUPPLY_ENERGY_LIMIT } from '../../src/map.js';
 
 describe('Map Logic (map.js)', () => {
     describe('Title Screen Layout / DOM Basics', () => {
@@ -77,6 +77,46 @@ describe('Map Logic (map.js)', () => {
 
             map.applyHand(targetHex, 'hand-p1');
             expect(targetHex.height).toBe(1);
+        });
+    });
+
+    describe('Supply Energy Reconstruction', () => {
+        test('focus can increase supply energy up to the grid energy limit', () => {
+            const map = new HexMap(4, 'regular');
+            const [receiver, giver] = map.handHexes['hand-p1'];
+            receiver.height = SUPPLY_ENERGY_LIMIT - 1;
+            giver.height = 1;
+
+            const randomSpy = vi.spyOn(Math, 'random')
+                .mockReturnValueOnce(0)
+                .mockReturnValueOnce(0.2);
+
+            const result = map.calculateHandUpdate('hand-p1', 'focus');
+            map.applyHandUpdate(result.updates);
+
+            expect(result.success).toBe(true);
+            expect(receiver.height).toBe(SUPPLY_ENERGY_LIMIT);
+            expect(giver.height).toBe(0);
+            randomSpy.mockRestore();
+        });
+
+        test('focus can reduce supply energy down to the negative grid energy limit', () => {
+            const map = new HexMap(4, 'regular');
+            const [giver, receiver] = map.handHexes['hand-p2'];
+            giver.height = -SUPPLY_ENERGY_LIMIT + 1;
+            receiver.height = -1;
+
+            const randomSpy = vi.spyOn(Math, 'random')
+                .mockReturnValueOnce(0)
+                .mockReturnValueOnce(0.2);
+
+            const result = map.calculateHandUpdate('hand-p2', 'focus');
+            map.applyHandUpdate(result.updates);
+
+            expect(result.success).toBe(true);
+            expect(giver.height).toBe(-SUPPLY_ENERGY_LIMIT);
+            expect(receiver.height).toBe(0);
+            randomSpy.mockRestore();
         });
     });
 });

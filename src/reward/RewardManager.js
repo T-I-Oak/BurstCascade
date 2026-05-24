@@ -1,4 +1,4 @@
-import { GameStateManager } from '../gameStateManager.js'; // for type reference if needed
+import { SUPPLY_ENERGY_LIMIT } from '../map.js';
 
 /**
  * Handles reward-related logic: queuing, flow, and applying effects.
@@ -42,8 +42,8 @@ export class RewardManager {
                 const handZoneId = `hand-p${reward.player}`;
                 const handHexes = g.map.hexes.filter(h => h.zone === handZoneId);
                 const candidates = handHexes.filter(h =>
-                    (reward.player === 1 && h.height < 5) ||
-                    (reward.player === 2 && h.height > -5)
+                    (reward.player === 1 && h.height < SUPPLY_ENERGY_LIMIT) ||
+                    (reward.player === 2 && h.height > -SUPPLY_ENERGY_LIMIT)
                 );
                 reward.targetHex = candidates.length > 0 ?
                     candidates[Math.floor(Math.random() * candidates.length)] :
@@ -79,7 +79,10 @@ export class RewardManager {
 
         if (reward.type === 'self') {
             reward.targetHex.height += (reward.player === 1 ? 1 : -1);
-            reward.targetHex.height = Math.max(-5, Math.min(5, reward.targetHex.height));
+            reward.targetHex.height = Math.max(
+                -SUPPLY_ENERGY_LIMIT,
+                Math.min(SUPPLY_ENERGY_LIMIT, reward.targetHex.height)
+            );
             reward.targetHex.updateOwner();
             const bumpAmt = reward.player === 1 ? 2.0 : -2.0;
             reward.targetHex.visualHeight += bumpAmt;
