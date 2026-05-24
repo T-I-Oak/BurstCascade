@@ -81,6 +81,36 @@ describe('Renderer Module', () => {
         expect(mockCtx.restore).toHaveBeenCalled();
     });
 
+    test('drawHex should show logical height even when visual height is bumped', () => {
+        const mockCtx = {
+            canvas: document.createElement('canvas'),
+            save: vi.fn(),
+            restore: vi.fn(),
+            beginPath: vi.fn(),
+            moveTo: vi.fn(),
+            lineTo: vi.fn(),
+            closePath: vi.fn(),
+            stroke: vi.fn(),
+            fill: vi.fn(),
+            fillText: vi.fn(),
+            translate: vi.fn(),
+            scale: vi.fn(),
+            rotate: vi.fn(),
+            setTransform: vi.fn(),
+            createLinearGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+            createRadialGradient: vi.fn(() => ({ addColorStop: vi.fn() })),
+            measureText: vi.fn().mockReturnValue({ width: 0 })
+        };
+        const hex = game.map.handHexes['hand-p1'][0];
+        hex.height = 9;
+        hex.visualHeight = 11;
+
+        renderer.drawHex(hex, mockCtx, game.layout);
+
+        expect(mockCtx.fillText).toHaveBeenCalledWith(9, 1, 1);
+        expect(mockCtx.fillText).not.toHaveBeenCalledWith(11, expect.any(Number), expect.any(Number));
+    });
+
     test('drawHexNumber should use explicit render DPR for non-main canvases', () => {
         const targetCanvas = document.createElement('canvas');
         const mockCtx = {

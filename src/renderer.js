@@ -176,8 +176,9 @@ export class Renderer {
         }
 
         const unitThickness = layout.size * 0.12;
-        const absH = Math.abs(hex.visualHeight);
-        const h = absH * unitThickness;
+        const visualAbsH = Math.abs(hex.visualHeight);
+        const h = visualAbsH * unitThickness;
+        const logicalAbsH = Math.abs(hex.height);
 
         let owner = 0;
         if (hex.height > 0) owner = 1;
@@ -195,9 +196,9 @@ export class Renderer {
         this.drawHexBase(hex, vertices, h, color, ctx);
 
         // 数値表示
-        if (absH > 0) {
+        if (logicalAbsH > 0) {
             const center = layout.hexToPixel(hex);
-            this.drawHexNumber(center.x, center.y - h, h, color, hex.visualHeight, ctx, layout);
+            this.drawHexNumber(center.x, center.y - h, h, color, hex.height, ctx, layout);
         }
 
         // 共鳴中枢（コア）の描画
