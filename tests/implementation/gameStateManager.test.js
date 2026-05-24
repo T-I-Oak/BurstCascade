@@ -151,6 +151,8 @@ describe('GameStateManager Module', () => {
 
             // 落下エフェクト（lands）がすべて着弾した状態をモック
             const targetHex = game.map.getHexAt(0, 0, 'main');
+            targetHex.height = 4;
+            targetHex.visualHeight = 1;
             game.dropEffects = [
                 { type: 'land', landed: true, targetHex: targetHex, y: 0, targetY: 0 }
             ];
@@ -169,6 +171,7 @@ describe('GameStateManager Module', () => {
             // processChainReaction の起動自体を保留アクションとして保存しているはず
             expect(game.pendingAction).toBeDefined();
             expect(typeof game.pendingAction).toBe('function');
+            expect(targetHex.visualHeight).toBe(targetHex.height);
 
             // Cleanup
             window.tutorialManager = undefined;
