@@ -155,8 +155,8 @@ export const ACHIEVEMENT_DEFINITIONS = [
     {
         id: 'high_voltage',
         title: '高電圧',
-        description: '最大エネルギー15以上を記録して勝利する',
-        condition: (game, stats) => stats[1].maxCellEnergy.max >= 15,
+        description: '最大エネルギー12以上を記録して勝利する',
+        condition: (game, stats) => stats[1].maxCellEnergy.max >= 12,
         metric: (game, stats) => stats[1].maxCellEnergy.max,
         metricType: 'max',
         metricCondition: (game) => game.winner === 1

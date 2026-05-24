@@ -3,7 +3,7 @@
  * 軸座標系 (Axial Coordinates) を使用
  */
 
-export const SUPPLY_ENERGY_LIMIT = 9;
+export const SUPPLY_ENERGY_LIMIT = 5;
 
 export class Hex {
     constructor(q, r, height = 0, owner = 0, zone = 'main') {
