@@ -173,28 +173,28 @@ export class GameResultUI {
         const achList = document.querySelector('#achievements-list .result-achievements-list-content')
             || document.getElementById('achievements-list');
 
-        if (achList) achList.innerHTML = '';
+        achList.innerHTML = '';
         g.lastAchievements = [];
 
         if (g.gameMode !== 'pvc') {
-            if (resultBody) resultBody.classList.add('result-body-no-achievements');
-            if (achContainer) achContainer.classList.add('hidden');
+            resultBody.classList.add('result-body-no-achievements');
+            achContainer.classList.add('hidden');
             return;
         }
 
-        if (resultBody) resultBody.classList.remove('result-body-no-achievements');
+        resultBody.classList.remove('result-body-no-achievements');
         const aiLevel = g.aiLevelSelect.querySelector('.selected').dataset.value;
         const mapType = g.sizeSelect.querySelector('.selected').dataset.value;
         const newUnlocks = g.achievementManager.checkAchievements(g, mapType, aiLevel);
         const sessionAchs = g.achievementManager.getSessionAchievements(g, mapType, aiLevel, newUnlocks);
         g.lastAchievements = sessionAchs;
 
-        if (!achList || sessionAchs.length === 0) {
-            if (achContainer) achContainer.classList.add('hidden');
+        if (sessionAchs.length === 0) {
+            achContainer.classList.add('hidden');
             return;
         }
 
-        if (achContainer) achContainer.classList.remove('hidden');
+        achContainer.classList.remove('hidden');
         sessionAchs.forEach(ach => {
             const item = document.createElement('div');
             item.className = 'achievement-item' + (ach.isNew ? ' new-unlock' : '');
