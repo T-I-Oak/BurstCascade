@@ -113,6 +113,22 @@ h1 {
     position: relative;
     flex-shrink: 1;
 }
+.language-select {
+    min-width: 8.5rem;
+    height: 2rem;
+    color: var(--text-color);
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 6px;
+    padding: 0 0.75rem;
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.language-select.hidden,
+#war-gauge-container.hidden {
+    display: none;
+}
 .gauge-bar {
     height: 100%;
     transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -215,6 +231,10 @@ h1 {
     #war-gauge-container {
         max-width: none;
         min-width: 160px;
+    }
+
+    .language-select {
+        width: 100%;
     }
 
     .chain-counter {
