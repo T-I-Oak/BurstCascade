@@ -145,6 +145,10 @@
     overflow: hidden;
 }
 
+#result-body.result-body-no-achievements #result-achievements {
+    display: none;
+}
+
 .ach-title-bar {
     display: flex;
     justify-content: space-between;

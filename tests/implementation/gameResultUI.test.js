@@ -4,10 +4,12 @@ import { GameResultUI } from '../../src/ui/gameResultUI.js';
 describe('GameResultUI', () => {
     beforeEach(() => {
         document.body.innerHTML = `
-            <div id="result-achievements">
-                <div id="achievements-list">
-                    <div class="result-achievements-list-content">
-                        <div class="achievement-item">previous</div>
+            <div id="result-body">
+                <div id="result-achievements">
+                    <div id="achievements-list">
+                        <div class="result-achievements-list-content">
+                            <div class="achievement-item">previous</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -27,6 +29,7 @@ describe('GameResultUI', () => {
         new GameResultUI(game, null).updateResultAchievements();
 
         expect(document.getElementById('result-achievements').classList.contains('hidden')).toBe(true);
+        expect(document.getElementById('result-body').classList.contains('result-body-no-achievements')).toBe(true);
         expect(document.querySelector('.result-achievements-list-content').children.length).toBe(0);
         expect(game.lastAchievements).toEqual([]);
         expect(game.achievementManager.checkAchievements).not.toHaveBeenCalled();

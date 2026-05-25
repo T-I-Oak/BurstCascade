@@ -7,7 +7,7 @@ import { getLocalizedUiText } from './i18nManager.js';
  */
 export async function generateShareImage(game) {
     const texts = getLocalizedUiText();
-    const achievements = game.lastAchievements || [];
+    const achievements = game.gameMode === 'pvc' ? (game.lastAchievements || []) : [];
     const hasAchievements = achievements.length > 0;
     
     const cardW = 300;
