@@ -8,6 +8,9 @@ vi.mock('https://t-i-oak.github.io/GameWorksOAK/lib/utils/env.js', () => {
 vi.mock('https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js', () => {
     return import('../../GameWorksOAK/src/lib/core/dataManager.js');
 });
+vi.mock('https://t-i-oak.github.io/GameWorksOAK/lib/core/i18n.js', () => {
+    return import('../../GameWorksOAK/src/lib/core/i18n.js');
+});
 
 global.window.IS_TESTING = true;
 global.__APP_VERSION__ = '0.6.3';
@@ -156,6 +159,8 @@ beforeEach(() => {
             <button id="game-start-btn"></button>
             <button id="achievements-btn"></button>
             <button id="peek-board-btn"></button>
+            <select id="language-select"></select>
+            <div id="war-gauge-container"></div>
         </div>
     `;
 });

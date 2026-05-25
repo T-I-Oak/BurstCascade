@@ -1,6 +1,8 @@
 import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
 import { PlayerStats } from './achievements/stats.js';
 import { ACHIEVEMENT_DEFINITIONS } from './achievements/definitions.js';
+import achievementTexts from './data/achievement_texts.json';
+import { expandAppLanguageResource } from './i18nManager.js';
 
 export class AchievementManager {
     constructor() {
@@ -14,16 +16,24 @@ export class AchievementManager {
         ];
 
         // 外部の定義データに関数引数 stats を自動バインドすることで、既存のシグネチャ (game, context) を維持
+        this.refreshDefinitions();
+
+        this.data = this.loadData();
+    }
+
+    refreshDefinitions() {
+        const localizedTexts = expandAppLanguageResource(achievementTexts);
         this.achievements = ACHIEVEMENT_DEFINITIONS.map(ach => {
+            const text = localizedTexts[ach.id];
             return {
                 ...ach,
+                title: text?.title || ach.id,
+                description: text?.description || '',
                 condition: (game, context) => ach.condition(game, this.stats, context),
                 metric: ach.metric ? (game, context) => ach.metric(game, this.stats, context) : undefined,
                 metricCondition: ach.metricCondition ? (game, context) => ach.metricCondition(game, this.stats, context) : undefined
             };
         });
-
-        this.data = this.loadData();
     }
 
     // データ読み込み

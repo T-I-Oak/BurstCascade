@@ -1,4 +1,5 @@
 import { Layout } from '../map.js';
+import { getLocalizedUiText } from '../i18nManager.js';
 
 export class GameResultUI {
     constructor(game, uiManager) {
@@ -29,79 +30,19 @@ export class GameResultUI {
     }
 
     getVictoryMessage(type, winner) {
-        const p1Name = "緑の勢力";
-        const p2Name = "赤の軍勢";
+        const texts = getLocalizedUiText();
+        const p1Name = texts.result.player1Name;
+        const p2Name = texts.result.player2Name;
         const winnerName = winner === 1 ? p1Name : p2Name;
         const loserName = winner === 1 ? p2Name : p1Name;
 
-        const messages = {
-            'SUICIDE': [
-                "{L} は自らの力が制御できず、自壊しました...",
-                "{L} の過剰なエネルギーが、仇となりました。",
-                "暴走した {L} の連鎖が、自陣を焼き尽くしました。",
-                "予期せぬフィードバック。これぞバーストの代償。",
-                "{L} の野望は、自らの手で潰えました。",
-                "コントロールを失った {L}。自滅という結末です。",
-                "過信した {L} は、自らの炎に焼かれました。",
-                "{L} の計算ミスが、致命的な連鎖を招きました。"
-            ],
-            'ANNIHILATION': [
-                "{W} の慈悲なき光が、すべてを塗り替えました。",
-                "完全なる静寂。{L} の痕跡はありません。",
-                "圧倒的な破壊。{W} は塵一つ残しません。",
-                "この領域の全ては、今や {W} のものです。",
-                "{L} は完全に消滅しました。{W} の完全勝利です。",
-                "歴史から {L} の名が消え去りました。",
-                "根こそぎ奪い尽くす。それが {W} のやり方です。",
-                "完璧な掃除が完了しました。勝者は {W} です。"
-            ],
-            'DOMINANCE': [
-                "{W} が圧倒的な力の差を見せつけました。",
-                "戦場は {W} の色に染まっています。",
-                "これぞ王者の風格。{W} の完勝です。",
-                "{L} を寄せ付けない、{W} の盤石の布陣でした。",
-                "世界の大部分は {W} の手に落ちました。",
-                "{W} の支配は絶対的です。{L} に為す術はありません。",
-                "圧倒적多数で {W} が戦場を制圧しました。",
-                "{L} は隅に追いやられました。{W} の圧勝です。"
-            ],
-            'CLOSE': [
-                "{W} が接戦を制しました。",
-                "激闘の末、{W} がわずかな差で運命を掴みました。",
-                "{L} も健闘しましたが...勝利の女神は {W} に微笑みました。",
-                "ギリギリの攻防。{W} が最後の一押しを決めました。",
-                "紙一重の決着。{W} の執念が勝りました。",
-                "息詰まる熱戦の果てに、{W} が立ち上がりました。",
-                "どちらが勝ってもおかしくない勝負でした。勝者は {W} です。",
-                "歴史に残る名勝負。{W} が {L} を僅差で退けました。"
-            ],
-            'NORMAL': [
-                "{W} が世界を制しました。",
-                "{W} の共鳴が、新たな秩序をもたらしました。",
-                "見事な勝利です。{W} が栄光を掴みました。",
-                "戦略的な一手一手が、{W} への道を開きました。",
-                "共鳴の連鎖を制した {W} が、世界を制します。",
-                "{W} の戦術が {L} を上回りました。",
-                "静かなる勝利。{W} が着実に陣地を広げました。",
-                "戦いの果てに、{W} が勝利宣言を行います。"
-            ],
-            'DRAW': [
-                "すべてのエネルギーが霧散し、境界は失われました。",
-                "相打ち...虚無だけが残りました。",
-                "互いの力が拮抗し、決着はつきませんでした。",
-                "共振限界に到達。システムは沈黙しました。",
-                "勝者なき戦い。残されたのは静寂のみ。",
-                "エネルギー飽和により、世界はリセットされました。",
-                "両勢力ともに譲らず。痛み分けとなりました。",
-                "過剰な干渉が、互いの存在を打ち消しました。"
-            ]
-        };
+        const messages = texts.result.messages;
 
         const candidates = messages[type] || messages['NORMAL'];
         const rawMessage = candidates[Math.floor(Math.random() * candidates.length)];
 
         return {
-            title: winner === 0 ? `DRAW - RESONANCE VOID` : `PLAYER ${winner} VICTORY!`,
+            title: winner === 0 ? texts.result.drawTitle : texts.result.victoryTitle.replace('{N}', winner),
             subtitle: rawMessage.replace(/\{W\}/g, winnerName).replace(/\{L\}/g, loserName)
         };
     }
@@ -236,7 +177,7 @@ export class GameResultUI {
                     item.innerHTML = `
                         <span class="ach-item-title">${ach.title}</span>
                         <span class="ach-item-desc">${ach.description}</span>
-                        ${ach.isNew ? '<span class="new-badge">NEW!</span>' : ''}
+                        ${ach.isNew ? `<span class="new-badge">${getLocalizedUiText().newBadge}</span>` : ''}
                     `;
                     achList.appendChild(item);
                 });

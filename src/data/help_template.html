@@ -1,0 +1,96 @@
+<section class="help-section">
+  <h2>Burst Cascade</h2>
+  <p class="flavor-text">{help.intro.body1}</p>
+  <p class="flavor-text">{help.intro.body2}</p>
+</section>
+
+<section class="help-section">
+  <h3>{help.objective.title}</h3>
+  <div class="how-to-play-float-right">
+    <canvas id="help-core-canvas" class="how-to-play-canvas" width="120" height="120"></canvas>
+    <p class="how-to-play-caption">{help.objective.caption}</p>
+  </div>
+  <p>{help.objective.body}</p>
+  <ul class="help-list">
+    <li>{help.objective.note}</li>
+  </ul>
+</section>
+
+<div class="clear-both"></div>
+<section class="help-section">
+  <h3>{help.rules.title}</h3>
+  <p>{help.rules.firstPlayer}</p>
+  <p>{help.rules.turnCycle}</p>
+  <ul class="help-list help-list-spaced">
+    <li><strong>{help.rules.injectPhaseName}</strong>: {help.rules.injectPhaseSummary}</li>
+    <li><strong>{help.rules.reconstructPhaseName}</strong>: {help.rules.reconstructPhaseSummary}</li>
+    <li><strong>{help.rules.checkPhaseName}</strong>: {help.rules.checkPhaseSummary}</li>
+  </ul>
+
+  <div class="rule-item">
+    <div class="how-to-play-float-right">
+      <canvas id="help-inject-canvas" class="how-to-play-canvas" width="120" height="120"></canvas>
+      <p class="how-to-play-caption">{help.inject.caption}</p>
+    </div>
+    <h4>1. {help.rules.injectPhaseName}</h4>
+    <p>{help.inject.body}</p>
+    <ul class="help-list">
+      <li>{help.inject.item1}</li>
+      <li>{help.inject.item2}</li>
+      <li>{help.inject.item3}</li>
+      <li>{help.inject.item4}</li>
+      <li>{help.inject.item5}</li>
+    </ul>
+  </div>
+
+  <div class="rule-item">
+    <div class="how-to-play-float-right">
+      <canvas id="help-overload-canvas" class="how-to-play-canvas" width="120" height="120"></canvas>
+      <p class="how-to-play-caption">{help.burst.caption}</p>
+    </div>
+    <h4>{help.burst.title}</h4>
+    <p>{help.burst.body}</p>
+    <ul class="help-list">
+      <li>{help.burst.item1}</li>
+      <li>{help.burst.item2}</li>
+    </ul>
+  </div>
+
+  <div class="rule-item">
+    <h4>{help.resonance.title}</h4>
+    <p>{help.resonance.body}</p>
+    <ul class="help-list">
+      <li><strong>{help.resonance.energyBoostTitle}</strong>: {help.resonance.energyBoostBody}</li>
+      <li><strong>{help.resonance.coreAddTitle}</strong>: {help.resonance.coreAddBody}</li>
+    </ul>
+  </div>
+
+  <div class="rule-item">
+    <div class="how-to-play-float-right">
+      <canvas id="help-reconstruct-canvas" class="how-to-play-canvas" width="120" height="120"></canvas>
+      <p class="how-to-play-caption">{help.reconstruct.caption}</p>
+    </div>
+    <h4>2. {help.rules.reconstructPhaseName}</h4>
+    <p>{help.reconstruct.body}</p>
+    <ul class="help-list">
+      <li>{help.reconstruct.item1}</li>
+      <li><strong>{help.reconstruct.focusTitle}</strong>: {help.reconstruct.focusBody}<br><small>{help.reconstruct.focusExample}</small></li>
+      <li><strong>{help.reconstruct.diffuseTitle}</strong>: {help.reconstruct.diffuseBody}<br><small>{help.reconstruct.diffuseExample}</small></li>
+    </ul>
+  </div>
+</section>
+
+<section class="help-section">
+  <h4>3. {help.rules.checkPhaseName}</h4>
+  <p>{help.turnCheck.body}</p>
+  <ul class="help-list">
+    <li><strong>{help.turnCheck.stagnationTitle}</strong>: {help.turnCheck.stagnationBody}<br>{help.turnCheck.turnEnd}</li>
+    <li><strong>{help.turnCheck.saturationTitle}</strong>: {help.turnCheck.saturationBody}<br>{help.turnCheck.turnEnd}</li>
+    <li><strong>{help.turnCheck.cascadeTitle}</strong>: {help.turnCheck.cascadeBody}<br>{help.turnCheck.turnContinue}</li>
+  </ul>
+</section>
+
+<div class="tutorial-reset-container">
+  <input type="checkbox" id="tutorial-reset-checkbox" class="tutorial-reset-checkbox">
+  <label for="tutorial-reset-checkbox" class="tutorial-reset-label">{help.tutorialReset}</label>
+</div>

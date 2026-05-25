@@ -1,0 +1,450 @@
+{
+  "win": {
+    "title": {
+      "lang-store": {
+        "ja": "勝利",
+        "en": "Victory"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "AIに勝利する",
+        "en": "Defeat the AI."
+      }
+    }
+  },
+  "learner": {
+    "title": {
+      "lang-store": {
+        "ja": "学習者",
+        "en": "Learner"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "AIに敗北する",
+        "en": "Lose to the AI."
+      }
+    }
+  },
+  "draw_game": {
+    "title": {
+      "lang-store": {
+        "ja": "共鳴の消失",
+        "en": "Resonance Lost"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "引き分けで終了する",
+        "en": "End the game in a draw."
+      }
+    }
+  },
+  "suicide_victory": {
+    "title": {
+      "lang-store": {
+        "ja": "墓穴",
+        "en": "Backfire"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "相手の自滅により勝利する",
+        "en": "Win because the opponent self-destructs."
+      }
+    }
+  },
+  "unscathed": {
+    "title": {
+      "lang-store": {
+        "ja": "無傷",
+        "en": "Unscathed"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "コアを一度も失わずに勝利する",
+        "en": "Win without losing any cores."
+      }
+    }
+  },
+  "minimalist": {
+    "title": {
+      "lang-store": {
+        "ja": "省エネ勝利",
+        "en": "Energy Saver"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "供給エネルギー強化を一度も発生させずに勝利する",
+        "en": "Win without triggering any supply-energy boosts."
+      }
+    }
+  },
+  "core_frugal": {
+    "title": {
+      "lang-store": {
+        "ja": "第一形態維持",
+        "en": "First Form"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "自分のコアを一度も追加せずに勝利する",
+        "en": "Win without adding any of your own cores."
+      }
+    }
+  },
+  "efficient_resonance": {
+    "title": {
+      "lang-store": {
+        "ja": "効率的共鳴",
+        "en": "Efficient Resonance"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "累積連鎖回数を10回以下に抑えて勝利する",
+        "en": "Win with 10 or fewer total cascades."
+      }
+    }
+  },
+  "last_stand": {
+    "title": {
+      "lang-store": {
+        "ja": "背水の陣",
+        "en": "Last Stand"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "自分のコアが残り1個の状態で勝利する",
+        "en": "Win with only 1 of your cores remaining."
+      }
+    }
+  },
+  "core_collector": {
+    "title": {
+      "lang-store": {
+        "ja": "コア収集家",
+        "en": "Core Collector"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "自分のコアを5個以上所持して勝利する",
+        "en": "Win while holding 5 or more of your own cores."
+      }
+    }
+  },
+  "close_game": {
+    "title": {
+      "lang-store": {
+        "ja": "接戦",
+        "en": "Close Game"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "グリッド数差が3以内で勝利する",
+        "en": "Win with a grid-count difference of 3 or less."
+      }
+    }
+  },
+  "comeback": {
+    "title": {
+      "lang-store": {
+        "ja": "逆転劇",
+        "en": "Comeback"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "相手よりグリッドが少ない状態で勝利する",
+        "en": "Win while owning fewer grids than the opponent."
+      }
+    }
+  },
+  "domination": {
+    "title": {
+      "lang-store": {
+        "ja": "完全制圧",
+        "en": "Total Domination"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "相手のグリッドを0にして勝利する",
+        "en": "Win after reducing the opponent's grids to 0."
+      }
+    }
+  },
+  "speed_run": {
+    "title": {
+      "lang-store": {
+        "ja": "スピード決着",
+        "en": "Speed Finish"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "30ターン以内に勝利する",
+        "en": "Win within 30 turns."
+      }
+    }
+  },
+  "core_shutdown": {
+    "title": {
+      "lang-store": {
+        "ja": "コア封殺",
+        "en": "Core Lockout"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "相手に一度もコアを増幅させずに勝利する",
+        "en": "Win without allowing the opponent to add any cores."
+      }
+    }
+  },
+  "high_voltage": {
+    "title": {
+      "lang-store": {
+        "ja": "高電圧",
+        "en": "High Voltage"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "最大エネルギー12以上を記録して勝利する",
+        "en": "Win after recording a maximum energy of 12 or more."
+      }
+    }
+  },
+  "chain_master": {
+    "title": {
+      "lang-store": {
+        "ja": "連鎖の達人",
+        "en": "Chain Master"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1ターンに6連鎖以上発生させて勝利する",
+        "en": "Win after causing 6 or more cascades in one turn."
+      }
+    }
+  },
+  "energy_collector": {
+    "title": {
+      "lang-store": {
+        "ja": "エネルギー・コレクター",
+        "en": "Energy Collector"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "供給エネルギー強化を15回以上発生させて勝利",
+        "en": "Win after triggering 15 or more supply-energy boosts."
+      }
+    }
+  },
+  "action_pro": {
+    "title": {
+      "lang-store": {
+        "ja": "アクションプロ",
+        "en": "Action Pro"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1試合で80回以上注入し勝利する",
+        "en": "Win after injecting energy 80 or more times in one match."
+      }
+    }
+  },
+  "core_master": {
+    "title": {
+      "lang-store": {
+        "ja": "コア・マスター",
+        "en": "Core Master"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1試合中に10回以上コアを獲得して勝利",
+        "en": "Win after gaining 10 or more cores in one match."
+      }
+    }
+  },
+  "saboteur": {
+    "title": {
+      "lang-store": {
+        "ja": "破壊工作員",
+        "en": "Saboteur"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "相手のコアを5個以上無力化して勝利する",
+        "en": "Win after disabling 5 or more enemy cores."
+      }
+    }
+  },
+  "war_veteran": {
+    "title": {
+      "lang-store": {
+        "ja": "歴戦の勇士",
+        "en": "War Veteran"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "自身のコアを5個以上無力化されつつ勝利する",
+        "en": "Win after 5 or more of your own cores are disabled."
+      }
+    }
+  },
+  "desperate_victory": {
+    "title": {
+      "lang-store": {
+        "ja": "絶望からの逆転",
+        "en": "From Despair"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "コア数差-3以上の劣勢を経験して勝利する",
+        "en": "Win after experiencing a core deficit of -3 or worse."
+      }
+    }
+  },
+  "deathline": {
+    "title": {
+      "lang-store": {
+        "ja": "死線",
+        "en": "Deathline"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "グリッド数が2以下まで追い詰められつつ勝利する",
+        "en": "Win after being reduced to 2 or fewer grids."
+      }
+    }
+  },
+  "core_sniper": {
+    "title": {
+      "lang-store": {
+        "ja": "コアスナイパー",
+        "en": "Core Sniper"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1アクションで2個以上の敵コアを爆発させて勝利",
+        "en": "Win after bursting 2 or more enemy cores in one action."
+      }
+    }
+  },
+  "core_hunter": {
+    "title": {
+      "lang-store": {
+        "ja": "コアハンター",
+        "en": "Core Hunter"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1ターンに3個以上の敵コアを爆発させて勝利",
+        "en": "Win after bursting 3 or more enemy cores in one turn."
+      }
+    }
+  },
+  "grid_blaster": {
+    "title": {
+      "lang-store": {
+        "ja": "地形粉砕",
+        "en": "Grid Blaster"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1アクションで4箇所以上のグリッドを爆発させて勝利",
+        "en": "Win after bursting 4 or more grids in one action."
+      }
+    }
+  },
+  "burst_addict": {
+    "title": {
+      "lang-store": {
+        "ja": "爆発ジャンキー",
+        "en": "Burst Addict"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "1試合で20回以上グリッドを爆発させて勝利する",
+        "en": "Win after bursting grids 20 or more times in one match."
+      }
+    }
+  },
+  "win_streak_5": {
+    "title": {
+      "lang-store": {
+        "ja": "五連覇",
+        "en": "Five-Win Streak"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "AIに5連勝する",
+        "en": "Win 5 games in a row against the AI."
+      }
+    }
+  },
+  "endurance_win": {
+    "title": {
+      "lang-store": {
+        "ja": "長期戦",
+        "en": "Endurance Win"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "60ターン以上かけて勝利する",
+        "en": "Win after 60 or more turns."
+      }
+    }
+  },
+  "honorable_defeat": {
+    "title": {
+      "lang-store": {
+        "ja": "力戦奮闘",
+        "en": "Honorable Defeat"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "60ターン以上かけて敗北する",
+        "en": "Lose after 60 or more turns."
+      }
+    }
+  },
+  "total_wins_20": {
+    "title": {
+      "lang-store": {
+        "ja": "常勝軍団",
+        "en": "Winning Force"
+      }
+    },
+    "description": {
+      "lang-store": {
+        "ja": "AIに通算20勝する",
+        "en": "Reach 20 total wins against the AI."
+      }
+    }
+  }
+}

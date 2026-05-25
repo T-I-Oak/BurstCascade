@@ -1,0 +1,252 @@
+{
+  "documentTitle": {
+    "lang-store": {
+      "ja": "BURST CASCADE - 連鎖爆発ストラテジー",
+      "en": "BURST CASCADE - Chain Burst Strategy"
+    }
+  },
+  "documentLang": {
+    "lang-store": {
+      "ja": "ja",
+      "en": "en"
+    }
+  },
+  "subtitle": {
+    "lang-store": {
+      "ja": "連鎖爆発ストラテジー",
+      "en": "Chain Burst Strategy"
+    }
+  },
+  "help": {
+    "lang-store": {
+      "ja": "HOW TO PLAY",
+      "en": "HOW TO PLAY"
+    }
+  },
+  "players": {
+    "lang-store": {
+      "ja": "PLAYERS",
+      "en": "PLAYERS"
+    }
+  },
+  "aiLevel": {
+    "lang-store": {
+      "ja": "AI LEVEL",
+      "en": "AI LEVEL"
+    }
+  },
+  "mapSize": {
+    "lang-store": {
+      "ja": "MAP SIZE",
+      "en": "MAP SIZE"
+    }
+  },
+  "sound": {
+    "lang-store": {
+      "ja": "SOUND / BGM",
+      "en": "SOUND / BGM"
+    }
+  },
+  "gameStart": {
+    "lang-store": {
+      "ja": "GAME START",
+      "en": "GAME START"
+    }
+  },
+  "achievements": {
+    "lang-store": {
+      "ja": "ACHIEVEMENTS",
+      "en": "ACHIEVEMENTS"
+    }
+  },
+  "returnToTitle": {
+    "lang-store": {
+      "ja": "RETURN TO TITLE",
+      "en": "RETURN TO TITLE"
+    }
+  },
+  "close": {
+    "lang-store": {
+      "ja": "CLOSE",
+      "en": "CLOSE"
+    }
+  },
+  "tutorialReset": {
+    "lang-store": {
+      "ja": "チュートリアルを最初から表示する",
+      "en": "Show the tutorial from the beginning"
+    }
+  },
+  "shareResult": {
+    "lang-store": {
+      "ja": "SHARE RESULT",
+      "en": "SHARE RESULT"
+    }
+  },
+  "resultCopied": {
+    "lang-store": {
+      "ja": "RESULT COPIED!",
+      "en": "RESULT COPIED!"
+    }
+  },
+  "sharePrompt": {
+    "lang-store": {
+      "ja": "結果画像をクリップボードにコピーしました。<br>Xを開いて貼り付け（Ctrl+V）しますか？",
+      "en": "The result image has been copied to the clipboard.<br>Open X and paste it?"
+    }
+  },
+  "openX": {
+    "lang-store": {
+      "ja": "OPEN X",
+      "en": "OPEN X"
+    }
+  },
+  "ok": {
+    "lang-store": {
+      "ja": "OK",
+      "en": "OK"
+    }
+  },
+  "focusLabel": {
+    "lang-store": {
+      "ja": "集束 (Focus)",
+      "en": "Focus"
+    }
+  },
+  "diffuseLabel": {
+    "lang-store": {
+      "ja": "拡散 (Diffuse)",
+      "en": "Diffuse"
+    }
+  },
+  "newBadge": {
+    "lang-store": {
+      "ja": "NEW!",
+      "en": "NEW!"
+    }
+  },
+  "result": {
+    "player1Name": {
+      "lang-store": {
+        "ja": "緑の勢力",
+        "en": "Green Force"
+      }
+    },
+    "player2Name": {
+      "lang-store": {
+        "ja": "赤の軍勢",
+        "en": "Red Force"
+      }
+    },
+    "drawTitle": {
+      "lang-store": {
+        "ja": "DRAW - RESONANCE VOID",
+        "en": "DRAW - RESONANCE VOID"
+      }
+    },
+    "victoryTitle": {
+      "lang-store": {
+        "ja": "PLAYER {N} VICTORY!",
+        "en": "PLAYER {N} VICTORY!"
+      }
+    },
+    "messages": {
+      "SUICIDE": {
+        "lang-store": {
+          "ja": [
+            "{L} は自らの力が制御できず、自壊しました...",
+            "{L} の過剰なエネルギーが、仇となりました。",
+            "暴走した {L} の連鎖が、自陣を焼き尽くしました。",
+            "予期せぬフィードバック。これぞバーストの代償。"
+          ],
+          "en": [
+            "{L} lost control of its own power and collapsed.",
+            "{L}'s excess energy turned against it.",
+            "A runaway cascade from {L} burned through its own side.",
+            "Unexpected feedback. That is the price of a Burst."
+          ]
+        }
+      },
+      "ANNIHILATION": {
+        "lang-store": {
+          "ja": [
+            "{W} の慈悲なき光が、すべてを塗り替えました。",
+            "完全なる静寂。{L} の痕跡はありません。",
+            "この領域の全ては、今や {W} のものです。",
+            "{L} は完全に消滅しました。{W} の完全勝利です。"
+          ],
+          "en": [
+            "{W} repainted everything with merciless light.",
+            "Perfect silence. No trace of {L} remains.",
+            "This whole region now belongs to {W}.",
+            "{L} has vanished completely. Total victory for {W}."
+          ]
+        }
+      },
+      "DOMINANCE": {
+        "lang-store": {
+          "ja": [
+            "{W} が圧倒的な力の差を見せつけました。",
+            "戦場は {W} の色に染まっています。",
+            "世界の大部分は {W} の手に落ちました。",
+            "{L} は隅に追いやられました。{W} の圧勝です。"
+          ],
+          "en": [
+            "{W} showed an overwhelming gap in power.",
+            "The battlefield is painted in {W}'s color.",
+            "Most of the world has fallen into {W}'s hands.",
+            "{L} was driven into the corner. A crushing win for {W}."
+          ]
+        }
+      },
+      "CLOSE": {
+        "lang-store": {
+          "ja": [
+            "{W} が接戦を制しました。",
+            "激闘の末、{W} がわずかな差で運命を掴みました。",
+            "ギリギリの攻防。{W} が最後の一押しを決めました。",
+            "紙一重の決着。{W} の執念が勝りました。"
+          ],
+          "en": [
+            "{W} prevailed in a close game.",
+            "After a fierce fight, {W} seized fate by a narrow margin.",
+            "A razor-thin exchange. {W} landed the final push.",
+            "The result came down to a hair. {W}'s resolve won out."
+          ]
+        }
+      },
+      "NORMAL": {
+        "lang-store": {
+          "ja": [
+            "{W} が世界を制しました。",
+            "{W} の共鳴が、新たな秩序をもたらしました。",
+            "見事な勝利です。{W} が栄光を掴みました。",
+            "{W} の戦術が {L} を上回りました。"
+          ],
+          "en": [
+            "{W} has claimed the world.",
+            "{W}'s resonance brought a new order.",
+            "A brilliant victory. {W} seized glory.",
+            "{W}'s tactics surpassed {L}."
+          ]
+        }
+      },
+      "DRAW": {
+        "lang-store": {
+          "ja": [
+            "すべてのエネルギーが霧散し、境界は失われました。",
+            "相打ち...虚無だけが残りました。",
+            "互いの力が拮抗し、決着はつきませんでした。",
+            "勝者なき戦い。残されたのは静寂のみ。"
+          ],
+          "en": [
+            "All energy dispersed, and the borders were lost.",
+            "Mutual destruction. Only the void remains.",
+            "Both powers held firm, and no decision was reached.",
+            "A battle without a winner. Only silence remains."
+          ]
+        }
+      }
+    }
+  }
+}

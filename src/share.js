@@ -1,10 +1,12 @@
 import { Layout } from './map.js';
 import { Constants } from './constants.js';
+import { getLocalizedUiText } from './i18nManager.js';
 
 /**
  * ゲーム結果のシェア用画像を生成する (動的高さ対応 Ver 6.6.12)
  */
 export async function generateShareImage(game) {
+    const texts = getLocalizedUiText();
     const achievements = game.lastAchievements || [];
     const hasAchievements = achievements.length > 0;
     
@@ -97,7 +99,7 @@ export async function generateShareImage(game) {
         ctx.font = '900 24px Inter, sans-serif';
         ctx.fillStyle = '#3b82f6';
         ctx.letterSpacing = '0.15rem';
-        ctx.fillText('ACHIEVEMENTS', achX, startY + 15);
+        ctx.fillText(texts.achievements, achX, startY + 15);
         ctx.letterSpacing = '0px';
 
         const mapSizeText = game.lastMapSize || 'REGULAR';
@@ -131,7 +133,7 @@ export async function generateShareImage(game) {
             const desc = ach.description.length > 30 ? ach.description.slice(0, 30) + '...' : ach.description;
             ctx.fillText(desc, x + 15, y + 52);
             if (ach.isNew) {
-                const badgeText = 'NEW';
+                const badgeText = texts.newBadge;
                 ctx.font = '900 8px Inter, sans-serif';
                 const btw = ctx.measureText(badgeText).width;
                 const bw = btw + 8; const bh = 14;
