@@ -4,6 +4,15 @@
     "date": "2026-05-21",
     "content": [
       {
+        "type": "fix",
+        "text": {
+          "lang-store": {
+            "ja": "PvP結果画面では実績欄を表示しないよう調整",
+            "en": "Hide the achievements area on PvP result screens."
+          }
+        }
+      },
+      {
         "type": "imp",
         "text": {
           "lang-store": {
