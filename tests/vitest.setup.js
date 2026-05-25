@@ -147,8 +147,8 @@ beforeEach(() => {
                 <button class="toggle-btn" data-value="regular"></button>
             </div>
             <div id="ai-level-select">
-                <button class="toggle-btn" data-value="easy"></button>
-                <button class="toggle-btn selected" data-value="normal"></button>
+                <button class="toggle-btn selected" data-value="easy"></button>
+                <button class="toggle-btn" data-value="normal"></button>
                 <button class="toggle-btn" data-value="hard"></button>
             </div>
             <div id="ai-level-group"></div>

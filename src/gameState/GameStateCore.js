@@ -29,7 +29,7 @@ export class GameStateCore {
 
         const mode = modeEl ? modeEl.dataset.value : 'pvc';
         const size = sizeEl ? sizeEl.dataset.value : 'regular';
-        const aiLevel = aiLevelEl ? aiLevelEl.dataset.value : 'normal';
+        const aiLevel = aiLevelEl ? aiLevelEl.dataset.value : 'easy';
 
         g.sound.startBgm('game');
         g.gameMode = mode;

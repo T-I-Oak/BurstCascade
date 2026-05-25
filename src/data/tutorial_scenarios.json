@@ -150,8 +150,8 @@
       {
         "message": {
           "lang-store": {
-            "ja": "爆発（Burst）を発生させると、爆発させたグリッドの陣営に応じたインジケーターが進みます。自陣グリッドを1ターン内で4回以上爆発させると、エネルギー注入の連続注入は終了して相手ターンに変わります。相手グリッドを2回爆発させるごとにランダムな自陣にコアが追加されます。",
-            "en": "When you cause a burst, the indicator advances according to the owner of the burst grid. If your own grids burst 4 or more times in one turn, the chain of injections ends and the turn passes to your opponent. Every 2 enemy-grid bursts adds a core to one random friendly grid."
+            "ja": "爆発（Burst）を発生させると、爆発させたグリッドの陣営に応じたインジケーターが進みます。爆発を発生させたプレイヤーは通常は連続してエネルギーを注入できますが、1ターン内で自陣グリッドを4回以上爆発させるとそれ以上は連続できません。また相手グリッドを累積で2回爆発させるごとにランダムな自陣にコアが追加されます。",
+            "en": "When a burst occurs, the indicator advances according to the owner of the burst grid. The player who caused the burst can normally inject energy again, but if their own grids burst 4 or more times in one turn, the chain cannot continue any further. Also, every 2 cumulative enemy-grid bursts adds a core to one random friendly grid."
           }
         },
         "highlight": [
