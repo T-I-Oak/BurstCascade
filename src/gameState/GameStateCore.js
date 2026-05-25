@@ -34,6 +34,7 @@ export class GameStateCore {
         g.sound.startBgm('game');
         g.gameMode = mode;
         g.saveSettings();
+        if (g.ui) g.ui.setHeaderTitleMode(false);
 
         g.map = new HexMap(4, size);
         if (mode === 'pvc') {

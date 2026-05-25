@@ -1,0 +1,332 @@
+{
+  "help": {
+    "intro": {
+      "body1": {
+        "lang-store": {
+          "ja": "この世界は、純粋なエネルギーの結晶体「ヘキサグリッド」によって維持されてきた。しかし今、安定は崩れ、秩序は混沌へと向かっている。グリッドの不安定化は、一箇所の爆発（Burst）がさらなる事象を引き起こす連鎖（Cascade）を招き、既存の境界を飲み込もうとしている。",
+          "en": "This world was sustained by pure energy crystals called hex grids. Stability has now broken down, and one Burst can trigger a Cascade that swallows the old borders."
+        }
+      },
+      "body2": {
+        "lang-store": {
+          "ja": "あなたの使命は、このカスケードを戦略的に制御し、対立する勢力からすべての共鳴中枢（Core）を奪還することだ。グリッドのエネルギーを飽和させ、戦術的な爆発（Burst）を引き起こし、世界の秩序を再定義せよ。",
+          "en": "Your mission is to control that cascade strategically and reclaim every resonance Core from the opposing force. Saturate grid energy, trigger tactical Bursts, and redefine the order of the board."
+        }
+      }
+    },
+    "objective": {
+      "title": {
+        "lang-store": {
+          "ja": "目的",
+          "en": "Objective"
+        }
+      },
+      "caption": {
+        "lang-store": {
+          "ja": "共鳴中枢（Core）",
+          "en": "Resonance Core"
+        }
+      },
+      "body": {
+        "lang-store": {
+          "ja": "相手勢力がマップ中に保有している「共鳴中枢（Core）」をすべて無効化したら勝利となります。",
+          "en": "You win by disabling every Core held by the opposing force on the map."
+        }
+      },
+      "note": {
+        "lang-store": {
+          "ja": "相手のグリッドに自勢力の供給エネルギーを注入して中和したり、相手のグリッドを爆発（Burst）させることで、そこにある共鳴中枢（Core）を無効化することができます。",
+          "en": "You can disable a Core by neutralizing an enemy grid with your supply energy, or by causing the enemy grid containing that Core to Burst."
+        }
+      }
+    },
+    "rules": {
+      "title": {
+        "lang-store": {
+          "ja": "システム・ルール",
+          "en": "System Rules"
+        }
+      },
+      "firstPlayer": {
+        "lang-store": {
+          "ja": "ゲーム開始時に先攻プレイヤーがランダムに抽選されます。",
+          "en": "At the start of the game, the first player is chosen randomly."
+        }
+      },
+      "turnCycle": {
+        "lang-store": {
+          "ja": "このゲームは、「ターン」という単位で進行します。1つのターンは以下のフェーズのサイクルで構成されます。",
+          "en": "The game proceeds in turns. Each turn is made of the following phase cycle."
+        }
+      },
+      "injectPhaseName": {
+        "lang-store": {
+          "ja": "エネルギー注入フェーズ",
+          "en": "Energy Injection Phase"
+        }
+      },
+      "injectPhaseSummary": {
+        "lang-store": {
+          "ja": "エネルギー注入のアクションを行う段階です。",
+          "en": "Choose where to inject energy."
+        }
+      },
+      "reconstructPhaseName": {
+        "lang-store": {
+          "ja": "供給エネルギー再構築フェーズ",
+          "en": "Supply Energy Reconstruction Phase"
+        }
+      },
+      "reconstructPhaseSummary": {
+        "lang-store": {
+          "ja": "アクションの結果を受け、供給エネルギーが変化する段階です。",
+          "en": "Supply energy changes based on the result of the action."
+        }
+      },
+      "checkPhaseName": {
+        "lang-store": {
+          "ja": "ターン継続チェックフェーズ",
+          "en": "Turn Continuation Check Phase"
+        }
+      },
+      "checkPhaseSummary": {
+        "lang-store": {
+          "ja": "次のターンに進むか、このターンのままアクションを続けるかを判定する段階です。",
+          "en": "The game decides whether to move to the next turn or continue acting in the current turn."
+        }
+      }
+    },
+    "inject": {
+      "caption": {
+        "lang-store": {
+          "ja": "エネルギー注入",
+          "en": "Energy Injection"
+        }
+      },
+      "body": {
+        "lang-store": {
+          "ja": "自勢力のグリッドを選択してエネルギーを注入するアクションを行います。",
+          "en": "Select one of your grids and inject energy as your action."
+        }
+      },
+      "item1": {
+        "lang-store": {
+          "ja": "選択したグリッドを中心に、周囲を含む7つのグリッドに供給エネルギーが注入されます。",
+          "en": "Supply energy is injected into 7 grids: the selected grid and its surrounding grids."
+        }
+      },
+      "item2": {
+        "lang-store": {
+          "ja": "供給エネルギーはマップの左上（Player 1）または右下（Player 2）に表示されます。",
+          "en": "The supply pattern is shown in each player's area: Player 1 at the upper left, Player 2 at the lower right."
+        }
+      },
+      "item3": {
+        "lang-store": {
+          "ja": "エネルギーと同じ勢力のグリッドに注入した場合、その合計値が新しいエネルギー値となります。",
+          "en": "If the energy matches the grid owner, the energy is added to the grid."
+        }
+      },
+      "item4": {
+        "lang-store": {
+          "ja": "エネルギーと異なる勢力のグリッドに注入した場合、その差分が新しいエネルギー値となります。",
+          "en": "If the energy belongs to the opposing force, the difference becomes the new grid energy."
+        }
+      },
+      "item5": {
+        "lang-store": {
+          "ja": "エネルギーを注入した結果により、爆発（Burst）や共鳴（Resonance）が発生します。",
+          "en": "The result of injection can trigger Burst or Resonance effects."
+        }
+      }
+    },
+    "burst": {
+      "caption": {
+        "lang-store": {
+          "ja": "爆発（Burst）",
+          "en": "Burst"
+        }
+      },
+      "title": {
+        "lang-store": {
+          "ja": "爆発（Burst）",
+          "en": "Burst"
+        }
+      },
+      "body": {
+        "lang-store": {
+          "ja": "アクションによって注入されたエネルギーが限界（エネルギー値9）を超えたときに発生します。",
+          "en": "A Burst occurs when injected energy pushes a grid beyond the limit of 9."
+        }
+      },
+      "item1": {
+        "lang-store": {
+          "ja": "蓄積されたエネルギーを放出し、グリッドは基底状態（0）へ戻ります。",
+          "en": "The stored energy is released and the grid returns to its base state, 0."
+        }
+      },
+      "item2": {
+        "lang-store": {
+          "ja": "そのグリッドに配置されていた共鳴中枢（Core）は無効化されます。",
+          "en": "Any Core placed on that grid is disabled."
+        }
+      }
+    },
+    "resonance": {
+      "title": {
+        "lang-store": {
+          "ja": "共鳴（Resonance）",
+          "en": "Resonance"
+        }
+      },
+      "body": {
+        "lang-store": {
+          "ja": "爆発（Burst）の発生回数に応じて発動する効果です。",
+          "en": "Resonance effects activate according to the number of Bursts."
+        }
+      },
+      "energyBoostTitle": {
+        "lang-store": {
+          "ja": "供給エネルギー強化",
+          "en": "Supply Energy Boost"
+        }
+      },
+      "energyBoostBody": {
+        "lang-store": {
+          "ja": "1ターンの間に自勢力の爆発（Burst）を4回発生させると、供給エネルギーがランダムに1エネルギー強化されます。このとき、自動的にターン終了となります。",
+          "en": "If your own grids Burst 4 times in one turn, one random supply energy is increased by 1 and the turn ends automatically."
+        }
+      },
+      "coreAddTitle": {
+        "lang-store": {
+          "ja": "共鳴中枢（Core）追加",
+          "en": "Core Addition"
+        }
+      },
+      "coreAddBody": {
+        "lang-store": {
+          "ja": "相手勢力の爆発（Burst）を通算2回発生させるたびに、共鳴中枢（Core）がランダムに1つ増えます。",
+          "en": "Every 2 enemy-grid Bursts adds one Core to a random friendly grid."
+        }
+      }
+    },
+    "reconstruct": {
+      "caption": {
+        "lang-store": {
+          "ja": "供給エネルギー再構築",
+          "en": "Supply Reconstruction"
+        }
+      },
+      "body": {
+        "lang-store": {
+          "ja": "アクション終了後、7つの供給エネルギーのうちランダムな2つが選ばれ、再構築されます（±1 ずつ変化）。",
+          "en": "After an action, 2 of the 7 supply-energy values are chosen randomly and reconstructed by +/-1."
+        }
+      },
+      "item1": {
+        "lang-store": {
+          "ja": "各位置の供給エネルギーは最大9まで強化されます。",
+          "en": "Each supply energy can be strengthened up to 9."
+        }
+      },
+      "focusTitle": {
+        "lang-store": {
+          "ja": "爆発未発生時 → 集束（Focus）",
+          "en": "No Burst -> Focus"
+        }
+      },
+      "focusBody": {
+        "lang-store": {
+          "ja": "エネルギー差が開くように移動します。",
+          "en": "Energy moves so the difference becomes wider."
+        }
+      },
+      "focusExample": {
+        "lang-store": {
+          "ja": "（例: 2と4 → 1と5）",
+          "en": "Example: 2 and 4 -> 1 and 5"
+        }
+      },
+      "diffuseTitle": {
+        "lang-store": {
+          "ja": "爆発発生時 → 拡散（Diffuse）",
+          "en": "Burst -> Diffuse"
+        }
+      },
+      "diffuseBody": {
+        "lang-store": {
+          "ja": "エネルギー差が縮まるように移動します。",
+          "en": "Energy moves so the difference becomes smaller."
+        }
+      },
+      "diffuseExample": {
+        "lang-store": {
+          "ja": "（例: 1と5 → 2と4）",
+          "en": "Example: 1 and 5 -> 2 and 4"
+        }
+      }
+    },
+    "turnCheck": {
+      "body": {
+        "lang-store": {
+          "ja": "爆発や共鳴の結果に応じて、次のターンに進むか、エネルギー注入フェーズに戻るかが確定します。",
+          "en": "Depending on Burst and Resonance results, the turn either passes to the next player or returns to Energy Injection."
+        }
+      },
+      "stagnationTitle": {
+        "lang-store": {
+          "ja": "停滞 (Stagnation)",
+          "en": "Stagnation"
+        }
+      },
+      "stagnationBody": {
+        "lang-store": {
+          "ja": "爆発（Burst）が発生しなかった場合。",
+          "en": "No Burst occurred."
+        }
+      },
+      "saturationTitle": {
+        "lang-store": {
+          "ja": "飽和 (Saturation)",
+          "en": "Saturation"
+        }
+      },
+      "saturationBody": {
+        "lang-store": {
+          "ja": "共鳴（Resonance）により供給エネルギー強化が発生した場合。",
+          "en": "A supply-energy boost occurred through Resonance."
+        }
+      },
+      "cascadeTitle": {
+        "lang-store": {
+          "ja": "連鎖 (Cascade)",
+          "en": "Cascade"
+        }
+      },
+      "cascadeBody": {
+        "lang-store": {
+          "ja": "爆発（Burst）が発生し、かつ飽和に至らなかった場合。",
+          "en": "A Burst occurred without reaching Saturation."
+        }
+      },
+      "turnEnd": {
+        "lang-store": {
+          "ja": "→ ターン終了（交代）",
+          "en": "-> Turn ends"
+        }
+      },
+      "turnContinue": {
+        "lang-store": {
+          "ja": "→ ターン継続（引き続き、エネルギー注入フェーズとしてアクションを行えます）",
+          "en": "-> Turn continues, and you can act again in Energy Injection."
+        }
+      }
+    },
+    "tutorialReset": {
+      "lang-store": {
+        "ja": "チュートリアルを最初から表示する",
+        "en": "Show the tutorial from the beginning"
+      }
+    }
+  }
+}

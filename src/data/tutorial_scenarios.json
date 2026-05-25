@@ -7,10 +7,20 @@
   },
   {
     "trigger": "turnStart",
-    "title": "Welcome to Burst Cascade",
+    "title": {
+      "lang-store": {
+        "ja": "Welcome to Burst Cascade",
+        "en": "Welcome to Burst Cascade"
+      }
+    },
     "pages": [
       {
-        "message": "Burst Cascade へようこそ。このゲームは陣取りストラテジーゲームです。相手のコアを全滅させたら勝利です。まずは自陣（緑色）のグリッドをどれか1つタップしてみましょう。",
+        "message": {
+          "lang-store": {
+            "ja": "Burst Cascade へようこそ。このゲームは陣取りストラテジーゲームです。相手のコアを全滅させたら勝利です。まずは自陣（緑色）のグリッドをどれか1つタップしてみましょう。",
+            "en": "Welcome to Burst Cascade. This is a territory strategy game. You win by eliminating all enemy cores. First, tap one of your own green grids."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -23,10 +33,20 @@
   },
   {
     "trigger": "afterInject",
-    "title": "Energy Injected!",
+    "title": {
+      "lang-store": {
+        "ja": "Energy Injected!",
+        "en": "Energy Injected!"
+      }
+    },
     "pages": [
       {
-        "message": "素晴らしい！自陣のグリッドをタップすると、その位置と周囲のグリッドにエネルギーが注入されます。",
+        "message": {
+          "lang-store": {
+            "ja": "素晴らしい！自陣のグリッドをタップすると、その位置と周囲のグリッドにエネルギーが注入されます。",
+            "en": "Great. Tapping one of your grids injects energy into that grid and the surrounding grids."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -40,10 +60,20 @@
   },
   {
     "trigger": "turnStart",
-    "title": "Energy Indicator",
+    "title": {
+      "lang-store": {
+        "ja": "Energy Indicator",
+        "en": "Energy Indicator"
+      }
+    },
     "pages": [
       {
-        "message": "自陣グリッドをタップしたときに各グリッドに注入されるエネルギーの量は、プレイヤーごとのエリアに表示されています。",
+        "message": {
+          "lang-store": {
+            "ja": "自陣グリッドをタップしたときに各グリッドに注入されるエネルギーの量は、プレイヤーごとのエリアに表示されています。",
+            "en": "The amount of energy injected into each grid when you tap your own grid is shown in each player area."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -57,10 +87,20 @@
   },
   {
     "trigger": "turnStart",
-    "title": "Core Crystal",
+    "title": {
+      "lang-store": {
+        "ja": "Core Crystal",
+        "en": "Core Crystal"
+      }
+    },
     "pages": [
       {
-        "message": "グリッド上に置かれているクリスタルが「コア」です。グリッドを失った場合、そこにあるコアも同時に失われます。グリッドが保有できるエネルギーは最大9です。エネルギーが0になるか9を超えると、グリッドは消滅します。",
+        "message": {
+          "lang-store": {
+            "ja": "グリッド上に置かれているクリスタルが「コア」です。グリッドを失った場合、そこにあるコアも同時に失われます。グリッドが保有できるエネルギーは最大9です。エネルギーが0になるか9を超えると、グリッドは消滅します。",
+            "en": "The crystals placed on the grid are cores. If a grid is lost, the core on it is lost as well. A grid can hold up to 9 energy. If its energy becomes 0 or exceeds 9, the grid disappears."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -73,10 +113,20 @@
   },
   {
     "trigger": "burst",
-    "title": "Grid Burst!",
+    "title": {
+      "lang-store": {
+        "ja": "Grid Burst!",
+        "en": "Grid Burst!"
+      }
+    },
     "pages": [
       {
-        "message": "エネルギー値が9を超えるとそのグリッドは爆発（Burst）します。爆発を発生させたプレイヤーは連続してエネルギーを注入することができます。",
+        "message": {
+          "lang-store": {
+            "ja": "エネルギー値が9を超えるとそのグリッドは爆発（Burst）します。爆発を発生させたプレイヤーは連続してエネルギーを注入することができます。",
+            "en": "When a grid's energy exceeds 9, it bursts. The player who caused the burst can inject energy again immediately."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -90,10 +140,20 @@
   },
   {
     "trigger": "burst",
-    "title": "Cascade Indicator",
+    "title": {
+      "lang-store": {
+        "ja": "Cascade Indicator",
+        "en": "Cascade Indicator"
+      }
+    },
     "pages": [
       {
-        "message": "爆発（Burst）を発生させると、爆発させたグリッドの陣営に応じたインジケーターが進みます。自陣グリッドを1ターン内で4回以上爆発させると、エネルギー注入の連続注入は終了して相手ターンに変わります。相手グリッドを2回爆発させるごとにランダムな自陣にコアが追加されます。",
+        "message": {
+          "lang-store": {
+            "ja": "爆発（Burst）を発生させると、爆発させたグリッドの陣営に応じたインジケーターが進みます。自陣グリッドを1ターン内で4回以上爆発させると、エネルギー注入の連続注入は終了して相手ターンに変わります。相手グリッドを2回爆発させるごとにランダムな自陣にコアが追加されます。",
+            "en": "When you cause a burst, the indicator advances according to the owner of the burst grid. If your own grids burst 4 or more times in one turn, the chain of injections ends and the turn passes to your opponent. Every 2 enemy-grid bursts adds a core to one random friendly grid."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -106,10 +166,20 @@
   },
   {
     "trigger": "turnStart",
-    "title": "Victory & Beyond",
+    "title": {
+      "lang-store": {
+        "ja": "Victory & Beyond",
+        "en": "Victory & Beyond"
+      }
+    },
     "pages": [
       {
-        "message": "自陣のコアを守りながら、相手のコアを全滅させたら勝利です。爆発（Burst）をうまく使って勝利をつかみ取ってください！！",
+        "message": {
+          "lang-store": {
+            "ja": "自陣のコアを守りながら、相手のコアを全滅させたら勝利です。爆発（Burst）をうまく使って勝利をつかみ取ってください！！",
+            "en": "Protect your own cores and eliminate every enemy core to win. Use bursts well and seize victory."
+          }
+        },
         "highlight": [
           {
             "elementId": "game-canvas",
@@ -119,7 +189,12 @@
         ]
       },
       {
-        "message": "詳しいゲームのルールは How To Play を参照してください。How To Play 内の「チュートリアルを最初から表示する」をチェックすることで、チュートリアルを最初から見直すことができます。それではゲームを楽しんでください！！",
+        "message": {
+          "lang-store": {
+            "ja": "詳しいゲームのルールは How To Play を参照してください。How To Play 内の「チュートリアルを最初から表示する」をチェックすることで、チュートリアルを最初から見直すことができます。それではゲームを楽しんでください！！",
+            "en": "For detailed rules, see How To Play. You can restart the tutorial by checking \"Show the tutorial from the beginning\" inside How To Play. Enjoy the game."
+          }
+        },
         "highlight": [
           {
             "elementId": "help-btn",

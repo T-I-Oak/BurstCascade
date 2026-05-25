@@ -1,17 +1,56 @@
 {
-  "title": "Burst Cascade",
-  "description": "ヘキサグリッドを舞台にした陣取りストラテジー。エネルギーを Burst（爆発）させ、発生する連続ターンを繋いで一気に盤面を制圧せよ。",
-  "tags": ["対戦型陣取り", "ヘキサ・ストラテジー", "バースト・連鎖"],
+  "title": {
+    "lang-store": {
+      "ja": "Burst Cascade",
+      "en": "Burst Cascade"
+    }
+  },
+  "description": {
+    "lang-store": {
+      "ja": "ヘキサグリッドを舞台にした陣取りストラテジー。エネルギーを Burst（爆発）させ、発生する連続ターンを繋いで一気に盤面を制圧せよ。",
+      "en": "A territory-control strategy game on a hex grid. Trigger Burst explosions, chain extra turns, and seize the board in one sweep."
+    }
+  },
+  "tags": [
+    {
+      "lang-store": {
+        "ja": "対戦型陣取り",
+        "en": "Territory Battle"
+      }
+    },
+    {
+      "lang-store": {
+        "ja": "ヘキサ・ストラテジー",
+        "en": "Hex Strategy"
+      }
+    },
+    {
+      "lang-store": {
+        "ja": "バースト・連鎖",
+        "en": "Burst Chain"
+      }
+    }
+  ],
   "logo": {
     "path": "assets/logo.svg",
     "type": "standard"
   },
   "badge": {
-    "content": "Coming Soon",
+    "content": {
+      "lang-store": {
+        "ja": "Coming Soon",
+        "en": "Coming Soon"
+      }
+    },
     "type": "info"
   },
   "button": {
-    "content": "PLAY NOW",
+    "content": {
+      "lang-store": {
+        "ja": "PLAY NOW",
+        "en": "PLAY NOW"
+      }
+    },
     "url": "https://t-i-oak.github.io/BurstCascade/",
     "type": "published"
   },

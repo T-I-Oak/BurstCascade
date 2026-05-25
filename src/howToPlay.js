@@ -1,4 +1,5 @@
 import { Hex, Layout } from './map.js';
+import { getLocalizedUiText } from './i18nManager.js';
 
 export class HowToPlayRenderer {
     constructor() {
@@ -73,7 +74,8 @@ export class HowToPlayRenderer {
         // Diffuse: 1, 5 -> 2, 4 (Narrowing gap)
         let valLeft = isFocusPhase ? 2 : 1;
         let valRight = isFocusPhase ? 4 : 5;
-        let label = isFocusPhase ? "集束 (Focus)" : "拡散 (Diffuse)";
+        const texts = getLocalizedUiText();
+        let label = isFocusPhase ? texts.focusLabel : texts.diffuseLabel;
 
         const moveStart = 40;
         const moveEnd = 80;

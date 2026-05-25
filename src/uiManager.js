@@ -34,6 +34,8 @@ export class UIManager {
         g.aiLevelGroup = getEl('ai-level-group');
         g.volumeSlider = getEl('volume-slider');
         g.volumeValue = getEl('volume-value');
+        g.warGaugeContainer = getEl('war-gauge-container');
+        g.languageSelect = getEl('language-select');
 
         g.gameStartBtn = getEl('game-start-btn');
         g.restartBtn = getEl('restart-btn');
@@ -153,6 +155,7 @@ export class UIManager {
             }
         }
 
+        this.setHeaderTitleMode(!g.gameMode);
         window.addEventListener('resize', () => this.resize());
     }
 
@@ -178,11 +181,22 @@ export class UIManager {
     showModeSelection() {
         const g = this.game;
         if (g.sound) g.sound.startBgm('title');
+        this.setHeaderTitleMode(true);
         if (g.overlay) g.overlay.classList.remove('hidden');
         if (g.modeSelection) g.modeSelection.classList.remove('hidden');
         if (g.helpContent) g.helpContent.classList.add('hidden');
         if (g.achievementsContent) g.achievementsContent.classList.add('hidden');
         if (g.gameOverContent) g.gameOverContent.classList.add('hidden');
+    }
+
+    setHeaderTitleMode(isTitleMode) {
+        const g = this.game;
+        if (g.warGaugeContainer) {
+            g.warGaugeContainer.classList.toggle('hidden', isTitleMode);
+        }
+        if (g.languageSelect) {
+            g.languageSelect.classList.toggle('hidden', !isTitleMode);
+        }
     }
 
     showAchievements() {
