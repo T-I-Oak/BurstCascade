@@ -1322,6 +1322,9 @@ main {
     border: 1px solid rgba(255, 255, 255, 0.05);
     overflow: hidden;
 }
+#result-body.result-body-no-achievements #result-achievements {
+    display: none;
+}
 .ach-title-bar {
     display: flex;
     justify-content: space-between;

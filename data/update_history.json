@@ -7,6 +7,15 @@
         "type": "fix",
         "text": {
           "lang-store": {
+            "ja": "PvP結果画面と共有画像から実績表示を除外",
+            "en": "Exclude achievement display from PvP result screens and share images."
+          }
+        }
+      },
+      {
+        "type": "fix",
+        "text": {
+          "lang-store": {
             "ja": "PvP結果画面では実績欄を表示しないよう調整",
             "en": "Hide the achievements area on PvP result screens."
           }
