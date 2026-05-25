@@ -154,39 +154,7 @@ export class GameResultUI {
             });
         }
 
-        // --- アチーブメント情報の表示 (Ver 6.0.0) ---
-        const achContainer = document.getElementById('result-achievements');
-        const achList = document.querySelector('#achievements-list .result-achievements-list-content')
-            || document.getElementById('achievements-list');
-        if (achList) achList.innerHTML = '';
-        g.lastAchievements = []; // シェア用に初期化 (Ver 6.6.6)
-        
-        if (g.gameMode === 'pvc') {
-            const aiLevel = g.aiLevelSelect.querySelector('.selected').dataset.value;
-            const mapType = g.sizeSelect.querySelector('.selected').dataset.value;
-
-            const newUnlocks = g.achievementManager.checkAchievements(g, mapType, aiLevel);
-            const sessionAchs = g.achievementManager.getSessionAchievements(g, mapType, aiLevel, newUnlocks);
-            g.lastAchievements = sessionAchs; // シェア用に保存
-
-            if (sessionAchs.length > 0) {
-                if (achContainer) achContainer.classList.remove('hidden');
-                sessionAchs.forEach(ach => {
-                    const item = document.createElement('div');
-                    item.className = 'achievement-item' + (ach.isNew ? ' new-unlock' : '');
-                    item.innerHTML = `
-                        <span class="ach-item-title">${ach.title}</span>
-                        <span class="ach-item-desc">${ach.description}</span>
-                        ${ach.isNew ? `<span class="new-badge">${getLocalizedUiText().newBadge}</span>` : ''}
-                    `;
-                    achList.appendChild(item);
-                });
-            } else {
-                if (achContainer) achContainer.classList.add('hidden');
-            }
-        } else {
-            if (achContainer) achContainer.classList.add('hidden');
-        }
+        this.updateResultAchievements();
 
         // BGM 制御
         if (g.gameMode === 'pvp') {
@@ -196,5 +164,43 @@ export class GameResultUI {
         } else {
             g.sound.startBgm('defeat');
         }
+    }
+
+    updateResultAchievements() {
+        const g = this.game;
+        const achContainer = document.getElementById('result-achievements');
+        const achList = document.querySelector('#achievements-list .result-achievements-list-content')
+            || document.getElementById('achievements-list');
+
+        if (achList) achList.innerHTML = '';
+        g.lastAchievements = [];
+
+        if (g.gameMode !== 'pvc') {
+            if (achContainer) achContainer.classList.add('hidden');
+            return;
+        }
+
+        const aiLevel = g.aiLevelSelect.querySelector('.selected').dataset.value;
+        const mapType = g.sizeSelect.querySelector('.selected').dataset.value;
+        const newUnlocks = g.achievementManager.checkAchievements(g, mapType, aiLevel);
+        const sessionAchs = g.achievementManager.getSessionAchievements(g, mapType, aiLevel, newUnlocks);
+        g.lastAchievements = sessionAchs;
+
+        if (!achList || sessionAchs.length === 0) {
+            if (achContainer) achContainer.classList.add('hidden');
+            return;
+        }
+
+        if (achContainer) achContainer.classList.remove('hidden');
+        sessionAchs.forEach(ach => {
+            const item = document.createElement('div');
+            item.className = 'achievement-item' + (ach.isNew ? ' new-unlock' : '');
+            item.innerHTML = `
+                <span class="ach-item-title">${ach.title}</span>
+                <span class="ach-item-desc">${ach.description}</span>
+                ${ach.isNew ? `<span class="new-badge">${getLocalizedUiText().newBadge}</span>` : ''}
+            `;
+            achList.appendChild(item);
+        });
     }
 }
