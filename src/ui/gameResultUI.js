@@ -168,6 +168,7 @@ export class GameResultUI {
 
     updateResultAchievements() {
         const g = this.game;
+        const resultBody = document.getElementById('result-body');
         const achContainer = document.getElementById('result-achievements');
         const achList = document.querySelector('#achievements-list .result-achievements-list-content')
             || document.getElementById('achievements-list');
@@ -176,10 +177,12 @@ export class GameResultUI {
         g.lastAchievements = [];
 
         if (g.gameMode !== 'pvc') {
+            if (resultBody) resultBody.classList.add('result-body-no-achievements');
             if (achContainer) achContainer.classList.add('hidden');
             return;
         }
 
+        if (resultBody) resultBody.classList.remove('result-body-no-achievements');
         const aiLevel = g.aiLevelSelect.querySelector('.selected').dataset.value;
         const mapType = g.sizeSelect.querySelector('.selected').dataset.value;
         const newUnlocks = g.achievementManager.checkAchievements(g, mapType, aiLevel);
