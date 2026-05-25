@@ -137,7 +137,7 @@ export class Game {
         const settings = {
             mode: modeEl ? modeEl.dataset.value : 'pvc',
             size: sizeEl ? sizeEl.dataset.value : 'regular',
-            aiLevel: aiLevelEl ? aiLevelEl.dataset.value : 'normal',
+            aiLevel: aiLevelEl ? aiLevelEl.dataset.value : 'easy',
             volume: this.volumeSlider ? this.volumeSlider.value : 50
         };
         setAppSavedData('settings', settings);
@@ -148,7 +148,7 @@ export class Game {
             init: () => ({
                 mode: 'pvc',
                 size: 'mini',
-                aiLevel: 'normal',
+                aiLevel: 'easy',
                 volume: 50
             })
         };
