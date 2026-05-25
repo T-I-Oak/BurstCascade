@@ -33,7 +33,7 @@ export async function generateShareImage(game) {
 
     try {
         const logo = new Image();
-        logo.src = 'burst_cascade/logo.svg';
+        logo.src = 'assets/logo.svg';
         await new Promise((resolve) => {
             const timeout = setTimeout(resolve, 2000);
             logo.onload = () => { clearTimeout(timeout); resolve(); };
