@@ -4,6 +4,15 @@
     "date": "2026-05-21",
     "content": [
       {
+        "type": "imp",
+        "text": {
+          "lang-store": {
+            "ja": "初期AIレベルをEasyに変更し、チュートリアル説明を調整",
+            "en": "Change the initial AI level to Easy and adjust tutorial wording."
+          }
+        }
+      },
+      {
         "type": "fix",
         "text": {
           "lang-store": {
