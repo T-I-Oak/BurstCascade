@@ -1,11 +1,13 @@
 import { describe, test, expect, beforeEach, vi } from 'vitest';
 import { AchievementManager } from '../../src/achievements.js';
+import { appDataManager } from '../../src/appDataManager.js';
 
 describe('Achievement System (achievements.js)', () => {
     let am;
 
     beforeEach(() => {
         localStorage.clear();
+        appDataManager.cache = {};
         vi.spyOn(Storage.prototype, 'setItem');
         am = new AchievementManager();
     });

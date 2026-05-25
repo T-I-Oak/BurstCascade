@@ -10,7 +10,7 @@ import {
 import helpTemplate from './data/help_template.html?raw';
 import helpText from './data/help_text.json';
 import { TutorialManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/tutorialManager.js';
-import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
+import { getAppSavedData, setAppSavedData } from './appDataManager.js';
 
 const tutorialIndexMigrationMap = {
     init: () => 0
@@ -20,7 +20,7 @@ function createTutorialManager(savedIndex) {
     return new TutorialManager(expandAppLanguageResource(defaultScenarios), {
         initialScenarioIndex: savedIndex,
         onSaveIndex: (index) => {
-            DataManager.setSavedData('burst-cascade-tutorial-index', index);
+            setAppSavedData('tutorial-index', index);
         },
         onTriggerCondition: (triggerName, context) => {
             const g = context && context.game;
@@ -75,11 +75,11 @@ function initializeApp() {
     // ホットリロードや残りカスによるUI表示の競合を完全に防ぐ初期化 (No.06)
     clearTutorialOverlay();
 
-    const savedIndex = DataManager.getSavedData('burst-cascade-tutorial-index', tutorialIndexMigrationMap);
+    const savedIndex = getAppSavedData('tutorial-index', tutorialIndexMigrationMap);
 
     initializeI18n(() => {
         window.tutorialManager = createTutorialManager(
-            DataManager.getSavedData('burst-cascade-tutorial-index', tutorialIndexMigrationMap)
+            getAppSavedData('tutorial-index', tutorialIndexMigrationMap)
         );
         if (window.game && window.game.achievementManager) {
             window.game.achievementManager.refreshDefinitions();

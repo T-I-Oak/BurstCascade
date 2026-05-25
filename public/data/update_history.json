@@ -4,6 +4,15 @@
     "date": "2026-05-21",
     "content": [
       {
+        "type": "fix",
+        "text": {
+          "lang-store": {
+            "ja": "保存データ管理を共通仕様の名前空間方式に対応",
+            "en": "Support the common namespaced format for saved data."
+          }
+        }
+      },
+      {
         "type": "new",
         "text": {
           "lang-store": {
