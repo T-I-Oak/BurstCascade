@@ -6,7 +6,7 @@ import { Utils } from './utils.js';
 import { SoundManager } from './sound.js';
 import { bindSoundLifecycleResumeHandlers } from './soundLifecycle.js';
 import { Renderer } from './renderer.js';
-import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
+import { getAppSavedData, setAppSavedData } from './appDataManager.js';
 import { setAppVersion } from 'https://t-i-oak.github.io/GameWorksOAK/lib/utils/env.js';
 import { shareResult } from './share.js';
 import { UIManager } from './uiManager.js';
@@ -140,7 +140,7 @@ export class Game {
             aiLevel: aiLevelEl ? aiLevelEl.dataset.value : 'normal',
             volume: this.volumeSlider ? this.volumeSlider.value : 50
         };
-        DataManager.setSavedData('burst-cascade-settings', settings);
+        setAppSavedData('settings', settings);
     }
 
     loadSettings() {
@@ -152,7 +152,7 @@ export class Game {
                 volume: 50
             })
         };
-        const settings = DataManager.getSavedData('burst-cascade-settings', migrationMap);
+        const settings = getAppSavedData('settings', migrationMap);
         
         try {
             this.applySetting('player-select', settings.mode);

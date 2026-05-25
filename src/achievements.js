@@ -1,4 +1,4 @@
-import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
+import { getAppSavedData, setAppSavedData } from './appDataManager.js';
 import { PlayerStats } from './achievements/stats.js';
 import { ACHIEVEMENT_DEFINITIONS } from './achievements/definitions.js';
 import achievementTexts from './data/achievement_texts.json';
@@ -6,7 +6,7 @@ import { expandAppLanguageResource } from './i18nManager.js';
 
 export class AchievementManager {
     constructor() {
-        this.STORAGE_KEY = 'burst_cascade_achievements';
+        this.STORAGE_KEY = 'achievements';
 
         // Initialize Atomic Stats (Player Array Index 1=P1, 2=P2)
         this.stats = [
@@ -50,7 +50,7 @@ export class AchievementManager {
         };
 
         try {
-            const data = DataManager.getSavedData(this.STORAGE_KEY, migrationMap);
+            const data = getAppSavedData(this.STORAGE_KEY, migrationMap);
             return data;
         } catch (e) {
             console.error('Achievement load error:', e);
@@ -219,7 +219,7 @@ export class AchievementManager {
             ...this.data,
             lifeStats: {} // For now, we might skip detailed StatItem.life persistence if not critical for current achievements
         };
-        DataManager.setSavedData(this.STORAGE_KEY, saveData);
+        setAppSavedData(this.STORAGE_KEY, saveData);
     }
 
     // リセット
