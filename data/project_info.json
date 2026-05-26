@@ -38,11 +38,11 @@
   "badge": {
     "content": {
       "lang-store": {
-        "ja": "Coming Soon",
-        "en": "Coming Soon"
+        "ja": "v1.0 Release",
+        "en": "v1.0 Release"
       }
     },
-    "type": "info"
+    "type": "hot"
   },
   "button": {
     "content": {
