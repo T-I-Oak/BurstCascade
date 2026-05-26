@@ -38,11 +38,12 @@
   "badge": {
     "content": {
       "lang-store": {
-        "ja": "v1.0 Release",
-        "en": "v1.0 Release"
+        "ja": "5月26日 v1.0 公開！",
+        "en": "May 26 v1.0 Released!"
       }
     },
-    "type": "hot"
+    "type": "info",
+    "featuredUntil": "2026-06-02"
   },
   "button": {
     "content": {
