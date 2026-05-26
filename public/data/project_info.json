@@ -8,7 +8,7 @@
   "description": {
     "lang-store": {
       "ja": "ヘキサグリッドを舞台にした陣取りストラテジー。エネルギーを Burst（爆発）させ、発生する連続ターンを繋いで一気に盤面を制圧せよ。",
-      "en": "A territory-control strategy game on a hex grid. Trigger Burst explosions, chain extra turns, and seize the board in one sweep."
+      "en": "A territory-control strategy set on a hex grid. Burst energy, connect the consecutive turns that occur, and control the board all at once."
     }
   },
   "tags": [
