@@ -12,15 +12,15 @@ import helpText from './data/help_text.json';
 import { TutorialManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/tutorialManager.js';
 import { getAppSavedData, setAppSavedData } from './appDataManager.js';
 
-const tutorialIndexMigrationMap = {
-    init: () => 0
+const tutorialStateMigrationMap = {
+    init: () => null
 };
 
-function createTutorialManager(savedIndex) {
+function createTutorialManager(savedTutorialState) {
     return new TutorialManager(expandAppLanguageResource(defaultScenarios), {
-        initialScenarioIndex: savedIndex,
-        onSaveIndex: (index) => {
-            setAppSavedData('tutorial-index', index);
+        initialState: savedTutorialState,
+        onSaveState: (state) => {
+            setAppSavedData('tutorial-index', state);
         },
         onTriggerCondition: (triggerName, context) => {
             const g = context && context.game;
@@ -75,11 +75,11 @@ function initializeApp() {
     // ホットリロードや残りカスによるUI表示の競合を完全に防ぐ初期化 (No.06)
     clearTutorialOverlay();
 
-    const savedIndex = getAppSavedData('tutorial-index', tutorialIndexMigrationMap);
+    const savedTutorialState = getAppSavedData('tutorial-index', tutorialStateMigrationMap);
 
     initializeI18n(() => {
         window.tutorialManager = createTutorialManager(
-            getAppSavedData('tutorial-index', tutorialIndexMigrationMap)
+            getAppSavedData('tutorial-index', tutorialStateMigrationMap)
         );
         if (window.game && window.game.achievementManager) {
             window.game.achievementManager.refreshDefinitions();
@@ -92,7 +92,7 @@ function initializeApp() {
 
     window.game = new Game();
     window.howToPlay = new HowToPlayRenderer();
-    window.tutorialManager = createTutorialManager(savedIndex);
+    window.tutorialManager = createTutorialManager(savedTutorialState);
 
     // チュートリアルの「OK」ボタンクリックイベントのバインド
     const nextBtn = document.getElementById('tutorial-next-btn');

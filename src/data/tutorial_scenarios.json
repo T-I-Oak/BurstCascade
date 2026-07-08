@@ -6,6 +6,7 @@
     }
   },
   {
+    "id": "welcome",
     "trigger": "turnStart",
     "title": {
       "lang-store": {
@@ -32,6 +33,7 @@
     ]
   },
   {
+    "id": "energy-injected",
     "trigger": "afterInject",
     "title": {
       "lang-store": {
@@ -59,6 +61,7 @@
     ]
   },
   {
+    "id": "energy-indicator",
     "trigger": "turnStart",
     "title": {
       "lang-store": {
@@ -86,6 +89,7 @@
     ]
   },
   {
+    "id": "core-crystal",
     "trigger": "turnStart",
     "title": {
       "lang-store": {
@@ -112,6 +116,7 @@
     ]
   },
   {
+    "id": "grid-burst",
     "trigger": "burst",
     "title": {
       "lang-store": {
@@ -139,6 +144,7 @@
     ]
   },
   {
+    "id": "cascade-indicator",
     "trigger": "burst",
     "title": {
       "lang-store": {
@@ -165,6 +171,7 @@
     ]
   },
   {
+    "id": "victory-beyond",
     "trigger": "turnStart",
     "title": {
       "lang-store": {
