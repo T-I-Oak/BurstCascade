@@ -1,4 +1,4 @@
-import { DataManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/dataManager.js';
+import { DataManager } from '../../GameWorksOAK/src/lib/core/dataManager.js';
 
 export const GAME_DATA_ID = 'burst-cascade';
 

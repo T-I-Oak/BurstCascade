@@ -9,7 +9,7 @@ import {
 } from './i18nManager.js';
 import helpTemplate from './data/help_template.html?raw';
 import helpText from './data/help_text.json';
-import { TutorialManager } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/tutorialManager.js';
+import { TutorialManager } from '../../GameWorksOAK/src/lib/core/tutorialManager.js';
 import { getAppSavedData, setAppSavedData } from './appDataManager.js';
 
 const tutorialStateMigrationMap = {
@@ -38,7 +38,8 @@ function createTutorialManager(savedTutorialState) {
                 g.pendingAction = null;
                 action();
             }
-        }
+        },
+        nextButtonSelector: '#tutorial-next-btn'
     });
 }
 
@@ -93,16 +94,6 @@ function initializeApp() {
     window.game = new Game();
     window.howToPlay = new HowToPlayRenderer();
     window.tutorialManager = createTutorialManager(savedTutorialState);
-
-    // チュートリアルの「OK」ボタンクリックイベントのバインド
-    const nextBtn = document.getElementById('tutorial-next-btn');
-    if (nextBtn) {
-        nextBtn.addEventListener('click', () => {
-            if (window.tutorialManager) {
-                window.tutorialManager.advanceScenario();
-            }
-        });
-    }
 
     // チュートリアル「チェックボックス」に基づくリセット制御のイベントバインド
     bindTutorialResetControls();

@@ -3,7 +3,7 @@ import {
     expandLanguageResource,
     bindI18nTemplate,
     setupLanguageSelector
-} from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/i18n.js';
+} from '../../GameWorksOAK/src/lib/core/i18n.js';
 
 export const SUPPORTED_LANGS = ['ja', 'en'];
 

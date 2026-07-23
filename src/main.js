@@ -7,7 +7,7 @@ import { SoundManager } from './sound.js';
 import { bindSoundLifecycleResumeHandlers } from './soundLifecycle.js';
 import { Renderer } from './renderer.js';
 import { getAppSavedData, setAppSavedData } from './appDataManager.js';
-import { setAppVersion } from 'https://t-i-oak.github.io/GameWorksOAK/lib/utils/env.js';
+import { setAppVersion } from '../../GameWorksOAK/src/lib/utils/env.js';
 import { shareResult } from './share.js';
 import { UIManager } from './uiManager.js';
 import { InputHandler } from './inputHandler.js';

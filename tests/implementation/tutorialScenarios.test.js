@@ -66,4 +66,38 @@ describe('Tutorial scenario data', () => {
 
         expect(savedState).toEqual({ completed: [] });
     });
+
+    test('should let TutorialManager own next button progression in managed mode', async () => {
+        document.body.innerHTML = `
+            <canvas id="tutorial-mask-canvas" class="hidden"></canvas>
+            <div id="tutorial-tooltip" class="hidden">
+                <h3 id="tutorial-title"></h3>
+                <p id="tutorial-message"></p>
+                <button id="tutorial-next-btn"></button>
+            </div>
+        `;
+
+        let savedState = null;
+        const manager = new TutorialManager([
+            {
+                id: 'managed-intro',
+                trigger: 'start',
+                title: 'Managed Intro',
+                pages: [{ message: 'Managed message' }]
+            }
+        ], {
+            nextButtonSelector: '#tutorial-next-btn',
+            onSaveState: (state) => {
+                savedState = state;
+            }
+        });
+
+        expect(manager.checkTrigger('start', {})).toBe(true);
+        await new Promise(resolve => setTimeout(resolve, 0));
+        document.getElementById('tutorial-next-btn').click();
+        await new Promise(resolve => setTimeout(resolve, 0));
+
+        expect(savedState).toEqual({ completed: ['managed-intro'] });
+        expect(manager.isShowing).toBe(false);
+    });
 });

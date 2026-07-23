@@ -16,6 +16,16 @@ jobs:
       - name: Checkout 🛎️
         uses: actions/checkout@v4
 
+      - name: Checkout GameWorksOAK common library 🛎️
+        uses: actions/checkout@v4
+        with:
+          repository: T-I-Oak/GameWorksOAK
+          path: common/GameWorksOAK
+
+      - name: Link common library 🔗
+        run: |
+          ln -sfn "$GITHUB_WORKSPACE/common/GameWorksOAK" "$GITHUB_WORKSPACE/../GameWorksOAK"
+
       - name: Install and Build 🔧
         run: |
           npm install

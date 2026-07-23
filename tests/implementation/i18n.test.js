@@ -7,7 +7,7 @@ import helpTemplate from '../../src/data/help_template.html?raw';
 import achievementTexts from '../../src/data/achievement_texts.json';
 import { ACHIEVEMENT_DEFINITIONS } from '../../src/achievements/definitions.js';
 import { expandAppLanguageResource, SUPPORTED_LANGS } from '../../src/i18nManager.js';
-import { renderI18nTemplate } from 'https://t-i-oak.github.io/GameWorksOAK/lib/core/i18n.js';
+import { renderI18nTemplate } from '../../../GameWorksOAK/src/lib/core/i18n.js';
 
 function expectLangStore(value) {
     expect(value).toHaveProperty('lang-store');
